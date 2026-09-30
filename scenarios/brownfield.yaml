@@ -1,0 +1,18 @@
+id: brownfield
+title: "Brownfield: add limited-use links (max_clicks) to the existing service"
+type: brownfield
+baseline: service         # workspace = copy of the current production codebase
+playbook: scenarios/playbooks/brownfield.yaml
+requirement: |
+  Marketing wants limited-use links for promotions, for example a code that is valid only for the
+  first 100 visits. Add an optional maximum number of clicks when creating a link. Once the limit
+  is reached, the short link must stop redirecting and respond 410 Gone. Link metadata must show the
+  limit and the remaining clicks. Existing links, and clients that do not send the new field, must
+  keep working unchanged.
+# Reliability drill: the first implementation has an off-by-one in the limit check.
+# Expected: run_tests fails -> rollback to pre-implement snapshot -> implement re-runs with the
+# failing-test feedback -> tests pass. Shows rework loop, rollback and MTTR.
+faults:
+  implement: {on_executions: [1], variant: buggy}
+approver: "eng-manager@example.com"
+approvals: {}

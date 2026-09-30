@@ -1,0 +1,10 @@
+# Drill: a human rejects the release at the final gate.
+# Expected: workspace restored to the baseline snapshot, run ends ROLLED_BACK, nothing ships.
+extends: ../brownfield.yaml
+id: drill-release-rejected
+title: "Drill: release rejected at the final human gate -> rollback"
+faults: {}
+approvals:
+  release_readiness:
+    - decision: reject
+      comment: "Promotion cancelled by marketing; do not ship this change."

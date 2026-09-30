@@ -1,0 +1,588 @@
+# Recorded agent responses for the ambiguous scenario (offline provider).
+# Items with `when: {Q2: ...}` are included only if the clarified answer matches, so a
+# human revising an answer at an approval gate changes the spec, design, tests and code.
+
+requirements:
+  problem_statement: Reduce abuse of the shortener as a vector for harmful destinations, and give marketing audience
+    analytics - without identifying individuals and without adding latency to redirects.
+  functional:
+  - Reject creation of links whose destination domain (or a parent domain) is on an operator-managed denylist
+  - when: &id001
+      Q2: create_and_redirect
+    text: Links whose destination becomes denylisted after creation stop redirecting (410)
+  - Stats report unique visitors in addition to total clicks
+  - 'Visitor identity is pseudonymous: keyed, daily-rotating hash; the raw IP address is never stored'
+  - Visitor hashes are purged after the retention window
+  non_functional:
+  - 'Redirect path: no new network calls; one in-process HMAC; no extra queries'
+  - 'Privacy: data minimisation, purpose limitation (aggregate analytics), retention <= policy maximum'
+  domain_terms:
+  - blocked
+  - domain
+  - visitor
+  - unique
+  - click
+  - stats
+  - redirect
+  - hash
+  - retention
+  out_of_scope:
+  - Third-party threat-intel feeds (Safe Browsing etc.)
+  - Per-person click history
+  - Geo-location
+  acceptance_criteria:
+  - id: AC1
+    text: Creating a link to a denylisted domain or any of its subdomains returns 422
+    verified_by:
+    - tests/test_safety_analytics.py::test_http_denylisted_destination_rejected
+    - tests/test_safety_analytics.py::test_denylist_matches_parent_domains_only
+  - when: *id001
+    id: AC2
+    text: An existing link to a newly denylisted domain returns 410 and records no click
+    verified_by:
+    - tests/test_safety_analytics.py::test_http_existing_link_blocked_after_denylisting
+  - id: AC3
+    text: Stats include unique_visitors (distinct visitors per day)
+    verified_by:
+    - tests/test_safety_analytics.py::test_http_unique_visitors_in_stats
+  - id: AC4
+    text: The raw client IP never reaches storage
+    verified_by:
+    - tests/test_safety_analytics.py::test_raw_ip_never_persisted
+  - id: AC5
+    text: Visitor hash is keyed (secret) and rotates daily
+    verified_by:
+    - tests/test_safety_analytics.py::test_visitor_hash_is_keyed_and_rotates_daily
+  - id: AC6
+    text: Visitor hashes older than the retention window are purged; click counts remain
+    verified_by:
+    - tests/test_safety_analytics.py::test_visitor_hashes_purged_after_retention
+  - id: AC7
+    text: Existing behaviour is unchanged for links and clients (regression)
+    verified_by:
+    - tests/test_api.py::test_redirect_is_307_and_counts_click
+    - tests/test_api.py::test_invalid_url_rejected
+  questions:
+  - id: Q1
+    about: safer
+    question: What threat does 'safer' address?
+    default: block harmful destinations via an operator-managed domain denylist
+    options:
+    - domain denylist
+    - external threat-intel lookup
+    - link-enumeration hardening
+  - id: Q2
+    about: safer-scope
+    question: Does the denylist apply only to new links, or also stop existing links?
+    default: creation_only
+    options:
+    - creation_only
+    - create_and_redirect
+  - id: Q3
+    about: who
+    question: Does 'see who is clicking' mean identifying individuals?
+    default: 'no: aggregate unique-visitor counts from a pseudonymous daily hash; no personal profiles'
+    options:
+    - aggregate only
+    - identify individuals (requires legal basis + consent)
+  - id: Q4
+    about: quickly
+    question: Is 'quickly' a delivery deadline or a latency requirement?
+    default: latency (read together with 'without slowing redirects'); no deadline was given
+  - id: Q5
+    about: slowing
+    question: What latency budget must redirects keep?
+    default: no new I/O on the redirect path; one HMAC (~microseconds); p95 unchanged
+  - id: Q6
+    about: retention
+    question: How long may visitor hashes be kept?
+    default: 90 days (policy maximum)
+design:
+  title: Destination denylist + privacy-preserving visitor analytics
+  approach: Denylist is configuration (SHORTENER_BLOCKED_DOMAINS) checked in URL validation with parent-domain matching.
+    Unique visitors are counted from a keyed HMAC of day|ip|user-agent stored in a new nullable clicks.visitor_hash
+    column (migration v2); the raw IP exists only in memory for the request. A retention job nulls hashes older
+    than the window while keeping click counts.
+  api_changes:
+  - 'GET /api/v1/links/{code}/stats: + unique_visitors'
+  - 'POST /api/v1/links: 422 for denylisted destinations'
+  - when: *id001
+    text: 'GET /{code}: 410 when the destination is denylisted'
+  schema_changes:
+  - table: clicks
+    column: visitor_hash
+    change: add nullable TEXT (migration v2)
+  data_handling:
+    personal_data:
+    - client IP (transient, in memory only)
+    - user agent (hash input)
+    storage: pseudonymised
+    keyed_hash: true
+    hashing: HMAC-SHA256(server secret, day|ip|user-agent), truncated to 128 bits
+    rotation: day is part of the hash input, so visitors cannot be linked across days
+    retention_days: 90
+    purpose: aggregate unique-visitor counts for marketing; no individual profiles or exports
+  tasks:
+  - id: T1
+    title: 'Config: denylist, visitor secret, retention'
+    deps: []
+    satisfies: []
+    files:
+    - shortener/config.py
+  - id: T2
+    title: Denylist check with parent-domain matching (creation)
+    deps:
+    - T1
+    satisfies:
+    - AC1
+    files:
+    - shortener/validation.py
+  - when: *id001
+    id: T2b
+    title: Enforce denylist on redirect for existing links
+    deps:
+    - T2
+    satisfies:
+    - AC2
+    files:
+    - shortener/service.py
+  - id: T3
+    title: 'Migration v2: clicks.visitor_hash; repository write/aggregate/purge'
+    deps: []
+    satisfies:
+    - AC3
+    - AC6
+    files:
+    - shortener/db.py
+    - shortener/models.py
+    - shortener/repository.py
+  - id: T4
+    title: 'Service: keyed daily visitor hash, retention purge'
+    deps:
+    - T1
+    - T3
+    satisfies:
+    - AC4
+    - AC5
+    - AC6
+    files:
+    - shortener/service.py
+  - id: T5
+    title: 'API: pass client IP to service, expose unique_visitors'
+    deps:
+    - T4
+    satisfies:
+    - AC3
+    - AC7
+    files:
+    - shortener/api.py
+    - shortener/schemas.py
+  - id: T6
+    title: Tests from ACs
+    deps:
+    - T1
+    satisfies:
+    - AC1
+    - AC3
+    - AC4
+    - AC5
+    - AC6
+    - AC7
+    files:
+    - tests/test_safety_analytics.py
+  alternatives_considered:
+  - option: Meaning of 'who is clicking'
+    decision: Aggregate unique visitors from a pseudonymous daily hash
+    why: Answers the marketing question (reach) without processing identities; keeps the change inside privacy policy.
+    rejected:
+    - Store raw IPs (personal data; needs legal basis, DPIA, access controls)
+    - Cookies/fingerprinting (consent requirements)
+  - option: Visitor hash construction
+    decision: HMAC-SHA256 with a server secret, day in the input
+    why: Unkeyed hashes of IPv4 are trivially brute-forced; the day component prevents cross-day tracking.
+    rejected:
+    - sha256(ip) (reversible by enumeration)
+    - Static salt (enables long-term tracking)
+  - option: Denylist source
+    decision: Operator-managed config list with parent-domain matching
+    why: No new network dependency on the redirect path; deterministic; feeds can populate it later.
+    rejected:
+    - Live threat-intel API call per redirect (latency + availability coupling)
+  risks:
+  - risk: Denylist is only as good as its curation
+    likelihood: high
+    impact: medium
+    mitigation: 'follow-up: scheduled sync from a threat-intel feed'
+  - risk: Random default secret makes unique counts restart-dependent
+    likelihood: medium
+    impact: low
+    mitigation: SHORTENER_VISITOR_SECRET documented as required in production
+  - risk: Unique visitors undercount users behind shared NAT
+    likelihood: medium
+    impact: low
+    mitigation: user agent is part of the hash; documented as an estimate
+  - when:
+      Q2: creation_only
+    risk: Existing links to newly denylisted domains keep working
+    likelihood: medium
+    impact: high
+    mitigation: manual deactivation via DELETE
+  rollback_plan: Redeploy the previous version. Migration v2 only adds a nullable column, so old code runs unchanged;
+    optionally run UPDATE clicks SET visitor_hash = NULL to drop pseudonymous data.
+  changelog:
+  - Operator-managed destination denylist (SHORTENER_BLOCKED_DOMAINS), including subdomains
+  - when: *id001
+    text: Denylisted destinations also stop existing links (410)
+  - 'Stats: `unique_visitors` from a keyed, daily-rotating pseudonymous hash (raw IPs are never stored)'
+  - 'Retention: `LinkService.purge_visitor_data()` for the daily retention job'
+  - 'DB migration v2: nullable `clicks.visitor_hash`'
+implement:
+  summary: denylist + pseudonymous unique-visitor analytics with retention
+  changes:
+  - op: replace
+    path: shortener/config.py
+    search: |-
+      import os
+      from dataclasses
+    replace: |-
+      import os
+      import secrets
+      from dataclasses
+  - op: replace
+    path: shortener/config.py
+    search: |2
+          extra_reserved_codes: frozenset[str] = field(default_factory=frozenset)
+    replace: |2
+          extra_reserved_codes: frozenset[str] = field(default_factory=frozenset)
+          # Destinations (and all their subdomains) that may not be shortened.
+          blocked_domains: frozenset[str] = field(default_factory=frozenset)
+          # Key for pseudonymous visitor hashes. Set SHORTENER_VISITOR_SECRET in production so
+          # counts are stable across restarts/replicas; the random default is safe but per-process.
+          visitor_hash_secret: str = field(default_factory=lambda: secrets.token_hex(32))
+          visitor_retention_days: int = 90
+  - op: replace
+    path: shortener/config.py
+    search: |2-
+                  allow_private_targets=_bool(env.get("SHORTENER_ALLOW_PRIVATE_TARGETS"), False),
+              )
+    replace: |2-
+                  allow_private_targets=_bool(env.get("SHORTENER_ALLOW_PRIVATE_TARGETS"), False),
+                  blocked_domains=frozenset(
+                      d.strip().lower().rstrip(".")
+                      for d in env.get("SHORTENER_BLOCKED_DOMAINS", "").split(",")
+                      if d.strip()
+                  ),
+                  visitor_hash_secret=env.get("SHORTENER_VISITOR_SECRET") or secrets.token_hex(32),
+                  visitor_retention_days=int(env.get("SHORTENER_VISITOR_RETENTION_DAYS", 90)),
+              )
+  - op: replace
+    path: shortener/validation.py
+    search: 'def validate_target_url(url: str, settings: Settings) -> str:'
+    replace: |-
+      def is_blocked_domain(host: str, blocked: frozenset[str]) -> bool:
+          """True if host or any parent domain is denylisted (evil.test also blocks a.evil.test)."""
+          labels = host.lower().rstrip(".").split(".")
+          return any(".".join(labels[i:]) in blocked for i in range(len(labels)))
+
+
+      def validate_target_url(url: str, settings: Settings) -> str:
+  - op: replace
+    path: shortener/validation.py
+    search: '    own_host = (urlsplit(settings.base_url).hostname or "").lower()'
+    replace: |2-
+          if is_blocked_domain(host, settings.blocked_domains):
+              raise InvalidInput("destination domain is blocked")
+
+          own_host = (urlsplit(settings.base_url).hostname or "").lower()
+  - op: replace
+    path: shortener/db.py
+    search: |2-
+                  "CREATE INDEX idx_clicks_link_time ON clicks(link_id, clicked_at)",
+              ],
+          ),
+      ]
+    replace: |2-
+                  "CREATE INDEX idx_clicks_link_time ON clicks(link_id, clicked_at)",
+              ],
+          ),
+          # v2: pseudonymous, daily-rotating visitor hash for unique-visitor analytics.
+          (2, ["ALTER TABLE clicks ADD COLUMN visitor_hash TEXT"]),
+      ]
+  - op: replace
+    path: shortener/models.py
+    search: |2
+          top_referrers: list[tuple[str, int]]
+    replace: |2
+          top_referrers: list[tuple[str, int]]
+          unique_visitors: int = 0
+  - op: replace
+    path: shortener/repository.py
+    search: |2-
+              user_agent: str | None,
+          ) -> None:
+              with self.db.write() as conn:
+                  conn.execute(
+                      "INSERT INTO clicks (link_id, clicked_at, referrer, user_agent) "
+                      "VALUES (?, ?, ?, ?)",
+                      (link_id, clicked_at.isoformat(), referrer, user_agent),
+                  )
+    replace: |2-
+              user_agent: str | None,
+              visitor_hash: str | None = None,
+          ) -> None:
+              with self.db.write() as conn:
+                  conn.execute(
+                      "INSERT INTO clicks (link_id, clicked_at, referrer, user_agent, visitor_hash) "
+                      "VALUES (?, ?, ?, ?, ?)",
+                      (link_id, clicked_at.isoformat(), referrer, user_agent, visitor_hash),
+                  )
+  - op: replace
+    path: shortener/repository.py
+    search: '    def count_clicks(self, link_id: int) -> int:'
+    replace: |2-
+          def purge_visitor_hashes(self, older_than: datetime) -> int:
+              """Retention: null out visitor hashes older than the cutoff; click counts are kept."""
+              with self.db.write() as conn:
+                  cur = conn.execute(
+                      "UPDATE clicks SET visitor_hash = NULL "
+                      "WHERE visitor_hash IS NOT NULL AND clicked_at < ?",
+                      (older_than.isoformat(),),
+                  )
+                  return cur.rowcount
+
+          def count_clicks(self, link_id: int) -> int:
+  - op: replace
+    path: shortener/repository.py
+    search: |2
+                      (link_id, top_n),
+                  ).fetchall()
+    replace: |2
+                      (link_id, top_n),
+                  ).fetchall()
+                  unique = conn.execute(
+                      "SELECT COUNT(DISTINCT visitor_hash) AS n FROM clicks WHERE link_id = ?", (link_id,)
+                  ).fetchone()["n"]
+  - op: replace
+    path: shortener/repository.py
+    search: |2-
+                  top_referrers=[(r["ref"], int(r["n"])) for r in referrers],
+              )
+    replace: |2-
+                  top_referrers=[(r["ref"], int(r["n"])) for r in referrers],
+                  unique_visitors=int(unique),
+              )
+  - op: replace
+    path: shortener/service.py
+    search: |
+      from __future__ import annotations
+
+      from collections.abc import Callable
+      from datetime import datetime, timezone
+    replace: |
+      from __future__ import annotations
+
+      import hashlib
+      import hmac
+      from collections.abc import Callable
+      from datetime import datetime, timedelta, timezone
+  - when: *id001
+    op: replace
+    path: shortener/service.py
+    search: |
+      from datetime import datetime, timedelta, timezone
+    replace: |
+      from datetime import datetime, timedelta, timezone
+      from urllib.parse import urlsplit
+  - when: *id001
+    op: replace
+    path: shortener/service.py
+    search: from .validation import validate_target_url
+    replace: from .validation import is_blocked_domain, validate_target_url
+  - op: replace
+    path: shortener/service.py
+    search: |
+      def _truncate(value: str | None) -> str | None:
+          return value[:MAX_HEADER_LEN] if value else None
+    replace: |
+      def _truncate(value: str | None) -> str | None:
+          return value[:MAX_HEADER_LEN] if value else None
+
+
+      def visitor_hash(secret: str, day: str, client_ip: str | None, user_agent: str | None) -> str | None:
+          """Pseudonymous visitor id: keyed HMAC that rotates daily. The raw IP is never stored,
+          and without the key the hash cannot be reversed or linked across days."""
+          if not client_ip:
+              return None
+          msg = f"{day}|{client_ip}|{user_agent or ''}".encode()
+          return hmac.new(secret.encode(), msg, hashlib.sha256).hexdigest()[:32]
+  - op: replace
+    path: shortener/service.py
+    search: |2-
+              self, code: str, referrer: str | None = None, user_agent: str | None = None
+          ) -> Link:
+    replace: |2-
+              self,
+              code: str,
+              referrer: str | None = None,
+              user_agent: str | None = None,
+              client_ip: str | None = None,
+          ) -> Link:
+  - when: *id001
+    op: replace
+    path: shortener/service.py
+    search: |2
+                  raise Gone(f"link '{code}' has expired")
+    replace: |2
+                  raise Gone(f"link '{code}' has expired")
+              host = (urlsplit(link.target_url).hostname or "").lower()
+              if is_blocked_domain(host, self.settings.blocked_domains):
+                  raise Gone(f"link '{code}' points to a blocked destination")
+  - op: replace
+    path: shortener/service.py
+    search: |2-
+              self.repo.record_click(link.id, now, _truncate(referrer), _truncate(user_agent))
+              return link
+    replace: |2-
+              vh = visitor_hash(self.settings.visitor_hash_secret, now.date().isoformat(), client_ip, user_agent)
+              self.repo.record_click(link.id, now, _truncate(referrer), _truncate(user_agent), vh)
+              return link
+  - op: replace
+    path: shortener/service.py
+    search: '    def delete_link(self, code: str) -> None:'
+    replace: |2-
+          def purge_visitor_data(self) -> int:
+              """Enforce visitor-data retention; intended to run daily (see ops runbook)."""
+              cutoff = self.clock() - timedelta(days=self.settings.visitor_retention_days)
+              return self.repo.purge_visitor_hashes(cutoff)
+
+          def delete_link(self, code: str) -> None:
+  - op: replace
+    path: shortener/schemas.py
+    search: |2-
+          total_clicks: int
+          clicks_by_day
+    replace: |2-
+          total_clicks: int
+          unique_visitors: int
+          clicks_by_day
+  - op: replace
+    path: shortener/api.py
+    search: |2
+                  total_clicks=stats.total_clicks,
+    replace: |2
+                  total_clicks=stats.total_clicks,
+                  unique_visitors=stats.unique_visitors,
+  - op: replace
+    path: shortener/api.py
+    search: |2-
+                  user_agent=request.headers.get("user-agent"),
+              )
+    replace: |2-
+                  user_agent=request.headers.get("user-agent"),
+                  client_ip=request.client.host if request.client else None,
+              )
+  - op: create
+    path: tests/test_safety_analytics.py
+    content: |
+      """Tests for destination denylisting and privacy-preserving visitor analytics."""
+
+      from __future__ import annotations
+
+      from datetime import timedelta
+
+      import pytest
+      from fastapi.testclient import TestClient
+
+      from shortener.api import create_app
+      from shortener.config import Settings
+      from shortener.service import LinkService, visitor_hash
+      from shortener.validation import is_blocked_domain
+
+      BLOCKED = frozenset({"evil.test", "phish.example"})
+
+
+      @pytest.fixture
+      def safe_settings(tmp_path) -> Settings:
+          return Settings(
+              database_path=str(tmp_path / "safe.db"),
+              base_url="https://sho.rt",
+              rate_limit_per_minute=1000,
+              blocked_domains=BLOCKED,
+              visitor_hash_secret="unit-test",
+              visitor_retention_days=30,
+          )
+
+
+      @pytest.fixture
+      def safe_service(repo, safe_settings, clock) -> LinkService:
+          return LinkService(repo, safe_settings, clock=clock)
+
+
+      @pytest.fixture
+      def safe_client(safe_settings, safe_service) -> TestClient:
+          return TestClient(create_app(safe_settings, service=safe_service), follow_redirects=False)
+
+
+      @pytest.mark.parametrize("url", ["https://evil.test/x", "https://login.evil.test/", "http://PHISH.example./a"])
+      def test_http_denylisted_destination_rejected(safe_client, url):
+          resp = safe_client.post("/api/v1/links", json={"url": url})
+          assert resp.status_code == 422
+          assert "blocked" in resp.json()["detail"]
+
+
+      def test_denylist_matches_parent_domains_only():
+          assert is_blocked_domain("a.b.evil.test", BLOCKED)
+          assert not is_blocked_domain("notevil.test", BLOCKED)
+          assert not is_blocked_domain("evil.test.example.com", BLOCKED)
+
+
+      def test_http_unique_visitors_in_stats(safe_client):
+          code = safe_client.post("/api/v1/links", json={"url": "https://example.com"}).json()["code"]
+          for ua in ("browser-a", "browser-a", "browser-b"):
+              assert safe_client.get(f"/{code}", headers={"User-Agent": ua}).status_code == 307
+          stats = safe_client.get(f"/api/v1/links/{code}/stats").json()
+          assert stats["total_clicks"] == 3
+          assert stats["unique_visitors"] == 2
+
+
+      def test_raw_ip_never_persisted(safe_service, db):
+          link = safe_service.create_link("https://example.com")
+          safe_service.resolve(link.code, user_agent="ua", client_ip="203.0.113.77")
+          with db.read() as conn:
+              cols = [r["name"] for r in conn.execute("PRAGMA table_info(clicks)")]
+              rows = [tuple(r) for r in conn.execute("SELECT * FROM clicks")]
+          assert not {"ip", "ip_address", "client_ip"} & set(cols)
+          assert all("203.0.113.77" not in str(v) for row in rows for v in row)
+
+
+      def test_visitor_hash_is_keyed_and_rotates_daily():
+          a = visitor_hash("k1", "2026-01-15", "203.0.113.7", "ua")
+          assert a == visitor_hash("k1", "2026-01-15", "203.0.113.7", "ua")
+          assert a != visitor_hash("k2", "2026-01-15", "203.0.113.7", "ua")   # keyed
+          assert a != visitor_hash("k1", "2026-01-16", "203.0.113.7", "ua")   # daily rotation
+          assert visitor_hash("k1", "2026-01-15", None, "ua") is None
+
+
+      def test_visitor_hashes_purged_after_retention(safe_service, repo, clock):
+          link = safe_service.create_link("https://example.com")
+          safe_service.resolve(link.code, user_agent="ua", client_ip="203.0.113.7")
+          clock.advance(days=31)
+          safe_service.resolve(link.code, user_agent="ua", client_ip="203.0.113.7")
+          assert safe_service.purge_visitor_data() == 1
+          assert repo.stats(link.id).unique_visitors == 1   # only the recent hash remains
+          assert repo.stats(link.id).total_clicks == 2      # click counts are kept
+  - when: *id001
+    op: append
+    path: tests/test_safety_analytics.py
+    content: |2
+
+
+      def test_http_existing_link_blocked_after_denylisting(repo, clock, tmp_path):
+          open_settings = Settings(database_path=str(tmp_path / "x.db"), rate_limit_per_minute=1000)
+          link = LinkService(repo, open_settings, clock=clock).create_link("https://login.evil.test/")
+          strict = Settings(database_path=str(tmp_path / "x.db"), blocked_domains=BLOCKED, visitor_hash_secret="unit-test")
+          client = TestClient(create_app(strict, service=LinkService(repo, strict, clock=clock)), follow_redirects=False)
+          resp = client.get(f"/{link.code}")
+          assert resp.status_code == 410
+          assert "blocked" in resp.json()["detail"]
+          assert repo.count_clicks(link.id) == 0

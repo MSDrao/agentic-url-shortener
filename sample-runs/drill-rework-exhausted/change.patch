@@ -1,0 +1,435 @@
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,14 @@
++# Changelog
++
++## [Unreleased] - 2026-09-30
++
++### Limited-use links (max_clicks)
++
++- Add optional `max_clicks` to link creation; exhausted links return 410 Gone
++- Link metadata includes `max_clicks` and `remaining_clicks`
++- DB migration v2: nullable `links.max_clicks`
++
++Assumptions (not confirmed by stakeholders):
++- Q1: no: only successful redirects are recorded as clicks
++- Q2: no: immutable in this change (out of scope)
++- Q3: no: the limit is enforced atomically
+--- /dev/null
++++ b/docs/API.md
+@@ -0,0 +1,57 @@
++# URL Shortener API reference
++
++Version 1.0.0. Generated from the OpenAPI contract - do not edit by hand.
++
++## `GET /healthz`
++
++Tags: ops
++
++Responses: `200`
++
++## `GET /readyz`
++
++Tags: ops
++
++Responses: `200`
++
++## `POST /api/v1/links`
++
++Tags: links
++Parameters: `x-api-key` (header)
++
++Request body:
++- `url` (string, required) Destination http(s) URL
++- `custom_alias` (string/null) Optional vanity code: 3-32 chars [A-Za-z0-9_-]
++- `expires_at` (string/null) Optional expiry (ISO-8601). Naive times are UTC.
++- `max_clicks` (integer/null) Optional click limit; the link returns 410 once reached
++
++Responses: `201`, `401`, `404`, `409`, `410`, `422`, `429`
++
++## `GET /api/v1/links/{code}`
++
++Tags: links
++Parameters: `code` (path)
++
++Responses: `200`, `401`, `404`, `409`, `410`, `422`, `429`
++
++## `DELETE /api/v1/links/{code}`
++
++Tags: links
++Parameters: `code` (path), `x-api-key` (header)
++
++Responses: `204`, `401`, `404`, `409`, `410`, `422`, `429`
++
++## `GET /api/v1/links/{code}/stats`
++
++Tags: analytics
++Parameters: `code` (path)
++
++Responses: `200`, `401`, `404`, `409`, `410`, `422`, `429`
++
++## `GET /{code}`
++
++Tags: redirect
++Parameters: `code` (path)
++
++Responses: `200`, `401`, `404`, `409`, `410`, `422`, `429`
++
+--- /dev/null
++++ b/docs/adr/ADR-001-limit-enforcement.md
+@@ -0,0 +1,13 @@
++# ADR-001: Limit enforcement
++
++Status: accepted
++
++## Decision
++Single conditional INSERT ... SELECT ... WHERE count < max_clicks
++
++## Rationale
++Check-then-act in application code races under concurrency; one statement is atomic under SQLite's single writer and maps to a row lock / counter column on Postgres.
++
++## Alternatives
++- Read count then insert (overshoots under concurrency)
++- Denormalized counter column (faster at scale; needs backfill and dual-write)
+--- /dev/null
++++ b/docs/adr/ADR-002-response-when-exhausted.md
+@@ -0,0 +1,13 @@
++# ADR-002: Response when exhausted
++
++Status: accepted
++
++## Decision
++410 Gone
++
++## Rationale
++Same semantics as expiry, which clients already handle.
++
++## Alternatives
++- 404 (hides that the link existed)
++- Redirect to a landing page (needs product input)
+--- /dev/null
++++ b/docs/adr/ADR-003-remaining-clicks-source.md
+@@ -0,0 +1,12 @@
++# ADR-003: remaining_clicks source
++
++Status: accepted
++
++## Decision
++Derived on read via COUNT(*) over the (link_id, clicked_at) index
++
++## Rationale
++No second source of truth to keep consistent.
++
++## Alternatives
++- Stored counter
+--- a/shortener/api.py
++++ b/shortener/api.py
+@@ -46,7 +46,7 @@
+         self.headers = headers
+ 
+ 
+-def _to_response(link: Link, settings: Settings) -> LinkResponse:
++def _to_response(link: Link, settings: Settings, remaining: int | None = None) -> LinkResponse:
+     return LinkResponse(
+         code=link.code,
+         short_url=f"{settings.base_url}/{link.code}",
+@@ -54,6 +54,8 @@
+         created_at=link.created_at,
+         expires_at=link.expires_at,
+         is_active=link.is_active,
++        max_clicks=link.max_clicks,
++        remaining_clicks=remaining,
+     )
+ 
+ 
+@@ -137,9 +139,9 @@
+         dependencies=[Depends(require_api_key), Depends(rate_limited)],
+     )
+     def create_link(body: CreateLinkRequest, response: Response) -> LinkResponse:
+-        link = service.create_link(body.url, body.custom_alias, body.expires_at)
++        link = service.create_link(body.url, body.custom_alias, body.expires_at, body.max_clicks)
+         response.headers["Location"] = f"/api/v1/links/{link.code}"
+-        return _to_response(link, settings)
++        return _to_response(link, settings, service.remaining_clicks(link))
+ 
+     @app.get(
+         "/api/v1/links/{code}",
+@@ -148,7 +150,8 @@
+         tags=["links"],
+     )
+     def get_link(code: str) -> LinkResponse:
+-        return _to_response(service.get_link(code), settings)
++        link = service.get_link(code)
++        return _to_response(link, settings, service.remaining_clicks(link))
+ 
+     @app.get(
+         "/api/v1/links/{code}/stats",
+--- a/shortener/db.py
++++ b/shortener/db.py
+@@ -38,6 +38,8 @@
+             "CREATE INDEX idx_clicks_link_time ON clicks(link_id, clicked_at)",
+         ],
+     ),
++    # v2: limited-use links. Nullable => existing rows stay unlimited; old code ignores the column.
++    (2, ["ALTER TABLE links ADD COLUMN max_clicks INTEGER"]),
+ ]
+ 
+ 
+--- a/shortener/models.py
++++ b/shortener/models.py
+@@ -14,6 +14,7 @@
+     created_at: datetime
+     expires_at: datetime | None
+     is_active: bool
++    max_clicks: int | None = None  # None = unlimited
+ 
+     def is_expired(self, now: datetime) -> bool:
+         return self.expires_at is not None and now >= self.expires_at
+--- a/shortener/repository.py
++++ b/shortener/repository.py
+@@ -9,7 +9,7 @@
+ from .errors import Conflict
+ from .models import Link, LinkStats
+ 
+-LINK_COLUMNS = "id, code, target_url, created_at, expires_at, is_active"
++LINK_COLUMNS = "id, code, target_url, created_at, expires_at, is_active, max_clicks"
+ 
+ 
+ def _dt(value: str | None) -> datetime | None:
+@@ -24,6 +24,7 @@
+         created_at=datetime.fromisoformat(row["created_at"]),
+         expires_at=_dt(row["expires_at"]),
+         is_active=bool(row["is_active"]),
++        max_clicks=row["max_clicks"],
+     )
+ 
+ 
+@@ -37,17 +38,19 @@
+         target_url: str,
+         created_at: datetime,
+         expires_at: datetime | None,
++        max_clicks: int | None = None,
+     ) -> Link:
+         try:
+             with self.db.write() as conn:
+                 cur = conn.execute(
+-                    "INSERT INTO links (code, target_url, created_at, expires_at) "
+-                    "VALUES (?, ?, ?, ?)",
++                    "INSERT INTO links (code, target_url, created_at, expires_at, max_clicks) "
++                    "VALUES (?, ?, ?, ?, ?)",
+                     (
+                         code,
+                         target_url,
+                         created_at.isoformat(),
+                         expires_at.isoformat() if expires_at else None,
++                        max_clicks,
+                     ),
+                 )
+                 link_id = cur.lastrowid
+@@ -92,6 +95,27 @@
+                 (link_id, clicked_at.isoformat(), referrer, user_agent),
+             )
+ 
++    def record_click_if_allowed(
++        self,
++        link_id: int,
++        clicked_at: datetime,
++        referrer: str | None,
++        user_agent: str | None,
++    ) -> bool:
++        """Record a click only while the link is under its limit.
++
++        Check and insert happen in ONE statement, so concurrent redirects cannot
++        overshoot the limit (no check-then-act race).
++        """
++        with self.db.write() as conn:
++            cur = conn.execute(
++                "INSERT INTO clicks (link_id, clicked_at, referrer, user_agent) "
++                "SELECT ?, ?, ?, ? FROM links l WHERE l.id = ? AND (l.max_clicks IS NULL "
++                "OR (SELECT COUNT(*) FROM clicks c WHERE c.link_id = l.id) <= l.max_clicks)",
++                (link_id, clicked_at.isoformat(), referrer, user_agent, link_id),
++            )
++            return cur.rowcount == 1
++
+     def count_clicks(self, link_id: int) -> int:
+         with self.db.read() as conn:
+             row = conn.execute(
+--- a/shortener/schemas.py
++++ b/shortener/schemas.py
+@@ -17,6 +17,9 @@
+     expires_at: datetime | None = Field(
+         default=None, description="Optional expiry (ISO-8601). Naive times are UTC."
+     )
++    max_clicks: int | None = Field(
++        default=None, ge=1, le=1_000_000, description="Optional click limit; the link returns 410 once reached"
++    )
+ 
+ 
+ class LinkResponse(BaseModel):
+@@ -26,6 +29,8 @@
+     created_at: datetime
+     expires_at: datetime | None
+     is_active: bool
++    max_clicks: int | None = None
++    remaining_clicks: int | None = None
+ 
+ 
+ class DayCount(BaseModel):
+--- a/shortener/service.py
++++ b/shortener/service.py
+@@ -13,6 +13,7 @@
+ from .validation import validate_target_url
+ 
+ MAX_HEADER_LEN = 512
++MAX_CLICKS_LIMIT = 1_000_000
+ 
+ 
+ def utcnow() -> datetime:
+@@ -43,8 +44,11 @@
+         url: str,
+         custom_alias: str | None = None,
+         expires_at: datetime | None = None,
++        max_clicks: int | None = None,
+     ) -> Link:
+         target = validate_target_url(url, self.settings)
++        if max_clicks is not None and not 1 <= max_clicks <= MAX_CLICKS_LIMIT:
++            raise InvalidInput(f"max_clicks must be between 1 and {MAX_CLICKS_LIMIT}")
+         now = self.clock()
+         expiry = _as_utc(expires_at) if expires_at else None
+         if expiry is not None and expiry <= now:
+@@ -55,12 +59,12 @@
+                 code = validate_alias(custom_alias, self.settings.extra_reserved_codes)
+             except ValueError as exc:
+                 raise InvalidInput(str(exc)) from exc
+-            return self.repo.create(code, target, now, expiry)
++            return self.repo.create(code, target, now, expiry, max_clicks)
+ 
+         for _ in range(self.settings.max_code_attempts):
+             code = generate_code(self.settings.code_length)
+             try:
+-                return self.repo.create(code, target, now, expiry)
++                return self.repo.create(code, target, now, expiry, max_clicks)
+             except Conflict:
+                 continue  # random collision: retry with a fresh code
+         raise CodeSpaceExhausted("could not allocate a unique code; retry later")
+@@ -79,13 +83,19 @@
+         now = self.clock()
+         if link.is_expired(now):
+             raise Gone(f"link '{code}' has expired")
+-        self.repo.record_click(link.id, now, _truncate(referrer), _truncate(user_agent))
++        if not self.repo.record_click_if_allowed(link.id, now, _truncate(referrer), _truncate(user_agent)):
++            raise Gone(f"link '{code}' has reached its click limit")
+         return link
+ 
+     def get_stats(self, code: str) -> tuple[Link, LinkStats]:
+         link = self.get_link(code)
+         return link, self.repo.stats(link.id)
+ 
++    def remaining_clicks(self, link: Link) -> int | None:
++        if link.max_clicks is None:
++            return None
++        return max(0, link.max_clicks - self.repo.count_clicks(link.id))
++
+     def delete_link(self, code: str) -> None:
+         if not self.repo.deactivate(code):
+             raise NotFound(f"link '{code}' not found")
+--- /dev/null
++++ b/tests/test_max_clicks.py
+@@ -0,0 +1,97 @@
++"""Tests for limited-use links (max_clicks)."""
++
++from __future__ import annotations
++
++import threading
++
++import pytest
++
++from shortener.db import MIGRATIONS, Database
++from shortener.repository import LinkRepository
++
++
++def _create(client, **body):
++    body.setdefault("url", "https://example.com/promo")
++    return client.post("/api/v1/links", json=body)
++
++
++def test_http_create_with_max_clicks_shows_remaining(client):
++    created = _create(client, max_clicks=3)
++    assert created.status_code == 201
++    assert created.json()["max_clicks"] == 3
++    assert created.json()["remaining_clicks"] == 3
++    code = created.json()["code"]
++    client.get(f"/{code}")
++    meta = client.get(f"/api/v1/links/{code}").json()
++    assert meta["max_clicks"] == 3 and meta["remaining_clicks"] == 2
++
++
++def test_http_limit_reached_returns_410(client):
++    code = _create(client, max_clicks=2).json()["code"]
++    assert client.get(f"/{code}").status_code == 307
++    assert client.get(f"/{code}").status_code == 307
++    blocked = client.get(f"/{code}")
++    assert blocked.status_code == 410
++    assert "click limit" in blocked.json()["detail"]
++    assert client.get(f"/api/v1/links/{code}/stats").json()["total_clicks"] == 2
++    assert client.get(f"/api/v1/links/{code}").json()["remaining_clicks"] == 0
++
++
++@pytest.mark.parametrize("value", [0, -1, 1_000_001, "ten"])
++def test_http_invalid_max_clicks_rejected(client, value):
++    assert _create(client, max_clicks=value).status_code == 422
++
++
++def test_http_unlimited_links_unchanged(client):
++    created = _create(client)
++    assert created.status_code == 201
++    assert created.json()["max_clicks"] is None
++    assert created.json()["remaining_clicks"] is None
++    code = created.json()["code"]
++    for _ in range(5):
++        assert client.get(f"/{code}").status_code == 307
++
++
++def test_service_rejects_out_of_range_max_clicks(service):
++    from shortener.errors import InvalidInput
++
++    with pytest.raises(InvalidInput):
++        service.create_link("https://example.com", max_clicks=0)
++
++
++def test_repository_limit_is_atomic(repo, clock):
++    link = repo.create("race001", "https://example.com", clock.now, None, max_clicks=5)
++    results: list[bool] = []
++    lock = threading.Lock()
++
++    def click():
++        ok = repo.record_click_if_allowed(link.id, clock.now, None, None)
++        with lock:
++            results.append(ok)
++
++    threads = [threading.Thread(target=click) for _ in range(20)]
++    for t in threads:
++        t.start()
++    for t in threads:
++        t.join()
++    assert sum(results) == 5
++    assert repo.count_clicks(link.id) == 5
++
++
++def test_migration_upgrades_existing_v1_database(tmp_path, monkeypatch):
++    import shortener.db as dbmod
++
++    path = str(tmp_path / "v1.db")
++    monkeypatch.setattr(dbmod, "MIGRATIONS", MIGRATIONS[:1])
++    old = Database(path)
++    assert old.migrate() == 1
++    with old.write() as conn:
++        conn.execute(
++            "INSERT INTO links (code, target_url, created_at) "
++            "VALUES ('legacy1', 'https://a.test', '2026-01-01T00:00:00+00:00')"
++        )
++    monkeypatch.undo()
++    new = Database(path)
++    assert new.migrate() == 2
++    link = LinkRepository(new).get_by_code("legacy1")
++    assert link is not None and link.max_clicks is None

@@ -1,0 +1,251 @@
+
+▶ Greenfield: build the URL shortener service from scratch  [greenfield]  run=demo-greenfield  llm=offline  approvals=auto
+  waves: intake | design, test_plan | implement | docs, run_tests, security_scan | release_readiness
+  → intake               running (agent=requirements_analyst, attempt=1)
+  ? intake               waiting_approval  requirement contains ambiguities resolved only by assumptions
+  ✓ intake               succeeded         7 functional reqs, 11 ACs, 2 ambiguities (2 assumed), pii=False
+  → design               running (agent=architect, attempt=1)
+  → test_plan            running (agent=test_planner, attempt=1)
+  ! design attempt 1 failed: LLMError: injected fault: provider error for 'design' (execution 1)
+  ✓ test_plan            succeeded         16 planned cases ({'unit': 4, 'integration': 12})
+  → design               running (agent=architect, attempt=2)
+  ? design               waiting_approval  high-impact change: public_api_change; high-impact change: schema_change
+  ✓ design               succeeded         7 tasks in 5 waves; 6 API / 2 schema changes
+  → implement            running (agent=implementer, attempt=1)
+  ? implement            waiting_approval  high-impact change: dependency_change; high-impact change: public_api_change; high-impact change: schema_chang
+  ✓ implement            succeeded         18 files (15 source, 3 test): Scaffold the v1 service and its test suites per tasks T1-T7
+  → docs                 running (agent=tech_writer, attempt=1)
+  → run_tests            running (agent=test_runner, attempt=1)
+  → security_scan        running (agent=security_scanner, attempt=1)
+  ✓ security_scan        succeeded         18 files scanned, 1 findings (max=medium)
+  ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 4 ADRs
+  ✓ run_tests            succeeded         53/53 passed, coverage=98.64%
+  → release_readiness    running (agent=release_manager, attempt=1)
+  ? release_readiness    waiting_approval  'release_readiness' always requires human sign-off
+  ✓ release_readiness    succeeded         GO: 7/7 checks green
+
+■ run SUCCEEDED  latency=2.098s  attempts=9  retries=1  rollbacks=0  replans=0  mttr=0.205s
+  summary: runs/demo-greenfield/SUMMARY.md
+  patch:   runs/demo-greenfield/change.patch
+
+▶ Brownfield: add limited-use links (max_clicks) to the existing service  [brownfield]  run=demo-brownfield  llm=offline  approvals=auto
+  waves: intake | codebase_analysis, test_plan | design | implement | docs, run_tests, security_scan | release_readiness
+  → intake               running (agent=requirements_analyst, attempt=1)
+  ? intake               waiting_approval  requirement contains ambiguities resolved only by assumptions
+  ✓ intake               succeeded         4 functional reqs, 6 ACs, 3 ambiguities (3 assumed), pii=False
+  → codebase_analysis    running (agent=codebase_analyst, attempt=1)
+  → test_plan            running (agent=test_planner, attempt=1)
+  ✓ test_plan            succeeded         10 planned cases ({'unit': 4, 'integration': 6})
+  ✓ codebase_analysis    succeeded         16 modules, 7 routes, 2 tables; 5 directly + 4 indirectly impacted; risk=high
+  → design               running (agent=architect, attempt=1)
+  ? design               waiting_approval  high-impact change: public_api_change; high-impact change: schema_change
+  ✓ design               succeeded         5 tasks in 4 waves; 3 API / 1 schema changes
+  → implement            running (agent=implementer, attempt=1)
+  ? implement            waiting_approval  high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/
+  ✓ implement            succeeded         7 files (6 source, 1 test): max_clicks (first attempt)
+  → docs                 running (agent=tech_writer, attempt=1)
+  → run_tests            running (agent=test_runner, attempt=1)
+  → security_scan        running (agent=security_scanner, attempt=1)
+  ✓ security_scan        succeeded         7 files scanned, 0 findings (max=info)
+  ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
+  ! run_tests attempt 1 failed: exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks
+  ↺ rework: rolled back 'implement', re-running with feedback from 'run_tests'
+  → implement            running (agent=implementer, attempt=1)
+  ? implement            waiting_approval  high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/
+  ✓ implement            succeeded         7 files (6 source, 1 test): max_clicks: migration v2, atomic limit enforcement, additive API fields, tests
+  → docs                 running (agent=tech_writer, attempt=1)
+  → run_tests            running (agent=test_runner, attempt=1)
+  → security_scan        running (agent=security_scanner, attempt=1)
+  ✓ security_scan        succeeded         7 files scanned, 0 findings (max=info)
+  ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
+  ✓ run_tests            succeeded         63/63 passed, coverage=98.91%
+  → release_readiness    running (agent=release_manager, attempt=1)
+  ? release_readiness    waiting_approval  'release_readiness' always requires human sign-off
+  ✓ release_readiness    succeeded         GO: 7/7 checks green
+
+■ run SUCCEEDED  latency=4.899s  attempts=13  retries=0  rollbacks=1  replans=0  mttr=2.47s
+  summary: runs/demo-brownfield/SUMMARY.md
+  patch:   runs/demo-brownfield/change.patch
+
+▶ Ambiguous: 'make links safer and show who is clicking'  [ambiguous]  run=demo-ambiguous  llm=offline  approvals=auto
+  waves: intake | codebase_analysis, test_plan | design | implement | docs, run_tests, security_scan | release_readiness
+  → intake               running (agent=requirements_analyst, attempt=1)
+  ? intake               waiting_approval  high-impact change: pii; requirement contains ambiguities resolved only by assumptions
+  ✓ intake               succeeded         4 functional reqs, 6 ACs, 6 ambiguities (6 assumed), pii=True
+  + re-plan: inserted node 'privacy_review' (requirement involves personal data (signals: ['\\bwho\\b[^.]*\\bclick']))
+  → codebase_analysis    running (agent=codebase_analyst, attempt=1)
+  → test_plan            running (agent=test_planner, attempt=1)
+  ✓ test_plan            succeeded         8 planned cases ({'unit': 4, 'integration': 4})
+  ✓ codebase_analysis    succeeded         16 modules, 7 routes, 2 tables; 7 directly + 5 indirectly impacted; risk=high
+  → design               running (agent=architect, attempt=1)
+  ? design               waiting_approval  high-impact change: pii; high-impact change: public_api_change; high-impact change: schema_change
+  ↩ product-owner@example.com requested revision at 'design' -> re-running 'intake' with answers {'Q2': 'create_and_redirect'}
+  → intake               running (agent=requirements_analyst, attempt=1)
+  ? intake               waiting_approval  high-impact change: pii; requirement contains ambiguities resolved only by assumptions
+  ✓ intake               succeeded         5 functional reqs, 7 ACs, 6 ambiguities (5 assumed), pii=True
+  ⟳ re-plan: 'requirements_spec' changed (v2); invalidated ['codebase_analysis', 'test_plan'] and their dependents
+  → codebase_analysis    running (agent=codebase_analyst, attempt=1)
+  → test_plan            running (agent=test_planner, attempt=1)
+  ✓ test_plan            succeeded         9 planned cases ({'unit': 4, 'integration': 5})
+  ✓ codebase_analysis    succeeded         16 modules, 7 routes, 2 tables; 7 directly + 5 indirectly impacted; risk=high
+  → design               running (agent=architect, attempt=1)
+  ? design               waiting_approval  high-impact change: pii; high-impact change: public_api_change; high-impact change: schema_change
+  ✓ design               succeeded         7 tasks in 3 waves; 3 API / 1 schema changes
+  → privacy_review       running (agent=privacy_officer, attempt=1)
+  ? privacy_review       waiting_approval  high-impact change: pii
+  ✓ privacy_review       succeeded         5/5 privacy checks passed
+  → implement            running (agent=implementer, attempt=1)
+  ? implement            waiting_approval  high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/
+  ✓ implement            succeeded         9 files (8 source, 1 test): denylist + pseudonymous unique-visitor analytics with retention
+  → docs                 running (agent=tech_writer, attempt=1)
+  → run_tests            running (agent=test_runner, attempt=1)
+  → security_scan        running (agent=security_scanner, attempt=1)
+  ✓ security_scan        succeeded         9 files scanned, 0 findings (max=info)
+  ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
+  ✓ run_tests            succeeded         62/62 passed, coverage=99.36%
+  → release_readiness    running (agent=release_manager, attempt=1)
+  ? release_readiness    waiting_approval  'release_readiness' always requires human sign-off
+  ✓ release_readiness    succeeded         GO: 8/8 checks green
+
+■ run SUCCEEDED  latency=2.472s  attempts=14  retries=0  rollbacks=0  replans=3  mttr=n/a
+  summary: runs/demo-ambiguous/SUMMARY.md
+  patch:   runs/demo-ambiguous/change.patch
+
+▶ Drill: release rejected at the final human gate -> rollback  [brownfield]  run=drill-release-rejected  llm=offline  approvals=auto
+  waves: intake | codebase_analysis, test_plan | design | implement | docs, run_tests, security_scan | release_readiness
+  → intake               running (agent=requirements_analyst, attempt=1)
+  ? intake               waiting_approval  requirement contains ambiguities resolved only by assumptions
+  ✓ intake               succeeded         4 functional reqs, 6 ACs, 3 ambiguities (3 assumed), pii=False
+  → codebase_analysis    running (agent=codebase_analyst, attempt=1)
+  → test_plan            running (agent=test_planner, attempt=1)
+  ✓ test_plan            succeeded         10 planned cases ({'unit': 4, 'integration': 6})
+  ✓ codebase_analysis    succeeded         16 modules, 7 routes, 2 tables; 5 directly + 4 indirectly impacted; risk=high
+  → design               running (agent=architect, attempt=1)
+  ? design               waiting_approval  high-impact change: public_api_change; high-impact change: schema_change
+  ✓ design               succeeded         5 tasks in 4 waves; 3 API / 1 schema changes
+  → implement            running (agent=implementer, attempt=1)
+  ? implement            waiting_approval  high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/
+  ✓ implement            succeeded         7 files (6 source, 1 test): max_clicks: migration v2, atomic limit enforcement, additive API fields, tests
+  → docs                 running (agent=tech_writer, attempt=1)
+  → run_tests            running (agent=test_runner, attempt=1)
+  → security_scan        running (agent=security_scanner, attempt=1)
+  ✓ security_scan        succeeded         7 files scanned, 0 findings (max=info)
+  ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
+  ✓ run_tests            succeeded         63/63 passed, coverage=98.91%
+  → release_readiness    running (agent=release_manager, attempt=1)
+  ? release_readiness    waiting_approval  'release_readiness' always requires human sign-off
+  ✗ release_readiness    failed            rejected by approver
+
+■ run ROLLED_BACK  latency=2.636s  attempts=9  retries=0  rollbacks=1  replans=0  mttr=n/a
+  summary: runs/drill-release-rejected/SUMMARY.md
+  patch:   runs/drill-release-rejected/change.patch
+
+▶ Drill: agent exceeds its autonomy boundary -> safe-stop  [brownfield]  run=drill-policy-violation  llm=offline  approvals=auto
+  waves: intake | codebase_analysis, test_plan | design | implement | docs, run_tests, security_scan | release_readiness
+  → intake               running (agent=requirements_analyst, attempt=1)
+  ? intake               waiting_approval  requirement contains ambiguities resolved only by assumptions
+  ✓ intake               succeeded         4 functional reqs, 6 ACs, 3 ambiguities (3 assumed), pii=False
+  → codebase_analysis    running (agent=codebase_analyst, attempt=1)
+  → test_plan            running (agent=test_planner, attempt=1)
+  ✓ test_plan            succeeded         10 planned cases ({'unit': 4, 'integration': 6})
+  ✓ codebase_analysis    succeeded         16 modules, 7 routes, 2 tables; 5 directly + 4 indirectly impacted; risk=high
+  → design               running (agent=architect, attempt=1)
+  ? design               waiting_approval  high-impact change: public_api_change; high-impact change: schema_change
+  ✓ design               succeeded         5 tasks in 4 waves; 3 API / 1 schema changes
+  → implement            running (agent=implementer, attempt=1)
+  ✗ implement            failed            critical policy violation
+  ■ SAFE-STOP: critical policy violation in 'implement'
+
+■ run HALTED  latency=0.044s  attempts=5  retries=0  rollbacks=0  replans=0  mttr=n/a
+  summary: runs/drill-policy-violation/SUMMARY.md
+  patch:   runs/drill-policy-violation/change.patch
+
+▶ Drill: repeated test failures exhaust the rework budget -> safe-stop  [brownfield]  run=drill-rework-exhausted  llm=offline  approvals=auto
+  waves: intake | codebase_analysis, test_plan | design | implement | docs, run_tests, security_scan | release_readiness
+  → intake               running (agent=requirements_analyst, attempt=1)
+  ? intake               waiting_approval  requirement contains ambiguities resolved only by assumptions
+  ✓ intake               succeeded         4 functional reqs, 6 ACs, 3 ambiguities (3 assumed), pii=False
+  → codebase_analysis    running (agent=codebase_analyst, attempt=1)
+  → test_plan            running (agent=test_planner, attempt=1)
+  ✓ test_plan            succeeded         10 planned cases ({'unit': 4, 'integration': 6})
+  ✓ codebase_analysis    succeeded         16 modules, 7 routes, 2 tables; 5 directly + 4 indirectly impacted; risk=high
+  → design               running (agent=architect, attempt=1)
+  ? design               waiting_approval  high-impact change: public_api_change; high-impact change: schema_change
+  ✓ design               succeeded         5 tasks in 4 waves; 3 API / 1 schema changes
+  → implement            running (agent=implementer, attempt=1)
+  ? implement            waiting_approval  high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/
+  ✓ implement            succeeded         7 files (6 source, 1 test): max_clicks (first attempt)
+  → docs                 running (agent=tech_writer, attempt=1)
+  → run_tests            running (agent=test_runner, attempt=1)
+  → security_scan        running (agent=security_scanner, attempt=1)
+  ✓ security_scan        succeeded         7 files scanned, 0 findings (max=info)
+  ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
+  ! run_tests attempt 1 failed: exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks
+  ↺ rework: rolled back 'implement', re-running with feedback from 'run_tests'
+  → implement            running (agent=implementer, attempt=1)
+  ? implement            waiting_approval  high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/
+  ✓ implement            succeeded         7 files (6 source, 1 test): max_clicks (first attempt)
+  → docs                 running (agent=tech_writer, attempt=1)
+  → run_tests            running (agent=test_runner, attempt=1)
+  → security_scan        running (agent=security_scanner, attempt=1)
+  ✓ security_scan        succeeded         7 files scanned, 0 findings (max=info)
+  ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
+  ! run_tests attempt 1 failed: exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks
+  ↺ rework: rolled back 'implement', re-running with feedback from 'run_tests'
+  → implement            running (agent=implementer, attempt=1)
+  ? implement            waiting_approval  high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/
+  ✓ implement            succeeded         7 files (6 source, 1 test): max_clicks (first attempt)
+  → docs                 running (agent=tech_writer, attempt=1)
+  → run_tests            running (agent=test_runner, attempt=1)
+  → security_scan        running (agent=security_scanner, attempt=1)
+  ✓ security_scan        succeeded         7 files scanned, 0 findings (max=info)
+  ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
+  ! run_tests attempt 1 failed: exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks
+  ✗ run_tests            failed            rework budget exhausted for 'implement': exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); plan
+  ■ SAFE-STOP: 'run_tests' failed after retries/fallback
+
+■ run HALTED  latency=7.595s  attempts=16  retries=0  rollbacks=2  replans=0  mttr=n/a
+  summary: runs/drill-rework-exhausted/SUMMARY.md
+  patch:   runs/drill-rework-exhausted/change.patch
+
+▶ recovering drill-policy-violation via resume --reset-failed
+
+▶ resuming drill-policy-violation (previous stop: critical policy violation in 'implement')
+  → implement            running (agent=implementer, attempt=1)
+  ? implement            waiting_approval  high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/
+  ✓ implement            succeeded         7 files (6 source, 1 test): max_clicks: migration v2, atomic limit enforcement, additive API fields, tests
+  → docs                 running (agent=tech_writer, attempt=1)
+  → run_tests            running (agent=test_runner, attempt=1)
+  → security_scan        running (agent=security_scanner, attempt=1)
+  ✓ security_scan        succeeded         7 files scanned, 0 findings (max=info)
+  ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
+  ✓ run_tests            succeeded         63/63 passed, coverage=98.91%
+  → release_readiness    running (agent=release_manager, attempt=1)
+  ? release_readiness    waiting_approval  'release_readiness' always requires human sign-off
+  ✓ release_readiness    succeeded         GO: 7/7 checks green
+
+■ run SUCCEEDED  latency=10.296s  attempts=10  retries=0  rollbacks=0  replans=0  mttr=7.672s
+  summary: runs/drill-policy-violation/SUMMARY.md
+  patch:   runs/drill-policy-violation/change.patch
+
+=== demo results ===
+  demo-greenfield              succeeded
+  demo-brownfield              succeeded
+  demo-ambiguous               succeeded
+  drill-release-rejected       rolled_back
+  drill-policy-violation       succeeded
+  drill-rework-exhausted       halted
+{
+  "runs": 6,
+  "run_success_rate": 0.667,
+  "status_breakdown": {
+    "halted": 1,
+    "rolled_back": 1,
+    "succeeded": 4
+  },
+  "retry_rate": 0.014,
+  "rollbacks_per_run": 0.667,
+  "mttr_s_mean": 3.449,
+  "latency_s_p50": 3.768,
+  "latency_s_max": 10.296
+}

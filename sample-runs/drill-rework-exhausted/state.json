@@ -1,0 +1,1618 @@
+{
+ "run_id": "drill-rework-exhausted",
+ "scenario": {
+  "id": "drill-rework-exhausted",
+  "title": "Drill: repeated test failures exhaust the rework budget -> safe-stop",
+  "type": "brownfield",
+  "baseline": "service",
+  "playbook": "scenarios/playbooks/brownfield.yaml",
+  "requirement": "Marketing wants limited-use links for promotions, for example a code that is valid only for the\nfirst 100 visits. Add an optional maximum number of clicks when creating a link. Once the limit\nis reached, the short link must stop redirecting and respond 410 Gone. Link metadata must show the\nlimit and the remaining clicks. Existing links, and clients that do not send the new field, must\nkeep working unchanged.\n",
+  "faults": {
+   "implement": {
+    "on_executions": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "variant": "buggy"
+   }
+  },
+  "approver": "eng-manager@example.com",
+  "approvals": {},
+  "_path": "scenarios/drills/rework-exhausted.yaml"
+ },
+ "run_status": "halted",
+ "stop_reason": "'run_tests' failed after retries/fallback",
+ "status": {
+  "intake": "succeeded",
+  "codebase_analysis": "succeeded",
+  "test_plan": "succeeded",
+  "design": "succeeded",
+  "implement": "succeeded",
+  "run_tests": "failed",
+  "security_scan": "succeeded",
+  "docs": "succeeded",
+  "release_readiness": "pending"
+ },
+ "attempts": {
+  "intake": 1,
+  "codebase_analysis": 1,
+  "test_plan": 1,
+  "design": 1,
+  "implement": 1,
+  "run_tests": 1,
+  "security_scan": 1,
+  "docs": 1,
+  "release_readiness": 0
+ },
+ "executions": {
+  "intake": 1,
+  "codebase_analysis": 1,
+  "test_plan": 1,
+  "design": 1,
+  "implement": 3,
+  "run_tests": 3,
+  "security_scan": 3,
+  "docs": 3,
+  "release_readiness": 0
+ },
+ "approval_rounds": {
+  "intake": 1,
+  "design": 1,
+  "implement": 3
+ },
+ "rework_cycles": {
+  "implement": 2
+ },
+ "revisions": 0,
+ "mutations": [],
+ "gate_log": {
+  "intake": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "spec_complete",
+    "passed": true,
+    "detail": "6 acceptance criteria"
+   }
+  ],
+  "codebase_analysis": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "entry",
+    "gate": "workspace_has_code",
+    "passed": true,
+    "detail": "16 python files"
+   },
+   {
+    "kind": "exit",
+    "gate": "impact_identified",
+    "passed": true,
+    "detail": "9 impacted modules"
+   }
+  ],
+  "test_plan": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "test_plan_covers_acs",
+    "passed": true,
+    "detail": "every AC has tests"
+   }
+  ],
+  "design": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "tasks_acyclic",
+    "passed": true,
+    "detail": "5 tasks, acyclic"
+   },
+   {
+    "kind": "exit",
+    "gate": "traceability",
+    "passed": true,
+    "detail": "all ACs traced to tasks"
+   }
+  ],
+  "implement": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "has_changes",
+    "passed": true,
+    "detail": "7 files changed"
+   },
+   {
+    "kind": "exit",
+    "gate": "compiles",
+    "passed": true,
+    "detail": "all python files compile"
+   },
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "has_changes",
+    "passed": true,
+    "detail": "7 files changed"
+   },
+   {
+    "kind": "exit",
+    "gate": "compiles",
+    "passed": true,
+    "detail": "all python files compile"
+   },
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "has_changes",
+    "passed": true,
+    "detail": "7 files changed"
+   },
+   {
+    "kind": "exit",
+    "gate": "compiles",
+    "passed": true,
+    "detail": "all python files compile"
+   }
+  ],
+  "docs": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "docs_cover_routes",
+    "passed": true,
+    "detail": "7 routes documented"
+   },
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "docs_cover_routes",
+    "passed": true,
+    "detail": "7 routes documented"
+   },
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "docs_cover_routes",
+    "passed": true,
+    "detail": "7 routes documented"
+   }
+  ],
+  "run_tests": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "entry",
+    "gate": "workspace_has_code",
+    "passed": true,
+    "detail": "17 python files"
+   },
+   {
+    "kind": "exit",
+    "gate": "tests_pass",
+    "passed": false,
+    "detail": "61/63 passed, 2 failed, 0 errors"
+   },
+   {
+    "kind": "exit",
+    "gate": "coverage_min",
+    "passed": true,
+    "detail": "98.7% (min 85.0%)"
+   },
+   {
+    "kind": "exit",
+    "gate": "planned_tests_pass",
+    "passed": false,
+    "detail": "planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic']"
+   },
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "entry",
+    "gate": "workspace_has_code",
+    "passed": true,
+    "detail": "17 python files"
+   },
+   {
+    "kind": "exit",
+    "gate": "tests_pass",
+    "passed": false,
+    "detail": "61/63 passed, 2 failed, 0 errors"
+   },
+   {
+    "kind": "exit",
+    "gate": "coverage_min",
+    "passed": true,
+    "detail": "98.7% (min 85.0%)"
+   },
+   {
+    "kind": "exit",
+    "gate": "planned_tests_pass",
+    "passed": false,
+    "detail": "planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic']"
+   },
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "entry",
+    "gate": "workspace_has_code",
+    "passed": true,
+    "detail": "17 python files"
+   },
+   {
+    "kind": "exit",
+    "gate": "tests_pass",
+    "passed": false,
+    "detail": "61/63 passed, 2 failed, 0 errors"
+   },
+   {
+    "kind": "exit",
+    "gate": "coverage_min",
+    "passed": true,
+    "detail": "98.7% (min 85.0%)"
+   },
+   {
+    "kind": "exit",
+    "gate": "planned_tests_pass",
+    "passed": false,
+    "detail": "planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic']"
+   }
+  ],
+  "security_scan": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "no_blocking_findings",
+    "passed": true,
+    "detail": "0 blocking of 0 findings"
+   },
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "no_blocking_findings",
+    "passed": true,
+    "detail": "0 blocking of 0 findings"
+   },
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "no_blocking_findings",
+    "passed": true,
+    "detail": "0 blocking of 0 findings"
+   }
+  ]
+ },
+ "timeline": [
+  {
+   "node": "intake",
+   "start": 0.0010585784912109375,
+   "end": 0.001077890396118164,
+   "attempt": 1
+  },
+  {
+   "node": "test_plan",
+   "start": 0.0032355785369873047,
+   "end": 0.0032536983489990234,
+   "attempt": 1
+  },
+  {
+   "node": "codebase_analysis",
+   "start": 0.0024764537811279297,
+   "end": 0.025697946548461914,
+   "attempt": 1
+  },
+  {
+   "node": "design",
+   "start": 0.02807760238647461,
+   "end": 0.028400897979736328,
+   "attempt": 1
+  },
+  {
+   "node": "implement",
+   "start": 0.031121253967285156,
+   "end": 0.03372311592102051,
+   "attempt": 1
+  },
+  {
+   "node": "security_scan",
+   "start": 0.052403926849365234,
+   "end": 0.062285423278808594,
+   "attempt": 1
+  },
+  {
+   "node": "docs",
+   "start": 0.04817819595336914,
+   "end": 0.4562664031982422,
+   "attempt": 1
+  },
+  {
+   "node": "run_tests",
+   "start": 0.04956817626953125,
+   "end": 2.5327978134155273,
+   "attempt": 1
+  },
+  {
+   "node": "implement",
+   "start": 2.5371110439300537,
+   "end": 2.5397655963897705,
+   "attempt": 1
+  },
+  {
+   "node": "security_scan",
+   "start": 2.5577197074890137,
+   "end": 2.5843312740325928,
+   "attempt": 1
+  },
+  {
+   "node": "docs",
+   "start": 2.5563509464263916,
+   "end": 2.972853422164917,
+   "attempt": 1
+  },
+  {
+   "node": "run_tests",
+   "start": 2.557615280151367,
+   "end": 5.0554070472717285,
+   "attempt": 1
+  },
+  {
+   "node": "implement",
+   "start": 5.062451362609863,
+   "end": 5.0650715827941895,
+   "attempt": 1
+  },
+  {
+   "node": "security_scan",
+   "start": 5.083900451660156,
+   "end": 5.108327865600586,
+   "attempt": 1
+  },
+  {
+   "node": "docs",
+   "start": 5.08270525932312,
+   "end": 5.468953847885132,
+   "attempt": 1
+  },
+  {
+   "node": "run_tests",
+   "start": 5.083810806274414,
+   "end": 7.593701124191284,
+   "attempt": 1
+  }
+ ],
+ "metrics": {
+  "started_at": 1790806707.1350465,
+  "finished_at": 1790806714.7296033,
+  "attempts": 16,
+  "attempt_successes": 13,
+  "attempt_failures": 3,
+  "retries": 0,
+  "fallbacks": 0,
+  "rollbacks": 2,
+  "reworks": 2,
+  "replans": 0,
+  "approvals_requested": 5,
+  "approvals_rejected": 0,
+  "policy_violations": 0,
+  "stage_latency": {
+   "requirements": 1.7642974853515625e-05,
+   "test-design": 1.6450881958007812e-05,
+   "analysis": 0.02321791648864746,
+   "architecture": 0.00032138824462890625,
+   "implementation": 0.00786590576171875,
+   "security": 0.0609126091003418,
+   "documentation": 1.210829734802246,
+   "testing": 7.49089789390564
+  },
+  "open_incidents": {
+   "run_tests": 1790806709.6681113
+  },
+  "repair_times": []
+ },
+ "context": {
+  "artifacts": {
+   "requirements_spec": [
+    {
+     "name": "requirements_spec",
+     "version": 1,
+     "hash": "9fd815822c7c2d98",
+     "producer": "intake",
+     "attempt": 1,
+     "derived_from": [],
+     "created_at": 1790806707.1363845,
+     "content": {
+      "problem_statement": "Support limited-use short links: a link may carry a maximum number of successful redirects, after which it stops redirecting - without changing behaviour for existing links or clients.",
+      "functional": [
+       "Accept an optional max_clicks (integer 1..1,000,000) when creating a link",
+       "Once a link has served max_clicks redirects, GET /{code} returns 410 Gone and records nothing",
+       "Link metadata exposes max_clicks and remaining_clicks (null when unlimited)",
+       "Links without max_clicks behave exactly as before"
+      ],
+      "non_functional": [
+       "Limit must hold under concurrent redirects (no overshoot)",
+       "Schema change must be additive and backward compatible (old code can run on the new schema)",
+       "No extra network calls on the redirect path"
+      ],
+      "acceptance_criteria": [
+       {
+        "id": "AC1",
+        "text": "Creating a link with max_clicks returns it with max_clicks and remaining_clicks; remaining decreases per redirect",
+        "verified_by": [
+         "tests/test_max_clicks.py::test_http_create_with_max_clicks_shows_remaining"
+        ]
+       },
+       {
+        "id": "AC2",
+        "text": "After max_clicks redirects the link returns 410 and further attempts are not counted",
+        "verified_by": [
+         "tests/test_max_clicks.py::test_http_limit_reached_returns_410"
+        ]
+       },
+       {
+        "id": "AC3",
+        "text": "max_clicks outside 1..1,000,000 or non-integer is rejected with 422",
+        "verified_by": [
+         "tests/test_max_clicks.py::test_http_invalid_max_clicks_rejected",
+         "tests/test_max_clicks.py::test_service_rejects_out_of_range_max_clicks"
+        ]
+       },
+       {
+        "id": "AC4",
+        "text": "Links created without max_clicks are unlimited and existing behaviour is unchanged (regression)",
+        "verified_by": [
+         "tests/test_max_clicks.py::test_http_unlimited_links_unchanged",
+         "tests/test_api.py::test_redirect_is_307_and_counts_click",
+         "tests/test_api.py::test_stats_aggregate_by_day_and_referrer"
+        ]
+       },
+       {
+        "id": "AC5",
+        "text": "Under 20 concurrent redirects a max_clicks=5 link records exactly 5 clicks",
+        "verified_by": [
+         "tests/test_max_clicks.py::test_repository_limit_is_atomic"
+        ]
+       },
+       {
+        "id": "AC6",
+        "text": "An existing v1 database migrates to v2 and existing links stay unlimited",
+        "verified_by": [
+         "tests/test_max_clicks.py::test_migration_upgrades_existing_v1_database",
+         "tests/test_units.py::test_migrations_are_idempotent_and_versioned"
+        ]
+       }
+      ],
+      "out_of_scope": [
+       "Changing max_clicks after creation",
+       "Custom landing page for exhausted links"
+      ],
+      "domain_terms": [
+       "max_clicks",
+       "click",
+       "limit",
+       "redirect",
+       "link",
+       "remaining",
+       "migration"
+      ],
+      "ambiguities": [
+       {
+        "id": "Q1",
+        "about": "limit-accounting",
+        "question": "Do rejected (over-limit) visits count in analytics?",
+        "default": "no: only successful redirects are recorded as clicks",
+        "options": [
+         "no",
+         "yes, as a separate metric"
+        ],
+        "answer": "no: only successful redirects are recorded as clicks",
+        "status": "assumed"
+       },
+       {
+        "id": "Q2",
+        "about": "mutability",
+        "question": "Can max_clicks be changed after creation?",
+        "default": "no: immutable in this change (out of scope)",
+        "options": [
+         "immutable",
+         "PATCH endpoint"
+        ],
+        "answer": "no: immutable in this change (out of scope)",
+        "status": "assumed"
+       },
+       {
+        "id": "Q3",
+        "about": "concurrency",
+        "question": "Is small overshoot under concurrent load acceptable?",
+        "default": "no: the limit is enforced atomically",
+        "options": [
+         "exact",
+         "best-effort"
+        ],
+        "answer": "no: the limit is enforced atomically",
+        "status": "assumed"
+       }
+      ],
+      "answers": {
+       "Q1": "no: only successful redirects are recorded as clicks",
+       "Q2": "no: immutable in this change (out of scope)",
+       "Q3": "no: the limit is enforced atomically"
+      },
+      "detected_terms": [],
+      "pii_involved": false,
+      "pii_signals": []
+     }
+    }
+   ],
+   "test_plan": [
+    {
+     "name": "test_plan",
+     "version": 1,
+     "hash": "9e78b7d5379edbe8",
+     "producer": "test_plan",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v1"
+     ],
+     "created_at": 1790806707.1385427,
+     "content": {
+      "strategy": [
+       "unit: pure functions and service logic with a fake clock",
+       "integration: HTTP API against real SQLite via TestClient",
+       "regression: full existing suite must stay green",
+       "quality gates: coverage floor, planned tests must pass, security scan"
+      ],
+      "cases": [
+       {
+        "id": "TC-01",
+        "ac": "AC1",
+        "test": "tests/test_max_clicks.py::test_http_create_with_max_clicks_shows_remaining",
+        "level": "integration",
+        "intent": "Creating a link with max_clicks returns it with max_clicks and remaining_clicks; remaining decreases per redirect"
+       },
+       {
+        "id": "TC-02",
+        "ac": "AC2",
+        "test": "tests/test_max_clicks.py::test_http_limit_reached_returns_410",
+        "level": "integration",
+        "intent": "After max_clicks redirects the link returns 410 and further attempts are not counted"
+       },
+       {
+        "id": "TC-03",
+        "ac": "AC3",
+        "test": "tests/test_max_clicks.py::test_http_invalid_max_clicks_rejected",
+        "level": "integration",
+        "intent": "max_clicks outside 1..1,000,000 or non-integer is rejected with 422"
+       },
+       {
+        "id": "TC-04",
+        "ac": "AC3",
+        "test": "tests/test_max_clicks.py::test_service_rejects_out_of_range_max_clicks",
+        "level": "unit",
+        "intent": "max_clicks outside 1..1,000,000 or non-integer is rejected with 422"
+       },
+       {
+        "id": "TC-05",
+        "ac": "AC4",
+        "test": "tests/test_max_clicks.py::test_http_unlimited_links_unchanged",
+        "level": "integration",
+        "intent": "Links created without max_clicks are unlimited and existing behaviour is unchanged (regression)"
+       },
+       {
+        "id": "TC-06",
+        "ac": "AC4",
+        "test": "tests/test_api.py::test_redirect_is_307_and_counts_click",
+        "level": "integration",
+        "intent": "Links created without max_clicks are unlimited and existing behaviour is unchanged (regression)"
+       },
+       {
+        "id": "TC-07",
+        "ac": "AC4",
+        "test": "tests/test_api.py::test_stats_aggregate_by_day_and_referrer",
+        "level": "integration",
+        "intent": "Links created without max_clicks are unlimited and existing behaviour is unchanged (regression)"
+       },
+       {
+        "id": "TC-08",
+        "ac": "AC5",
+        "test": "tests/test_max_clicks.py::test_repository_limit_is_atomic",
+        "level": "unit",
+        "intent": "Under 20 concurrent redirects a max_clicks=5 link records exactly 5 clicks"
+       },
+       {
+        "id": "TC-09",
+        "ac": "AC6",
+        "test": "tests/test_max_clicks.py::test_migration_upgrades_existing_v1_database",
+        "level": "unit",
+        "intent": "An existing v1 database migrates to v2 and existing links stay unlimited"
+       },
+       {
+        "id": "TC-10",
+        "ac": "AC6",
+        "test": "tests/test_units.py::test_migrations_are_idempotent_and_versioned",
+        "level": "unit",
+        "intent": "An existing v1 database migrates to v2 and existing links stay unlimited"
+       }
+      ],
+      "levels": {
+       "unit": 4,
+       "integration": 6
+      }
+     }
+    }
+   ],
+   "impact_analysis": [
+    {
+     "name": "impact_analysis",
+     "version": 1,
+     "hash": "41a24b096fc81ad4",
+     "producer": "codebase_analysis",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v1"
+     ],
+     "created_at": 1790806707.1610043,
+     "content": {
+      "terms": [
+       "accept",
+       "behave",
+       "behaviour",
+       "carry",
+       "chang",
+       "click",
+       "client",
+       "code",
+       "creat",
+       "exactly",
+       "expos",
+       "gone",
+       "integer",
+       "limit",
+       "link",
+       "max_click",
+       "maximum",
+       "metadata",
+       "migration",
+       "noth",
+       "null",
+       "number",
+       "optional",
+       "record",
+       "redirect",
+       "remain",
+       "remaining_click",
+       "serv",
+       "short",
+       "stop",
+       "successful",
+       "support",
+       "unlimit"
+      ],
+      "modules_scanned": 16,
+      "routes": [
+       {
+        "method": "GET",
+        "path": "/healthz",
+        "handler": "shortener.api.healthz"
+       },
+       {
+        "method": "GET",
+        "path": "/readyz",
+        "handler": "shortener.api.readyz"
+       },
+       {
+        "method": "POST",
+        "path": "/api/v1/links",
+        "handler": "shortener.api.create_link"
+       },
+       {
+        "method": "GET",
+        "path": "/api/v1/links/{code}",
+        "handler": "shortener.api.get_link"
+       },
+       {
+        "method": "GET",
+        "path": "/api/v1/links/{code}/stats",
+        "handler": "shortener.api.get_stats"
+       },
+       {
+        "method": "DELETE",
+        "path": "/api/v1/links/{code}",
+        "handler": "shortener.api.delete_link"
+       },
+       {
+        "method": "GET",
+        "path": "/{code}",
+        "handler": "shortener.api.redirect"
+       }
+      ],
+      "tables": {
+       "links": [
+        "id",
+        "code",
+        "target_url",
+        "created_at",
+        "expires_at",
+        "is_active"
+       ],
+       "clicks": [
+        "id",
+        "link_id",
+        "clicked_at",
+        "referrer",
+        "user_agent"
+       ]
+      },
+      "import_graph": {
+       "shortener.api": [
+        "shortener.config",
+        "shortener.db",
+        "shortener.errors",
+        "shortener.models",
+        "shortener.ratelimit",
+        "shortener.repository",
+        "shortener.schemas",
+        "shortener.service"
+       ],
+       "shortener.main": [
+        "shortener.api"
+       ],
+       "shortener.repository": [
+        "shortener.db",
+        "shortener.errors",
+        "shortener.models"
+       ],
+       "shortener.service": [
+        "shortener.codes",
+        "shortener.config",
+        "shortener.errors",
+        "shortener.models",
+        "shortener.repository",
+        "shortener.validation"
+       ],
+       "shortener.validation": [
+        "shortener.config",
+        "shortener.errors"
+       ],
+       "tests.conftest": [
+        "shortener.api",
+        "shortener.config",
+        "shortener.db",
+        "shortener.repository",
+        "shortener.service"
+       ],
+       "tests.test_api": [
+        "shortener.api",
+        "shortener.config"
+       ],
+       "tests.test_units": [
+        "shortener",
+        "shortener.config",
+        "shortener.db",
+        "shortener.errors",
+        "shortener.ratelimit",
+        "shortener.validation"
+       ]
+      },
+      "impacted": [
+       {
+        "module": "shortener.db",
+        "path": "shortener/db.py",
+        "reason": "direct",
+        "matched_terms": [
+         "integer",
+         "migration",
+         "null",
+         "record",
+         "creat",
+         "click",
+         "link",
+         "code"
+        ],
+        "score": 12.0
+       },
+       {
+        "module": "shortener.api",
+        "path": "shortener/api.py",
+        "reason": "direct",
+        "matched_terms": [
+         "client",
+         "limit",
+         "redirect",
+         "creat",
+         "click",
+         "link",
+         "code"
+        ],
+        "score": 9.25
+       },
+       {
+        "module": "shortener.schemas",
+        "path": "shortener/schemas.py",
+        "reason": "direct",
+        "matched_terms": [
+         "chang",
+         "optional",
+         "short",
+         "creat",
+         "click",
+         "link",
+         "code"
+        ],
+        "score": 8.62
+       },
+       {
+        "module": "shortener.service",
+        "path": "shortener/service.py",
+        "reason": "direct",
+        "matched_terms": [
+         "gone",
+         "record",
+         "redirect",
+         "click",
+         "link",
+         "code"
+        ],
+        "score": 6.97
+       },
+       {
+        "module": "shortener.repository",
+        "path": "shortener/repository.py",
+        "reason": "direct",
+        "matched_terms": [
+         "limit",
+         "record",
+         "creat",
+         "click",
+         "link",
+         "code"
+        ],
+        "score": 6.28
+       },
+       {
+        "module": "shortener.main",
+        "path": "shortener/main.py",
+        "reason": "imports ['shortener.api']",
+        "matched_terms": [],
+        "score": 1.03
+       },
+       {
+        "module": "tests.conftest",
+        "path": "tests/conftest.py",
+        "reason": "imports ['shortener.api', 'shortener.db', 'shortener.repository', 'shortener.service']",
+        "matched_terms": [],
+        "score": 0
+       },
+       {
+        "module": "tests.test_api",
+        "path": "tests/test_api.py",
+        "reason": "imports ['shortener.api']",
+        "matched_terms": [],
+        "score": 0
+       },
+       {
+        "module": "tests.test_units",
+        "path": "tests/test_units.py",
+        "reason": "imports ['shortener.db']",
+        "matched_terms": [],
+        "score": 0
+       }
+      ],
+      "relevance_threshold": 4.2,
+      "not_impacted": [
+       "shortener.__init__",
+       "shortener.codes",
+       "shortener.config",
+       "shortener.errors",
+       "shortener.models",
+       "shortener.ratelimit",
+       "shortener.validation"
+      ],
+      "data_flow": [
+       "shortener.api",
+       "shortener.service",
+       "shortener.repository",
+       "shortener.db"
+      ],
+      "tests_touching": {
+       "shortener.service": [
+        "tests.conftest"
+       ],
+       "shortener.schemas": [],
+       "shortener.db": [
+        "tests.conftest",
+        "tests.test_units"
+       ],
+       "shortener.repository": [
+        "tests.conftest"
+       ],
+       "shortener.api": [
+        "tests.conftest",
+        "tests.test_api"
+       ]
+      },
+      "risk": "high",
+      "risk_rationale": "schema and public API both impacted"
+     }
+    }
+   ],
+   "design": [
+    {
+     "name": "design",
+     "version": 1,
+     "hash": "5270bc98ff5e0673",
+     "producer": "design",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v1",
+      "impact_analysis@v1"
+     ],
+     "created_at": 1790806707.1637878,
+     "content": {
+      "title": "Limited-use links (max_clicks)",
+      "approach": "Add a nullable links.max_clicks column (migration v2). Enforce the limit in the repository with a single conditional INSERT ... SELECT so check-and-record is atomic. The service maps 'not recorded' to 410 Gone (same semantics as expiry). The API contract change is additive: an optional request field and two nullable response fields, so existing clients are unaffected.",
+      "api_changes": [
+       "POST /api/v1/links: optional max_clicks (1..1,000,000)",
+       "GET /api/v1/links/{code} and POST response: + max_clicks, remaining_clicks (nullable)",
+       "GET /{code}: 410 when the click limit is reached"
+      ],
+      "schema_changes": [
+       {
+        "table": "links",
+        "column": "max_clicks",
+        "change": "add nullable INTEGER (migration v2)"
+       }
+      ],
+      "data_handling": {
+       "personal_data": []
+      },
+      "tasks": [
+       {
+        "id": "T1",
+        "title": "Migration v2: nullable links.max_clicks",
+        "deps": [],
+        "satisfies": [
+         "AC6"
+        ],
+        "files": [
+         "shortener/db.py"
+        ]
+       },
+       {
+        "id": "T2",
+        "title": "Model + repository: persist max_clicks, atomic record_click_if_allowed",
+        "deps": [
+         "T1"
+        ],
+        "satisfies": [
+         "AC5"
+        ],
+        "files": [
+         "shortener/models.py",
+         "shortener/repository.py"
+        ]
+       },
+       {
+        "id": "T3",
+        "title": "Service: validate range, enforce limit (410), remaining_clicks",
+        "deps": [
+         "T2"
+        ],
+        "satisfies": [
+         "AC2",
+         "AC3"
+        ],
+        "files": [
+         "shortener/service.py"
+        ]
+       },
+       {
+        "id": "T4",
+        "title": "API contract: request/response fields",
+        "deps": [
+         "T3"
+        ],
+        "satisfies": [
+         "AC1",
+         "AC3",
+         "AC4"
+        ],
+        "files": [
+         "shortener/schemas.py",
+         "shortener/api.py"
+        ]
+       },
+       {
+        "id": "T5",
+        "title": "Tests written from the ACs (test-first, parallel with T2)",
+        "deps": [
+         "T1"
+        ],
+        "satisfies": [
+         "AC1",
+         "AC2",
+         "AC3",
+         "AC4",
+         "AC5",
+         "AC6"
+        ],
+        "files": [
+         "tests/test_max_clicks.py"
+        ]
+       }
+      ],
+      "alternatives_considered": [
+       {
+        "option": "Limit enforcement",
+        "decision": "Single conditional INSERT ... SELECT ... WHERE count < max_clicks",
+        "why": "Check-then-act in application code races under concurrency; one statement is atomic under SQLite's single writer and maps to a row lock / counter column on Postgres.",
+        "rejected": [
+         "Read count then insert (overshoots under concurrency)",
+         "Denormalized counter column (faster at scale; needs backfill and dual-write)"
+        ]
+       },
+       {
+        "option": "Response when exhausted",
+        "decision": "410 Gone",
+        "why": "Same semantics as expiry, which clients already handle.",
+        "rejected": [
+         "404 (hides that the link existed)",
+         "Redirect to a landing page (needs product input)"
+        ]
+       },
+       {
+        "option": "remaining_clicks source",
+        "decision": "Derived on read via COUNT(*) over the (link_id, clicked_at) index",
+        "why": "No second source of truth to keep consistent.",
+        "rejected": [
+         "Stored counter"
+        ]
+       }
+      ],
+      "risks": [
+       {
+        "risk": "COUNT(*) per redirect on very hot limited links",
+        "likelihood": "low",
+        "impact": "medium",
+        "mitigation": "covered by index; switch to counter column if redirect p95 regresses"
+       },
+       {
+        "risk": "Old code (after rollback) ignores limits on links created with max_clicks",
+        "likelihood": "low",
+        "impact": "medium",
+        "mitigation": "documented in rollback plan; notify marketing on rollback"
+       },
+       {
+        "risk": "Clients with strict response schemas see two new fields",
+        "likelihood": "low",
+        "impact": "low",
+        "mitigation": "fields are additive and nullable"
+       }
+      ],
+      "rollback_plan": "Redeploy the previous version; migration v2 only adds a nullable column, so v1 code runs unchanged on the v2 schema and no down-migration is needed. While rolled back, limited links behave as unlimited.",
+      "changelog": [
+       "Add optional `max_clicks` to link creation; exhausted links return 410 Gone",
+       "Link metadata includes `max_clicks` and `remaining_clicks`",
+       "DB migration v2: nullable `links.max_clicks`"
+      ],
+      "task_waves": [
+       [
+        "T1"
+       ],
+       [
+        "T2",
+        "T5"
+       ],
+       [
+        "T3"
+       ],
+       [
+        "T4"
+       ]
+      ],
+      "critical_path_length": 4,
+      "unpredicted_files": [
+       "shortener/models.py"
+      ]
+     }
+    }
+   ],
+   "change_set": [
+    {
+     "name": "change_set",
+     "version": 1,
+     "hash": "8fd45aa3f07fff2e",
+     "producer": "implement",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v1",
+      "design@v1",
+      "test_plan@v1"
+     ],
+     "created_at": 1790806707.1808372,
+     "content": {
+      "summary": "max_clicks (first attempt)",
+      "files": [
+       "shortener/api.py",
+       "shortener/db.py",
+       "shortener/models.py",
+       "shortener/repository.py",
+       "shortener/schemas.py",
+       "shortener/service.py",
+       "tests/test_max_clicks.py"
+      ],
+      "operations": 20
+     }
+    },
+    {
+     "name": "change_set",
+     "version": 2,
+     "hash": "8fd45aa3f07fff2e",
+     "producer": "implement",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v1",
+      "design@v1",
+      "test_plan@v1"
+     ],
+     "created_at": 1790806709.6887507,
+     "content": {
+      "summary": "max_clicks (first attempt)",
+      "files": [
+       "shortener/api.py",
+       "shortener/db.py",
+       "shortener/models.py",
+       "shortener/repository.py",
+       "shortener/schemas.py",
+       "shortener/service.py",
+       "tests/test_max_clicks.py"
+      ],
+      "operations": 20
+     }
+    },
+    {
+     "name": "change_set",
+     "version": 3,
+     "hash": "8fd45aa3f07fff2e",
+     "producer": "implement",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v1",
+      "design@v1",
+      "test_plan@v1"
+     ],
+     "created_at": 1790806712.214603,
+     "content": {
+      "summary": "max_clicks (first attempt)",
+      "files": [
+       "shortener/api.py",
+       "shortener/db.py",
+       "shortener/models.py",
+       "shortener/repository.py",
+       "shortener/schemas.py",
+       "shortener/service.py",
+       "tests/test_max_clicks.py"
+      ],
+      "operations": 20
+     }
+    }
+   ],
+   "security_report": [
+    {
+     "name": "security_report",
+     "version": 1,
+     "hash": "d5a617e4a8458b6c",
+     "producer": "security_scan",
+     "attempt": 1,
+     "derived_from": [],
+     "created_at": 1790806707.197452,
+     "content": {
+      "files_scanned": [
+       "shortener/api.py",
+       "shortener/db.py",
+       "shortener/models.py",
+       "shortener/repository.py",
+       "shortener/schemas.py",
+       "shortener/service.py",
+       "tests/test_max_clicks.py"
+      ],
+      "findings": [],
+      "max_severity": "info",
+      "rules": [
+       "hardcoded-secret",
+       "forbidden-call",
+       "shell-injection",
+       "sql-injection",
+       "pii-column",
+       "dependency-change",
+       "security-test-missing"
+      ]
+     }
+    },
+    {
+     "name": "security_report",
+     "version": 2,
+     "hash": "d5a617e4a8458b6c",
+     "producer": "security_scan",
+     "attempt": 1,
+     "derived_from": [],
+     "created_at": 1790806709.719574,
+     "content": {
+      "files_scanned": [
+       "shortener/api.py",
+       "shortener/db.py",
+       "shortener/models.py",
+       "shortener/repository.py",
+       "shortener/schemas.py",
+       "shortener/service.py",
+       "tests/test_max_clicks.py"
+      ],
+      "findings": [],
+      "max_severity": "info",
+      "rules": [
+       "hardcoded-secret",
+       "forbidden-call",
+       "shell-injection",
+       "sql-injection",
+       "pii-column",
+       "dependency-change",
+       "security-test-missing"
+      ]
+     }
+    },
+    {
+     "name": "security_report",
+     "version": 3,
+     "hash": "d5a617e4a8458b6c",
+     "producer": "security_scan",
+     "attempt": 1,
+     "derived_from": [],
+     "created_at": 1790806712.2435358,
+     "content": {
+      "files_scanned": [
+       "shortener/api.py",
+       "shortener/db.py",
+       "shortener/models.py",
+       "shortener/repository.py",
+       "shortener/schemas.py",
+       "shortener/service.py",
+       "tests/test_max_clicks.py"
+      ],
+      "findings": [],
+      "max_severity": "info",
+      "rules": [
+       "hardcoded-secret",
+       "forbidden-call",
+       "shell-injection",
+       "sql-injection",
+       "pii-column",
+       "dependency-change",
+       "security-test-missing"
+      ]
+     }
+    }
+   ],
+   "docs_report": [
+    {
+     "name": "docs_report",
+     "version": 1,
+     "hash": "ebf4a25b946ba813",
+     "producer": "docs",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v1",
+      "design@v1"
+     ],
+     "created_at": 1790806707.5937088,
+     "content": {
+      "routes": 7,
+      "undocumented_routes": [],
+      "files": [
+       "CHANGELOG.md",
+       "docs/API.md",
+       "docs/adr/ADR-001-limit-enforcement.md",
+       "docs/adr/ADR-002-response-when-exhausted.md",
+       "docs/adr/ADR-003-remaining-clicks-source.md"
+      ]
+     }
+    },
+    {
+     "name": "docs_report",
+     "version": 2,
+     "hash": "ebf4a25b946ba813",
+     "producer": "docs",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v1",
+      "design@v1"
+     ],
+     "created_at": 1790806710.1111588,
+     "content": {
+      "routes": 7,
+      "undocumented_routes": [],
+      "files": [
+       "CHANGELOG.md",
+       "docs/API.md",
+       "docs/adr/ADR-001-limit-enforcement.md",
+       "docs/adr/ADR-002-response-when-exhausted.md",
+       "docs/adr/ADR-003-remaining-clicks-source.md"
+      ]
+     }
+    },
+    {
+     "name": "docs_report",
+     "version": 3,
+     "hash": "ebf4a25b946ba813",
+     "producer": "docs",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v1",
+      "design@v1"
+     ],
+     "created_at": 1790806712.6073756,
+     "content": {
+      "routes": 7,
+      "undocumented_routes": [],
+      "files": [
+       "CHANGELOG.md",
+       "docs/API.md",
+       "docs/adr/ADR-001-limit-enforcement.md",
+       "docs/adr/ADR-002-response-when-exhausted.md",
+       "docs/adr/ADR-003-remaining-clicks-source.md"
+      ]
+     }
+    }
+   ]
+  },
+  "decisions": [
+   {
+    "id": "D001",
+    "node": "intake",
+    "kind": "approval",
+    "summary": "approve: requirement contains ambiguities resolved only by assumptions",
+    "actor": "eng-manager@example.com",
+    "rationale": "auto-approved under scripted policy",
+    "refs": [
+     "requirements_spec@pending"
+    ],
+    "at": 1790806707.1363425
+   },
+   {
+    "id": "D002",
+    "node": "intake",
+    "kind": "assumption",
+    "summary": "Q1: assumed 'no: only successful redirects are recorded as clicks'",
+    "actor": "requirements_analyst",
+    "rationale": "Do rejected (over-limit) visits count in analytics?",
+    "refs": [
+     "requirements_spec@v1"
+    ],
+    "at": 1790806707.1364224
+   },
+   {
+    "id": "D003",
+    "node": "intake",
+    "kind": "assumption",
+    "summary": "Q2: assumed 'no: immutable in this change (out of scope)'",
+    "actor": "requirements_analyst",
+    "rationale": "Can max_clicks be changed after creation?",
+    "refs": [
+     "requirements_spec@v1"
+    ],
+    "at": 1790806707.1364245
+   },
+   {
+    "id": "D004",
+    "node": "intake",
+    "kind": "assumption",
+    "summary": "Q3: assumed 'no: the limit is enforced atomically'",
+    "actor": "requirements_analyst",
+    "rationale": "Is small overshoot under concurrent load acceptable?",
+    "refs": [
+     "requirements_spec@v1"
+    ],
+    "at": 1790806707.1364264
+   },
+   {
+    "id": "D005",
+    "node": "design",
+    "kind": "approval",
+    "summary": "approve: high-impact change: public_api_change, high-impact change: schema_change",
+    "actor": "eng-manager@example.com",
+    "rationale": "auto-approved under scripted policy",
+    "refs": [
+     "design@pending"
+    ],
+    "at": 1790806707.163729
+   },
+   {
+    "id": "D006",
+    "node": "design",
+    "kind": "design_choice",
+    "summary": "Limit enforcement: Single conditional INSERT ... SELECT ... WHERE count < max_clicks",
+    "actor": "architect",
+    "rationale": "Check-then-act in application code races under concurrency; one statement is atomic under SQLite's single writer and maps to a row lock / counter column on Postgres.",
+    "refs": [
+     "design@v1"
+    ],
+    "at": 1790806707.1638298
+   },
+   {
+    "id": "D007",
+    "node": "design",
+    "kind": "design_choice",
+    "summary": "Response when exhausted: 410 Gone",
+    "actor": "architect",
+    "rationale": "Same semantics as expiry, which clients already handle.",
+    "refs": [
+     "design@v1"
+    ],
+    "at": 1790806707.1638327
+   },
+   {
+    "id": "D008",
+    "node": "design",
+    "kind": "design_choice",
+    "summary": "remaining_clicks source: Derived on read via COUNT(*) over the (link_id, clicked_at) index",
+    "actor": "architect",
+    "rationale": "No second source of truth to keep consistent.",
+    "refs": [
+     "design@v1"
+    ],
+    "at": 1790806707.163834
+   },
+   {
+    "id": "D009",
+    "node": "implement",
+    "kind": "approval",
+    "summary": "approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/db.py",
+    "actor": "eng-manager@example.com",
+    "rationale": "auto-approved under scripted policy",
+    "refs": [
+     "change_set@pending"
+    ],
+    "at": 1790806707.1786895
+   },
+   {
+    "id": "D010",
+    "node": "run_tests",
+    "kind": "rollback",
+    "summary": "rolled back 'implement' and re-running it with failure feedback",
+    "actor": "orchestrator",
+    "rationale": "exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'])",
+    "refs": [],
+    "at": 1790806709.6717503
+   },
+   {
+    "id": "D011",
+    "node": "implement",
+    "kind": "approval",
+    "summary": "approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/db.py",
+    "actor": "eng-manager@example.com",
+    "rationale": "auto-approved under scripted policy",
+    "refs": [
+     "change_set@pending"
+    ],
+    "at": 1790806709.6855235
+   },
+   {
+    "id": "D012",
+    "node": "run_tests",
+    "kind": "rollback",
+    "summary": "rolled back 'implement' and re-running it with failure feedback",
+    "actor": "orchestrator",
+    "rationale": "exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'])",
+    "refs": [],
+    "at": 1790806712.1970327
+   },
+   {
+    "id": "D013",
+    "node": "implement",
+    "kind": "approval",
+    "summary": "approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/db.py",
+    "actor": "eng-manager@example.com",
+    "rationale": "auto-approved under scripted policy",
+    "refs": [
+     "change_set@pending"
+    ],
+    "at": 1790806712.2111735
+   },
+   {
+    "id": "D014",
+    "node": "-",
+    "kind": "safe_stop",
+    "summary": "'run_tests' failed after retries/fallback",
+    "actor": "orchestrator",
+    "rationale": "no further nodes dispatched; uncommitted results discarded; state persisted for resume",
+    "refs": [],
+    "at": 1790806714.72926
+   }
+  ],
+  "feedback": {
+   "run_tests": [
+    "exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'])",
+    "exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'])",
+    "exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'])"
+   ]
+  }
+ }
+}

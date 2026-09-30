@@ -1,0 +1,19 @@
+id: greenfield
+title: "Greenfield: build the URL shortener service from scratch"
+type: greenfield
+baseline: null            # empty workspace
+playbook: scenarios/playbooks/greenfield.yaml
+requirement: |
+  Build a URL shortener HTTP service. Clients create a short link for an http(s) destination,
+  optionally with a custom alias and an expiry time. Visiting the short link redirects to the
+  destination and records the click. Link owners can read link metadata and click analytics
+  (total clicks, clicks per day, top referrers) and can deactivate links. Write operations can be
+  protected by an API key, and link creation is rate limited per client. Unsafe destinations
+  (non-http schemes, private network addresses, URLs with embedded credentials, links back to the
+  shortener itself) are rejected. Expose health and readiness endpoints for operations.
+# Reliability drill: the first design call fails like a transient LLM/provider error.
+# Expected: bounded retry with backoff, then success; the incident feeds MTTR.
+faults:
+  design: {on_executions: [1], variant: error}
+approver: "tech-lead@example.com"
+approvals: {}             # approve every gate (decisions still recorded under the approver identity)

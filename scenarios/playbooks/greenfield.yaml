@@ -1,0 +1,146 @@
+# Recorded agent responses for the greenfield scenario (offline provider).
+# With --llm anthropic these entries serve only as the JSON shape exemplar.
+
+requirements:
+  problem_statement: >-
+    Provide an HTTP service that maps short, unguessable codes to http(s) destinations, redirects
+    visitors while recording click analytics, and protects itself and its users from abuse.
+  functional:
+    - "Create a short link for an http(s) URL, with optional custom alias and optional expiry"
+    - "Redirect GET /{code} to the destination and record a click (timestamp, referrer, user agent)"
+    - "Read link metadata and analytics: total clicks, clicks per day, top referrers"
+    - "Deactivate (soft-delete) a link"
+    - "Optionally require an API key for write operations"
+    - "Rate limit link creation per client"
+    - "Expose /healthz (liveness) and /readyz (dependency readiness)"
+  non_functional:
+    - "Security: reject non-http(s) schemes, private/loopback/link-local targets, embedded credentials, self-links"
+    - "Codes are random (non-enumerable) base62; collisions are retried, never overwritten"
+    - "Every response carries X-Request-ID for traceability"
+    - "Schema changes are versioned, forward-only migrations"
+  domain_terms: [link, code, alias, redirect, click, expiry, referrer, analytics]
+  out_of_scope:
+    - "User accounts / per-owner link listing"
+    - "Custom domains, QR codes, bulk import"
+  acceptance_criteria:
+    - id: AC1
+      text: "POST /api/v1/links returns 201 with code, short_url, target_url and a Location header"
+      verified_by: ["tests/test_api.py::test_create_link_returns_201_with_short_url"]
+    - id: AC2
+      text: "GET /{code} returns 307 to the destination and records exactly one click"
+      verified_by: ["tests/test_api.py::test_redirect_is_307_and_counts_click"]
+    - id: AC3
+      text: "Stats report total clicks, per-day counts and top referrers"
+      verified_by: ["tests/test_api.py::test_stats_aggregate_by_day_and_referrer"]
+    - id: AC4
+      text: "Custom aliases are unique (409 on conflict) and reserved words are rejected case-insensitively"
+      verified_by: ["tests/test_api.py::test_custom_alias_and_conflict", "tests/test_api.py::test_reserved_alias_rejected_case_insensitively"]
+    - id: AC5
+      text: "Expired links return 410 and are not counted; expiry in the past is rejected"
+      verified_by: ["tests/test_api.py::test_expired_link_returns_410_and_does_not_count", "tests/test_api.py::test_expiry_in_past_rejected"]
+    - id: AC6
+      text: "Unsafe destinations are rejected with 422"
+      verified_by: ["tests/test_api.py::test_invalid_url_rejected", "tests/test_units.py::test_rejected_urls"]
+    - id: AC7
+      text: "DELETE deactivates a link; it then returns 404"
+      verified_by: ["tests/test_api.py::test_delete_deactivates_link"]
+    - id: AC8
+      text: "When an API key is configured, writes without a valid key return 401; reads stay public"
+      verified_by: ["tests/test_api.py::test_api_key_enforced_on_writes_when_configured"]
+    - id: AC9
+      text: "Creation beyond the per-client rate returns 429 with Retry-After"
+      verified_by: ["tests/test_api.py::test_rate_limit_returns_429_with_retry_after", "tests/test_units.py::test_token_bucket_refills_over_time"]
+    - id: AC10
+      text: "/healthz and /readyz report status"
+      verified_by: ["tests/test_api.py::test_health_and_readiness"]
+    - id: AC11
+      text: "Random code collisions are retried a bounded number of times, then fail with 503"
+      verified_by: ["tests/test_units.py::test_collision_retries_then_succeeds", "tests/test_units.py::test_collision_exhaustion_raises"]
+  questions:
+    - id: Q1
+      about: redirect-status
+      question: "Should redirects be permanent (301) or temporary (307)?"
+      default: "307: browsers do not cache it, so every click reaches the service and is counted"
+      options: ["301", "307"]
+    - id: Q2
+      about: storage
+      question: "Which datastore for the first release?"
+      default: "SQLite behind a repository interface; Postgres is a later, local swap"
+      options: [sqlite, postgres]
+
+design:
+  title: "URL shortener service v1"
+  approach: >-
+    Layered FastAPI service: HTTP layer (routing, auth, rate limit, error mapping, request IDs) ->
+    framework-free LinkService (business rules, injectable clock) -> LinkRepository (all SQL) ->
+    SQLite with versioned forward-only migrations. Validation and code generation are pure modules.
+  api_changes:
+    - "POST /api/v1/links"
+    - "GET /api/v1/links/{code}"
+    - "GET /api/v1/links/{code}/stats"
+    - "DELETE /api/v1/links/{code}"
+    - "GET /{code} (redirect)"
+    - "GET /healthz, GET /readyz"
+  schema_changes:
+    - {table: links, change: "create (migration v1)"}
+    - {table: clicks, change: "create (migration v1) + index (link_id, clicked_at)"}
+  data_handling: {personal_data: []}
+  tasks:
+    - {id: T1, title: "Config, domain errors, models", deps: [], satisfies: [], files: ["shortener/__init__.py", "shortener/config.py", "shortener/errors.py", "shortener/models.py"]}
+    - {id: T2, title: "Persistence: migrations + repository", deps: [T1], satisfies: [AC3, AC7], files: ["shortener/db.py", "shortener/repository.py"]}
+    - {id: T3, title: "Code generation + URL validation", deps: [T1], satisfies: [AC4, AC6, AC11], files: ["shortener/codes.py", "shortener/validation.py"]}
+    - {id: T4, title: "Token-bucket rate limiter", deps: [], satisfies: [AC9], files: ["shortener/ratelimit.py"]}
+    - {id: T5, title: "LinkService business rules", deps: [T2, T3], satisfies: [AC1, AC2, AC5, AC11], files: ["shortener/service.py"]}
+    - {id: T6, title: "HTTP API, schemas, ASGI entrypoint", deps: [T4, T5], satisfies: [AC1, AC2, AC3, AC7, AC8, AC9, AC10], files: ["shortener/api.py", "shortener/schemas.py", "shortener/main.py", "requirements.txt"]}
+    - {id: T7, title: "Unit + integration test suites", deps: [T6], satisfies: [AC1, AC2, AC3, AC4, AC5, AC6, AC7, AC8, AC9, AC10, AC11], files: ["tests/conftest.py", "tests/test_api.py", "tests/test_units.py", "pytest.ini"]}
+  alternatives_considered:
+    - option: "Redirect status code"
+      decision: "307 Temporary Redirect with Cache-Control max-age=0"
+      why: "301 is cached by browsers, so repeat clicks bypass the service and analytics undercount; 307 also preserves the method."
+      rejected: ["301 Moved Permanently (cached, breaks analytics)", "302 Found (legacy method-change ambiguity)"]
+    - option: "Short code generation"
+      decision: "Cryptographically random base62, length 7, bounded retry on collision"
+      why: "Non-enumerable (codes cannot be walked), no coordination between replicas, 62^7 ~ 3.5e12 space."
+      rejected: ["Auto-increment id in base62 (enumerable, leaks volume)", "Hash of URL (same URL -> same code prevents per-campaign links)"]
+    - option: "Storage"
+      decision: "SQLite with versioned forward-only migrations behind a repository"
+      why: "Zero-ops for v1; the repository boundary keeps a Postgres migration local to one module."
+      rejected: ["Postgres now (ops cost before product fit)", "In-memory map (no durability)"]
+    - option: "Click recording"
+      decision: "Synchronous insert on the redirect path"
+      why: "Simplest correct option; sub-millisecond at v1 scale; no loss-on-crash semantics to explain."
+      rejected: ["Async queue with batch writes (better p99 at scale, adds delivery semantics)"]
+  risks:
+    - {risk: "Shortener abused for phishing/malware redirects", likelihood: medium, impact: high, mitigation: "scheme/credential/private-host validation; denylist is a follow-up"}
+    - {risk: "SSRF-style redirects into internal networks", likelihood: low, impact: high, mitigation: "private, loopback, link-local and metadata IPs rejected"}
+    - {risk: "Code enumeration", likelihood: low, impact: medium, mitigation: "random codes; no sequential ids"}
+    - {risk: "SQLite single-writer contention under load", likelihood: medium, impact: medium, mitigation: "WAL mode; repository boundary for Postgres swap"}
+    - {risk: "Rate limit is per instance", likelihood: high, impact: low, mitigation: "documented; move buckets to Redis when scaled out"}
+  rollback_plan: "New service behind its own hostname: rollback = stop routing traffic / redeploy the previous image. Schema v1 has no predecessor, so no data rollback is needed."
+  changelog:
+    - "Create, read, deactivate short links (custom alias, expiry)"
+    - "307 redirect with click recording; stats by day and referrer"
+    - "API-key protection for writes, per-client rate limiting, unsafe-URL rejection"
+    - "Health/readiness endpoints, request IDs, versioned migrations"
+
+implement:
+  summary: "Scaffold the v1 service and its test suites per tasks T1-T7"
+  changes:
+    - {op: create_from_reference, path: shortener/__init__.py}
+    - {op: create_from_reference, path: shortener/config.py}
+    - {op: create_from_reference, path: shortener/errors.py}
+    - {op: create_from_reference, path: shortener/models.py}
+    - {op: create_from_reference, path: shortener/db.py}
+    - {op: create_from_reference, path: shortener/repository.py}
+    - {op: create_from_reference, path: shortener/codes.py}
+    - {op: create_from_reference, path: shortener/validation.py}
+    - {op: create_from_reference, path: shortener/ratelimit.py}
+    - {op: create_from_reference, path: shortener/service.py}
+    - {op: create_from_reference, path: shortener/schemas.py}
+    - {op: create_from_reference, path: shortener/api.py}
+    - {op: create_from_reference, path: shortener/main.py}
+    - {op: create_from_reference, path: requirements.txt}
+    - {op: create_from_reference, path: pytest.ini}
+    - {op: create_from_reference, path: tests/conftest.py}
+    - {op: create_from_reference, path: tests/test_api.py}
+    - {op: create_from_reference, path: tests/test_units.py}

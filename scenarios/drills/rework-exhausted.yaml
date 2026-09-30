@@ -1,0 +1,8 @@
+# Drill: the implementation keeps failing its tests.
+# Expected: rollback + rework twice (policy max_rework_cycles=2), then run_tests FAILED and a
+# safe-stop - bounded autonomy instead of an endless loop.
+extends: ../brownfield.yaml
+id: drill-rework-exhausted
+title: "Drill: repeated test failures exhaust the rework budget -> safe-stop"
+faults:
+  implement: {on_executions: [1, 2, 3, 4, 5], variant: buggy}

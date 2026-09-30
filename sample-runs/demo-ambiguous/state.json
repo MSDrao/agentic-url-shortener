@@ -1,0 +1,2579 @@
+{
+ "run_id": "demo-ambiguous",
+ "scenario": {
+  "id": "ambiguous",
+  "title": "Ambiguous: 'make links safer and show who is clicking'",
+  "type": "ambiguous",
+  "baseline": "service",
+  "playbook": "scenarios/playbooks/ambiguous.yaml",
+  "requirement": "Our short links need to be safer, and marketing wants to see who is clicking them.\nPlease get this done quickly without slowing redirects down.\n",
+  "approver": "product-owner@example.com",
+  "approvals": {
+   "design": [
+    {
+     "decision": "revise",
+     "revise_target": "intake",
+     "comment": "Security team: denylisted domains must also stop EXISTING links, not only new ones.",
+     "answers": {
+      "Q2": "create_and_redirect"
+     }
+    },
+    {
+     "decision": "approve",
+     "comment": "Design approved after scope clarification."
+    }
+   ]
+  },
+  "faults": {},
+  "_path": "scenarios/ambiguous.yaml"
+ },
+ "run_status": "succeeded",
+ "stop_reason": null,
+ "status": {
+  "intake": "succeeded",
+  "codebase_analysis": "succeeded",
+  "test_plan": "succeeded",
+  "design": "succeeded",
+  "implement": "succeeded",
+  "run_tests": "succeeded",
+  "security_scan": "succeeded",
+  "docs": "succeeded",
+  "release_readiness": "succeeded",
+  "privacy_review": "succeeded"
+ },
+ "attempts": {
+  "intake": 1,
+  "codebase_analysis": 1,
+  "test_plan": 1,
+  "design": 1,
+  "implement": 1,
+  "run_tests": 1,
+  "security_scan": 1,
+  "docs": 1,
+  "release_readiness": 1,
+  "privacy_review": 1
+ },
+ "executions": {
+  "intake": 2,
+  "codebase_analysis": 2,
+  "test_plan": 2,
+  "design": 2,
+  "implement": 1,
+  "run_tests": 1,
+  "security_scan": 1,
+  "docs": 1,
+  "release_readiness": 1,
+  "privacy_review": 1
+ },
+ "approval_rounds": {
+  "intake": 2,
+  "design": 2,
+  "privacy_review": 1,
+  "implement": 1,
+  "release_readiness": 1
+ },
+ "rework_cycles": {},
+ "revisions": 1,
+ "mutations": [
+  {
+   "template": "privacy_review",
+   "after": [
+    "design"
+   ],
+   "before": [
+    "implement"
+   ],
+   "reason": "requirement involves personal data (signals: ['\\\\bwho\\\\b[^.]*\\\\bclick'])"
+  }
+ ],
+ "gate_log": {
+  "intake": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "spec_complete",
+    "passed": true,
+    "detail": "6 acceptance criteria"
+   },
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "spec_complete",
+    "passed": true,
+    "detail": "7 acceptance criteria"
+   }
+  ],
+  "codebase_analysis": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "entry",
+    "gate": "workspace_has_code",
+    "passed": true,
+    "detail": "16 python files"
+   },
+   {
+    "kind": "exit",
+    "gate": "impact_identified",
+    "passed": true,
+    "detail": "12 impacted modules"
+   },
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "entry",
+    "gate": "workspace_has_code",
+    "passed": true,
+    "detail": "16 python files"
+   },
+   {
+    "kind": "exit",
+    "gate": "impact_identified",
+    "passed": true,
+    "detail": "12 impacted modules"
+   }
+  ],
+  "test_plan": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "test_plan_covers_acs",
+    "passed": true,
+    "detail": "every AC has tests"
+   },
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "test_plan_covers_acs",
+    "passed": true,
+    "detail": "every AC has tests"
+   }
+  ],
+  "design": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "tasks_acyclic",
+    "passed": true,
+    "detail": "6 tasks, acyclic"
+   },
+   {
+    "kind": "exit",
+    "gate": "traceability",
+    "passed": true,
+    "detail": "all ACs traced to tasks"
+   },
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "tasks_acyclic",
+    "passed": true,
+    "detail": "7 tasks, acyclic"
+   },
+   {
+    "kind": "exit",
+    "gate": "traceability",
+    "passed": true,
+    "detail": "all ACs traced to tasks"
+   }
+  ],
+  "privacy_review": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "privacy_compliant",
+    "passed": true,
+    "detail": "all privacy checks pass"
+   }
+  ],
+  "implement": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "has_changes",
+    "passed": true,
+    "detail": "9 files changed"
+   },
+   {
+    "kind": "exit",
+    "gate": "compiles",
+    "passed": true,
+    "detail": "all python files compile"
+   }
+  ],
+  "docs": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "docs_cover_routes",
+    "passed": true,
+    "detail": "7 routes documented"
+   }
+  ],
+  "run_tests": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "entry",
+    "gate": "workspace_has_code",
+    "passed": true,
+    "detail": "17 python files"
+   },
+   {
+    "kind": "exit",
+    "gate": "tests_pass",
+    "passed": true,
+    "detail": "62/62 passed, 0 failed, 0 errors"
+   },
+   {
+    "kind": "exit",
+    "gate": "coverage_min",
+    "passed": true,
+    "detail": "99.4% (min 85.0%)"
+   },
+   {
+    "kind": "exit",
+    "gate": "planned_tests_pass",
+    "passed": true,
+    "detail": "9 planned tests passed"
+   }
+  ],
+  "security_scan": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "no_blocking_findings",
+    "passed": true,
+    "detail": "0 blocking of 0 findings"
+   }
+  ],
+  "release_readiness": [
+   {
+    "kind": "entry",
+    "gate": "inputs_available",
+    "passed": true,
+    "detail": "all inputs present"
+   },
+   {
+    "kind": "exit",
+    "gate": "checklist_green",
+    "passed": true,
+    "detail": "8 checks green"
+   }
+  ]
+ },
+ "timeline": [
+  {
+   "node": "intake",
+   "start": 0.001222372055053711,
+   "end": 0.0012431144714355469,
+   "attempt": 1
+  },
+  {
+   "node": "test_plan",
+   "start": 0.00402069091796875,
+   "end": 0.004044055938720703,
+   "attempt": 1
+  },
+  {
+   "node": "codebase_analysis",
+   "start": 0.0032320022583007812,
+   "end": 0.034967899322509766,
+   "attempt": 1
+  },
+  {
+   "node": "design",
+   "start": 0.037515878677368164,
+   "end": 0.03797602653503418,
+   "attempt": 1
+  },
+  {
+   "node": "intake",
+   "start": 0.03889966011047363,
+   "end": 0.0392606258392334,
+   "attempt": 1
+  },
+  {
+   "node": "test_plan",
+   "start": 0.04341530799865723,
+   "end": 0.043604135513305664,
+   "attempt": 1
+  },
+  {
+   "node": "codebase_analysis",
+   "start": 0.04290962219238281,
+   "end": 0.0689241886138916,
+   "attempt": 1
+  },
+  {
+   "node": "design",
+   "start": 0.07256746292114258,
+   "end": 0.07294130325317383,
+   "attempt": 1
+  },
+  {
+   "node": "privacy_review",
+   "start": 0.07742905616760254,
+   "end": 0.07803153991699219,
+   "attempt": 1
+  },
+  {
+   "node": "implement",
+   "start": 0.08216643333435059,
+   "end": 0.08516144752502441,
+   "attempt": 1
+  },
+  {
+   "node": "security_scan",
+   "start": 0.10638904571533203,
+   "end": 0.13960647583007812,
+   "attempt": 1
+  },
+  {
+   "node": "docs",
+   "start": 0.1050567626953125,
+   "end": 0.5104897022247314,
+   "attempt": 1
+  },
+  {
+   "node": "run_tests",
+   "start": 0.10615921020507812,
+   "end": 2.456159830093384,
+   "attempt": 1
+  },
+  {
+   "node": "release_readiness",
+   "start": 2.4612696170806885,
+   "end": 2.467080593109131,
+   "attempt": 1
+  }
+ ],
+ "metrics": {
+  "started_at": 1790806701.8877525,
+  "finished_at": 1790806704.3599288,
+  "attempts": 14,
+  "attempt_successes": 13,
+  "attempt_failures": 0,
+  "retries": 0,
+  "fallbacks": 0,
+  "rollbacks": 0,
+  "reworks": 0,
+  "replans": 3,
+  "approvals_requested": 7,
+  "approvals_rejected": 0,
+  "policy_violations": 0,
+  "stage_latency": {
+   "requirements": 0.00037741661071777344,
+   "test-design": 0.0002090930938720703,
+   "analysis": 0.05774402618408203,
+   "architecture": 0.0008292198181152344,
+   "compliance": 0.0006003379821777344,
+   "implementation": 0.002992391586303711,
+   "security": 0.03321409225463867,
+   "documentation": 0.4054281711578369,
+   "testing": 2.349993944168091,
+   "release": 0.005806922912597656
+  },
+  "open_incidents": {},
+  "repair_times": []
+ },
+ "context": {
+  "artifacts": {
+   "requirements_spec": [
+    {
+     "name": "requirements_spec",
+     "version": 1,
+     "hash": "4db48afd70c78e85",
+     "producer": "intake",
+     "attempt": 1,
+     "derived_from": [],
+     "created_at": 1790806701.8893063,
+     "content": {
+      "problem_statement": "Reduce abuse of the shortener as a vector for harmful destinations, and give marketing audience analytics - without identifying individuals and without adding latency to redirects.",
+      "functional": [
+       "Reject creation of links whose destination domain (or a parent domain) is on an operator-managed denylist",
+       "Stats report unique visitors in addition to total clicks",
+       "Visitor identity is pseudonymous: keyed, daily-rotating hash; the raw IP address is never stored",
+       "Visitor hashes are purged after the retention window"
+      ],
+      "non_functional": [
+       "Redirect path: no new network calls; one in-process HMAC; no extra queries",
+       "Privacy: data minimisation, purpose limitation (aggregate analytics), retention <= policy maximum"
+      ],
+      "acceptance_criteria": [
+       {
+        "id": "AC1",
+        "text": "Creating a link to a denylisted domain or any of its subdomains returns 422",
+        "verified_by": [
+         "tests/test_safety_analytics.py::test_http_denylisted_destination_rejected",
+         "tests/test_safety_analytics.py::test_denylist_matches_parent_domains_only"
+        ]
+       },
+       {
+        "id": "AC3",
+        "text": "Stats include unique_visitors (distinct visitors per day)",
+        "verified_by": [
+         "tests/test_safety_analytics.py::test_http_unique_visitors_in_stats"
+        ]
+       },
+       {
+        "id": "AC4",
+        "text": "The raw client IP never reaches storage",
+        "verified_by": [
+         "tests/test_safety_analytics.py::test_raw_ip_never_persisted"
+        ]
+       },
+       {
+        "id": "AC5",
+        "text": "Visitor hash is keyed (secret) and rotates daily",
+        "verified_by": [
+         "tests/test_safety_analytics.py::test_visitor_hash_is_keyed_and_rotates_daily"
+        ]
+       },
+       {
+        "id": "AC6",
+        "text": "Visitor hashes older than the retention window are purged; click counts remain",
+        "verified_by": [
+         "tests/test_safety_analytics.py::test_visitor_hashes_purged_after_retention"
+        ]
+       },
+       {
+        "id": "AC7",
+        "text": "Existing behaviour is unchanged for links and clients (regression)",
+        "verified_by": [
+         "tests/test_api.py::test_redirect_is_307_and_counts_click",
+         "tests/test_api.py::test_invalid_url_rejected"
+        ]
+       }
+      ],
+      "out_of_scope": [
+       "Third-party threat-intel feeds (Safe Browsing etc.)",
+       "Per-person click history",
+       "Geo-location"
+      ],
+      "domain_terms": [
+       "blocked",
+       "domain",
+       "visitor",
+       "unique",
+       "click",
+       "stats",
+       "redirect",
+       "hash",
+       "retention"
+      ],
+      "ambiguities": [
+       {
+        "id": "Q1",
+        "about": "safer",
+        "question": "What threat does 'safer' address?",
+        "default": "block harmful destinations via an operator-managed domain denylist",
+        "options": [
+         "domain denylist",
+         "external threat-intel lookup",
+         "link-enumeration hardening"
+        ],
+        "answer": "block harmful destinations via an operator-managed domain denylist",
+        "status": "assumed"
+       },
+       {
+        "id": "Q2",
+        "about": "safer-scope",
+        "question": "Does the denylist apply only to new links, or also stop existing links?",
+        "default": "creation_only",
+        "options": [
+         "creation_only",
+         "create_and_redirect"
+        ],
+        "answer": "creation_only",
+        "status": "assumed"
+       },
+       {
+        "id": "Q3",
+        "about": "who",
+        "question": "Does 'see who is clicking' mean identifying individuals?",
+        "default": "no: aggregate unique-visitor counts from a pseudonymous daily hash; no personal profiles",
+        "options": [
+         "aggregate only",
+         "identify individuals (requires legal basis + consent)"
+        ],
+        "answer": "no: aggregate unique-visitor counts from a pseudonymous daily hash; no personal profiles",
+        "status": "assumed"
+       },
+       {
+        "id": "Q4",
+        "about": "quickly",
+        "question": "Is 'quickly' a delivery deadline or a latency requirement?",
+        "default": "latency (read together with 'without slowing redirects'); no deadline was given",
+        "answer": "latency (read together with 'without slowing redirects'); no deadline was given",
+        "status": "assumed"
+       },
+       {
+        "id": "Q5",
+        "about": "slowing",
+        "question": "What latency budget must redirects keep?",
+        "default": "no new I/O on the redirect path; one HMAC (~microseconds); p95 unchanged",
+        "answer": "no new I/O on the redirect path; one HMAC (~microseconds); p95 unchanged",
+        "status": "assumed"
+       },
+       {
+        "id": "Q6",
+        "about": "retention",
+        "question": "How long may visitor hashes be kept?",
+        "default": "90 days (policy maximum)",
+        "answer": "90 days (policy maximum)",
+        "status": "assumed"
+       }
+      ],
+      "answers": {
+       "Q1": "block harmful destinations via an operator-managed domain denylist",
+       "Q2": "creation_only",
+       "Q3": "no: aggregate unique-visitor counts from a pseudonymous daily hash; no personal profiles",
+       "Q4": "latency (read together with 'without slowing redirects'); no deadline was given",
+       "Q5": "no new I/O on the redirect path; one HMAC (~microseconds); p95 unchanged",
+       "Q6": "90 days (policy maximum)"
+      },
+      "detected_terms": [
+       "safer",
+       "quickly",
+       "slowing",
+       "who"
+      ],
+      "pii_involved": true,
+      "pii_signals": [
+       "\\bwho\\b[^.]*\\bclick"
+      ]
+     }
+    },
+    {
+     "name": "requirements_spec",
+     "version": 2,
+     "hash": "6c28ecb333358296",
+     "producer": "intake",
+     "attempt": 1,
+     "derived_from": [
+      "clarifications@v1"
+     ],
+     "created_at": 1790806701.9273422,
+     "content": {
+      "problem_statement": "Reduce abuse of the shortener as a vector for harmful destinations, and give marketing audience analytics - without identifying individuals and without adding latency to redirects.",
+      "functional": [
+       "Reject creation of links whose destination domain (or a parent domain) is on an operator-managed denylist",
+       "Links whose destination becomes denylisted after creation stop redirecting (410)",
+       "Stats report unique visitors in addition to total clicks",
+       "Visitor identity is pseudonymous: keyed, daily-rotating hash; the raw IP address is never stored",
+       "Visitor hashes are purged after the retention window"
+      ],
+      "non_functional": [
+       "Redirect path: no new network calls; one in-process HMAC; no extra queries",
+       "Privacy: data minimisation, purpose limitation (aggregate analytics), retention <= policy maximum"
+      ],
+      "acceptance_criteria": [
+       {
+        "id": "AC1",
+        "text": "Creating a link to a denylisted domain or any of its subdomains returns 422",
+        "verified_by": [
+         "tests/test_safety_analytics.py::test_http_denylisted_destination_rejected",
+         "tests/test_safety_analytics.py::test_denylist_matches_parent_domains_only"
+        ]
+       },
+       {
+        "id": "AC2",
+        "text": "An existing link to a newly denylisted domain returns 410 and records no click",
+        "verified_by": [
+         "tests/test_safety_analytics.py::test_http_existing_link_blocked_after_denylisting"
+        ]
+       },
+       {
+        "id": "AC3",
+        "text": "Stats include unique_visitors (distinct visitors per day)",
+        "verified_by": [
+         "tests/test_safety_analytics.py::test_http_unique_visitors_in_stats"
+        ]
+       },
+       {
+        "id": "AC4",
+        "text": "The raw client IP never reaches storage",
+        "verified_by": [
+         "tests/test_safety_analytics.py::test_raw_ip_never_persisted"
+        ]
+       },
+       {
+        "id": "AC5",
+        "text": "Visitor hash is keyed (secret) and rotates daily",
+        "verified_by": [
+         "tests/test_safety_analytics.py::test_visitor_hash_is_keyed_and_rotates_daily"
+        ]
+       },
+       {
+        "id": "AC6",
+        "text": "Visitor hashes older than the retention window are purged; click counts remain",
+        "verified_by": [
+         "tests/test_safety_analytics.py::test_visitor_hashes_purged_after_retention"
+        ]
+       },
+       {
+        "id": "AC7",
+        "text": "Existing behaviour is unchanged for links and clients (regression)",
+        "verified_by": [
+         "tests/test_api.py::test_redirect_is_307_and_counts_click",
+         "tests/test_api.py::test_invalid_url_rejected"
+        ]
+       }
+      ],
+      "out_of_scope": [
+       "Third-party threat-intel feeds (Safe Browsing etc.)",
+       "Per-person click history",
+       "Geo-location"
+      ],
+      "domain_terms": [
+       "blocked",
+       "domain",
+       "visitor",
+       "unique",
+       "click",
+       "stats",
+       "redirect",
+       "hash",
+       "retention"
+      ],
+      "ambiguities": [
+       {
+        "id": "Q1",
+        "about": "safer",
+        "question": "What threat does 'safer' address?",
+        "default": "block harmful destinations via an operator-managed domain denylist",
+        "options": [
+         "domain denylist",
+         "external threat-intel lookup",
+         "link-enumeration hardening"
+        ],
+        "answer": "block harmful destinations via an operator-managed domain denylist",
+        "status": "assumed"
+       },
+       {
+        "id": "Q2",
+        "about": "safer-scope",
+        "question": "Does the denylist apply only to new links, or also stop existing links?",
+        "default": "creation_only",
+        "options": [
+         "creation_only",
+         "create_and_redirect"
+        ],
+        "answer": "create_and_redirect",
+        "status": "confirmed"
+       },
+       {
+        "id": "Q3",
+        "about": "who",
+        "question": "Does 'see who is clicking' mean identifying individuals?",
+        "default": "no: aggregate unique-visitor counts from a pseudonymous daily hash; no personal profiles",
+        "options": [
+         "aggregate only",
+         "identify individuals (requires legal basis + consent)"
+        ],
+        "answer": "no: aggregate unique-visitor counts from a pseudonymous daily hash; no personal profiles",
+        "status": "assumed"
+       },
+       {
+        "id": "Q4",
+        "about": "quickly",
+        "question": "Is 'quickly' a delivery deadline or a latency requirement?",
+        "default": "latency (read together with 'without slowing redirects'); no deadline was given",
+        "answer": "latency (read together with 'without slowing redirects'); no deadline was given",
+        "status": "assumed"
+       },
+       {
+        "id": "Q5",
+        "about": "slowing",
+        "question": "What latency budget must redirects keep?",
+        "default": "no new I/O on the redirect path; one HMAC (~microseconds); p95 unchanged",
+        "answer": "no new I/O on the redirect path; one HMAC (~microseconds); p95 unchanged",
+        "status": "assumed"
+       },
+       {
+        "id": "Q6",
+        "about": "retention",
+        "question": "How long may visitor hashes be kept?",
+        "default": "90 days (policy maximum)",
+        "answer": "90 days (policy maximum)",
+        "status": "assumed"
+       }
+      ],
+      "answers": {
+       "Q1": "block harmful destinations via an operator-managed domain denylist",
+       "Q2": "create_and_redirect",
+       "Q3": "no: aggregate unique-visitor counts from a pseudonymous daily hash; no personal profiles",
+       "Q4": "latency (read together with 'without slowing redirects'); no deadline was given",
+       "Q5": "no new I/O on the redirect path; one HMAC (~microseconds); p95 unchanged",
+       "Q6": "90 days (policy maximum)"
+      },
+      "detected_terms": [
+       "safer",
+       "quickly",
+       "slowing",
+       "who"
+      ],
+      "pii_involved": true,
+      "pii_signals": [
+       "\\bwho\\b[^.]*\\bclick"
+      ]
+     }
+    }
+   ],
+   "test_plan": [
+    {
+     "name": "test_plan",
+     "version": 1,
+     "hash": "910f7d1ec022fa80",
+     "producer": "test_plan",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v1"
+     ],
+     "created_at": 1790806701.8919683,
+     "content": {
+      "strategy": [
+       "unit: pure functions and service logic with a fake clock",
+       "integration: HTTP API against real SQLite via TestClient",
+       "regression: full existing suite must stay green",
+       "quality gates: coverage floor, planned tests must pass, security scan"
+      ],
+      "cases": [
+       {
+        "id": "TC-01",
+        "ac": "AC1",
+        "test": "tests/test_safety_analytics.py::test_http_denylisted_destination_rejected",
+        "level": "integration",
+        "intent": "Creating a link to a denylisted domain or any of its subdomains returns 422"
+       },
+       {
+        "id": "TC-02",
+        "ac": "AC1",
+        "test": "tests/test_safety_analytics.py::test_denylist_matches_parent_domains_only",
+        "level": "unit",
+        "intent": "Creating a link to a denylisted domain or any of its subdomains returns 422"
+       },
+       {
+        "id": "TC-03",
+        "ac": "AC3",
+        "test": "tests/test_safety_analytics.py::test_http_unique_visitors_in_stats",
+        "level": "integration",
+        "intent": "Stats include unique_visitors (distinct visitors per day)"
+       },
+       {
+        "id": "TC-04",
+        "ac": "AC4",
+        "test": "tests/test_safety_analytics.py::test_raw_ip_never_persisted",
+        "level": "unit",
+        "intent": "The raw client IP never reaches storage"
+       },
+       {
+        "id": "TC-05",
+        "ac": "AC5",
+        "test": "tests/test_safety_analytics.py::test_visitor_hash_is_keyed_and_rotates_daily",
+        "level": "unit",
+        "intent": "Visitor hash is keyed (secret) and rotates daily"
+       },
+       {
+        "id": "TC-06",
+        "ac": "AC6",
+        "test": "tests/test_safety_analytics.py::test_visitor_hashes_purged_after_retention",
+        "level": "unit",
+        "intent": "Visitor hashes older than the retention window are purged; click counts remain"
+       },
+       {
+        "id": "TC-07",
+        "ac": "AC7",
+        "test": "tests/test_api.py::test_redirect_is_307_and_counts_click",
+        "level": "integration",
+        "intent": "Existing behaviour is unchanged for links and clients (regression)"
+       },
+       {
+        "id": "TC-08",
+        "ac": "AC7",
+        "test": "tests/test_api.py::test_invalid_url_rejected",
+        "level": "integration",
+        "intent": "Existing behaviour is unchanged for links and clients (regression)"
+       }
+      ],
+      "levels": {
+       "unit": 4,
+       "integration": 4
+      }
+     }
+    },
+    {
+     "name": "test_plan",
+     "version": 2,
+     "hash": "888d5a64f617ffe7",
+     "producer": "test_plan",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v2"
+     ],
+     "created_at": 1790806701.932417,
+     "content": {
+      "strategy": [
+       "unit: pure functions and service logic with a fake clock",
+       "integration: HTTP API against real SQLite via TestClient",
+       "regression: full existing suite must stay green",
+       "quality gates: coverage floor, planned tests must pass, security scan"
+      ],
+      "cases": [
+       {
+        "id": "TC-01",
+        "ac": "AC1",
+        "test": "tests/test_safety_analytics.py::test_http_denylisted_destination_rejected",
+        "level": "integration",
+        "intent": "Creating a link to a denylisted domain or any of its subdomains returns 422"
+       },
+       {
+        "id": "TC-02",
+        "ac": "AC1",
+        "test": "tests/test_safety_analytics.py::test_denylist_matches_parent_domains_only",
+        "level": "unit",
+        "intent": "Creating a link to a denylisted domain or any of its subdomains returns 422"
+       },
+       {
+        "id": "TC-03",
+        "ac": "AC2",
+        "test": "tests/test_safety_analytics.py::test_http_existing_link_blocked_after_denylisting",
+        "level": "integration",
+        "intent": "An existing link to a newly denylisted domain returns 410 and records no click"
+       },
+       {
+        "id": "TC-04",
+        "ac": "AC3",
+        "test": "tests/test_safety_analytics.py::test_http_unique_visitors_in_stats",
+        "level": "integration",
+        "intent": "Stats include unique_visitors (distinct visitors per day)"
+       },
+       {
+        "id": "TC-05",
+        "ac": "AC4",
+        "test": "tests/test_safety_analytics.py::test_raw_ip_never_persisted",
+        "level": "unit",
+        "intent": "The raw client IP never reaches storage"
+       },
+       {
+        "id": "TC-06",
+        "ac": "AC5",
+        "test": "tests/test_safety_analytics.py::test_visitor_hash_is_keyed_and_rotates_daily",
+        "level": "unit",
+        "intent": "Visitor hash is keyed (secret) and rotates daily"
+       },
+       {
+        "id": "TC-07",
+        "ac": "AC6",
+        "test": "tests/test_safety_analytics.py::test_visitor_hashes_purged_after_retention",
+        "level": "unit",
+        "intent": "Visitor hashes older than the retention window are purged; click counts remain"
+       },
+       {
+        "id": "TC-08",
+        "ac": "AC7",
+        "test": "tests/test_api.py::test_redirect_is_307_and_counts_click",
+        "level": "integration",
+        "intent": "Existing behaviour is unchanged for links and clients (regression)"
+       },
+       {
+        "id": "TC-09",
+        "ac": "AC7",
+        "test": "tests/test_api.py::test_invalid_url_rejected",
+        "level": "integration",
+        "intent": "Existing behaviour is unchanged for links and clients (regression)"
+       }
+      ],
+      "levels": {
+       "unit": 4,
+       "integration": 5
+      }
+     }
+    }
+   ],
+   "impact_analysis": [
+    {
+     "name": "impact_analysis",
+     "version": 1,
+     "hash": "8dfa1fe03d130553",
+     "producer": "codebase_analysis",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v1"
+     ],
+     "created_at": 1790806701.923007,
+     "content": {
+      "terms": [
+       "abuse",
+       "add",
+       "addition",
+       "addres",
+       "analytic",
+       "audience",
+       "block",
+       "click",
+       "creation",
+       "daily",
+       "denylist",
+       "destination",
+       "domain",
+       "give",
+       "harmful",
+       "hash",
+       "identify",
+       "identity",
+       "individual",
+       "key",
+       "latency",
+       "link",
+       "manag",
+       "market",
+       "never",
+       "operator",
+       "parent",
+       "pseudonymou",
+       "purg",
+       "raw",
+       "redirect",
+       "reduce",
+       "reject",
+       "report",
+       "retention",
+       "rotat",
+       "shortener",
+       "stat",
+       "stor",
+       "total",
+       "unique",
+       "vector",
+       "visitor",
+       "whose",
+       "window"
+      ],
+      "modules_scanned": 16,
+      "routes": [
+       {
+        "method": "GET",
+        "path": "/healthz",
+        "handler": "shortener.api.healthz"
+       },
+       {
+        "method": "GET",
+        "path": "/readyz",
+        "handler": "shortener.api.readyz"
+       },
+       {
+        "method": "POST",
+        "path": "/api/v1/links",
+        "handler": "shortener.api.create_link"
+       },
+       {
+        "method": "GET",
+        "path": "/api/v1/links/{code}",
+        "handler": "shortener.api.get_link"
+       },
+       {
+        "method": "GET",
+        "path": "/api/v1/links/{code}/stats",
+        "handler": "shortener.api.get_stats"
+       },
+       {
+        "method": "DELETE",
+        "path": "/api/v1/links/{code}",
+        "handler": "shortener.api.delete_link"
+       },
+       {
+        "method": "GET",
+        "path": "/{code}",
+        "handler": "shortener.api.redirect"
+       }
+      ],
+      "tables": {
+       "links": [
+        "id",
+        "code",
+        "target_url",
+        "created_at",
+        "expires_at",
+        "is_active"
+       ],
+       "clicks": [
+        "id",
+        "link_id",
+        "clicked_at",
+        "referrer",
+        "user_agent"
+       ]
+      },
+      "import_graph": {
+       "shortener.api": [
+        "shortener.config",
+        "shortener.db",
+        "shortener.errors",
+        "shortener.models",
+        "shortener.ratelimit",
+        "shortener.repository",
+        "shortener.schemas",
+        "shortener.service"
+       ],
+       "shortener.main": [
+        "shortener.api"
+       ],
+       "shortener.repository": [
+        "shortener.db",
+        "shortener.errors",
+        "shortener.models"
+       ],
+       "shortener.service": [
+        "shortener.codes",
+        "shortener.config",
+        "shortener.errors",
+        "shortener.models",
+        "shortener.repository",
+        "shortener.validation"
+       ],
+       "shortener.validation": [
+        "shortener.config",
+        "shortener.errors"
+       ],
+       "tests.conftest": [
+        "shortener.api",
+        "shortener.config",
+        "shortener.db",
+        "shortener.repository",
+        "shortener.service"
+       ],
+       "tests.test_api": [
+        "shortener.api",
+        "shortener.config"
+       ],
+       "tests.test_units": [
+        "shortener",
+        "shortener.config",
+        "shortener.db",
+        "shortener.errors",
+        "shortener.ratelimit",
+        "shortener.validation"
+       ]
+      },
+      "impacted": [
+       {
+        "module": "shortener.api",
+        "path": "shortener/api.py",
+        "reason": "direct",
+        "matched_terms": [
+         "analytic",
+         "domain",
+         "key",
+         "redirect",
+         "total",
+         "shortener",
+         "stat",
+         "click"
+        ],
+        "score": 12.27
+       },
+       {
+        "module": "shortener.db",
+        "path": "shortener/db.py",
+        "reason": "direct",
+        "matched_terms": [
+         "add",
+         "never",
+         "unique",
+         "key",
+         "click",
+         "link"
+        ],
+        "score": 9.56
+       },
+       {
+        "module": "shortener.service",
+        "path": "shortener/service.py",
+        "reason": "direct",
+        "matched_terms": [
+         "unique",
+         "redirect",
+         "stat",
+         "click",
+         "link"
+        ],
+        "score": 8.4
+       },
+       {
+        "module": "shortener.models",
+        "path": "shortener/models.py",
+        "reason": "direct",
+        "matched_terms": [
+         "domain",
+         "total",
+         "stat",
+         "click",
+         "link"
+        ],
+        "score": 6.79
+       },
+       {
+        "module": "shortener.schemas",
+        "path": "shortener/schemas.py",
+        "reason": "direct",
+        "matched_terms": [
+         "destination",
+         "total",
+         "stat",
+         "click",
+         "link"
+        ],
+        "score": 6.23
+       },
+       {
+        "module": "shortener.__init__",
+        "path": "shortener/__init__.py",
+        "reason": "direct",
+        "matched_terms": [
+         "analytic",
+         "redirect",
+         "shortener",
+         "click",
+         "link"
+        ],
+        "score": 6.01
+       },
+       {
+        "module": "shortener.validation",
+        "path": "shortener/validation.py",
+        "reason": "direct",
+        "matched_terms": [
+         "addres",
+         "redirect",
+         "shortener",
+         "link"
+        ],
+        "score": 5.29
+       },
+       {
+        "module": "shortener.main",
+        "path": "shortener/main.py",
+        "reason": "imports ['shortener.api']",
+        "matched_terms": [],
+        "score": 0.85
+       },
+       {
+        "module": "shortener.repository",
+        "path": "shortener/repository.py",
+        "reason": "imports ['shortener.db', 'shortener.models']",
+        "matched_terms": [],
+        "score": 4.29
+       },
+       {
+        "module": "tests.conftest",
+        "path": "tests/conftest.py",
+        "reason": "imports ['shortener.api', 'shortener.db', 'shortener.service']",
+        "matched_terms": [],
+        "score": 0
+       },
+       {
+        "module": "tests.test_api",
+        "path": "tests/test_api.py",
+        "reason": "imports ['shortener.api']",
+        "matched_terms": [],
+        "score": 0
+       },
+       {
+        "module": "tests.test_units",
+        "path": "tests/test_units.py",
+        "reason": "imports ['shortener.db', 'shortener.validation']",
+        "matched_terms": [],
+        "score": 0
+       }
+      ],
+      "relevance_threshold": 4.29,
+      "not_impacted": [
+       "shortener.codes",
+       "shortener.config",
+       "shortener.errors",
+       "shortener.ratelimit"
+      ],
+      "data_flow": [
+       "shortener.api",
+       "shortener.service",
+       "shortener.repository",
+       "shortener.db"
+      ],
+      "tests_touching": {
+       "shortener.models": [],
+       "shortener.service": [
+        "tests.conftest"
+       ],
+       "shortener.schemas": [],
+       "shortener.db": [
+        "tests.conftest",
+        "tests.test_units"
+       ],
+       "shortener.validation": [
+        "tests.test_units"
+       ],
+       "shortener.__init__": [],
+       "shortener.api": [
+        "tests.conftest",
+        "tests.test_api"
+       ]
+      },
+      "risk": "high",
+      "risk_rationale": "schema and public API both impacted"
+     }
+    },
+    {
+     "name": "impact_analysis",
+     "version": 2,
+     "hash": "623cee22c848750c",
+     "producer": "codebase_analysis",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v2"
+     ],
+     "created_at": 1790806701.9569547,
+     "content": {
+      "terms": [
+       "abuse",
+       "add",
+       "addition",
+       "addres",
+       "analytic",
+       "audience",
+       "becom",
+       "block",
+       "click",
+       "creation",
+       "daily",
+       "denylist",
+       "destination",
+       "domain",
+       "give",
+       "harmful",
+       "hash",
+       "identify",
+       "identity",
+       "individual",
+       "key",
+       "latency",
+       "link",
+       "manag",
+       "market",
+       "never",
+       "operator",
+       "parent",
+       "pseudonymou",
+       "purg",
+       "raw",
+       "redirect",
+       "reduce",
+       "reject",
+       "report",
+       "retention",
+       "rotat",
+       "shortener",
+       "stat",
+       "stop",
+       "stor",
+       "total",
+       "unique",
+       "vector",
+       "visitor",
+       "whose",
+       "window"
+      ],
+      "modules_scanned": 16,
+      "routes": [
+       {
+        "method": "GET",
+        "path": "/healthz",
+        "handler": "shortener.api.healthz"
+       },
+       {
+        "method": "GET",
+        "path": "/readyz",
+        "handler": "shortener.api.readyz"
+       },
+       {
+        "method": "POST",
+        "path": "/api/v1/links",
+        "handler": "shortener.api.create_link"
+       },
+       {
+        "method": "GET",
+        "path": "/api/v1/links/{code}",
+        "handler": "shortener.api.get_link"
+       },
+       {
+        "method": "GET",
+        "path": "/api/v1/links/{code}/stats",
+        "handler": "shortener.api.get_stats"
+       },
+       {
+        "method": "DELETE",
+        "path": "/api/v1/links/{code}",
+        "handler": "shortener.api.delete_link"
+       },
+       {
+        "method": "GET",
+        "path": "/{code}",
+        "handler": "shortener.api.redirect"
+       }
+      ],
+      "tables": {
+       "links": [
+        "id",
+        "code",
+        "target_url",
+        "created_at",
+        "expires_at",
+        "is_active"
+       ],
+       "clicks": [
+        "id",
+        "link_id",
+        "clicked_at",
+        "referrer",
+        "user_agent"
+       ]
+      },
+      "import_graph": {
+       "shortener.api": [
+        "shortener.config",
+        "shortener.db",
+        "shortener.errors",
+        "shortener.models",
+        "shortener.ratelimit",
+        "shortener.repository",
+        "shortener.schemas",
+        "shortener.service"
+       ],
+       "shortener.main": [
+        "shortener.api"
+       ],
+       "shortener.repository": [
+        "shortener.db",
+        "shortener.errors",
+        "shortener.models"
+       ],
+       "shortener.service": [
+        "shortener.codes",
+        "shortener.config",
+        "shortener.errors",
+        "shortener.models",
+        "shortener.repository",
+        "shortener.validation"
+       ],
+       "shortener.validation": [
+        "shortener.config",
+        "shortener.errors"
+       ],
+       "tests.conftest": [
+        "shortener.api",
+        "shortener.config",
+        "shortener.db",
+        "shortener.repository",
+        "shortener.service"
+       ],
+       "tests.test_api": [
+        "shortener.api",
+        "shortener.config"
+       ],
+       "tests.test_units": [
+        "shortener",
+        "shortener.config",
+        "shortener.db",
+        "shortener.errors",
+        "shortener.ratelimit",
+        "shortener.validation"
+       ]
+      },
+      "impacted": [
+       {
+        "module": "shortener.api",
+        "path": "shortener/api.py",
+        "reason": "direct",
+        "matched_terms": [
+         "analytic",
+         "domain",
+         "key",
+         "redirect",
+         "total",
+         "shortener",
+         "stat",
+         "click"
+        ],
+        "score": 12.27
+       },
+       {
+        "module": "shortener.db",
+        "path": "shortener/db.py",
+        "reason": "direct",
+        "matched_terms": [
+         "add",
+         "never",
+         "unique",
+         "key",
+         "click",
+         "link"
+        ],
+        "score": 9.56
+       },
+       {
+        "module": "shortener.service",
+        "path": "shortener/service.py",
+        "reason": "direct",
+        "matched_terms": [
+         "unique",
+         "redirect",
+         "stat",
+         "click",
+         "link"
+        ],
+        "score": 8.4
+       },
+       {
+        "module": "shortener.models",
+        "path": "shortener/models.py",
+        "reason": "direct",
+        "matched_terms": [
+         "domain",
+         "total",
+         "stat",
+         "click",
+         "link"
+        ],
+        "score": 6.79
+       },
+       {
+        "module": "shortener.schemas",
+        "path": "shortener/schemas.py",
+        "reason": "direct",
+        "matched_terms": [
+         "destination",
+         "total",
+         "stat",
+         "click",
+         "link"
+        ],
+        "score": 6.23
+       },
+       {
+        "module": "shortener.__init__",
+        "path": "shortener/__init__.py",
+        "reason": "direct",
+        "matched_terms": [
+         "analytic",
+         "redirect",
+         "shortener",
+         "click",
+         "link"
+        ],
+        "score": 6.01
+       },
+       {
+        "module": "shortener.validation",
+        "path": "shortener/validation.py",
+        "reason": "direct",
+        "matched_terms": [
+         "addres",
+         "redirect",
+         "shortener",
+         "link"
+        ],
+        "score": 5.29
+       },
+       {
+        "module": "shortener.main",
+        "path": "shortener/main.py",
+        "reason": "imports ['shortener.api']",
+        "matched_terms": [],
+        "score": 0.85
+       },
+       {
+        "module": "shortener.repository",
+        "path": "shortener/repository.py",
+        "reason": "imports ['shortener.db', 'shortener.models']",
+        "matched_terms": [],
+        "score": 4.29
+       },
+       {
+        "module": "tests.conftest",
+        "path": "tests/conftest.py",
+        "reason": "imports ['shortener.api', 'shortener.db', 'shortener.service']",
+        "matched_terms": [],
+        "score": 0
+       },
+       {
+        "module": "tests.test_api",
+        "path": "tests/test_api.py",
+        "reason": "imports ['shortener.api']",
+        "matched_terms": [],
+        "score": 0
+       },
+       {
+        "module": "tests.test_units",
+        "path": "tests/test_units.py",
+        "reason": "imports ['shortener.db', 'shortener.validation']",
+        "matched_terms": [],
+        "score": 0
+       }
+      ],
+      "relevance_threshold": 4.29,
+      "not_impacted": [
+       "shortener.codes",
+       "shortener.config",
+       "shortener.errors",
+       "shortener.ratelimit"
+      ],
+      "data_flow": [
+       "shortener.api",
+       "shortener.service",
+       "shortener.repository",
+       "shortener.db"
+      ],
+      "tests_touching": {
+       "shortener.models": [],
+       "shortener.service": [
+        "tests.conftest"
+       ],
+       "shortener.schemas": [],
+       "shortener.db": [
+        "tests.conftest",
+        "tests.test_units"
+       ],
+       "shortener.validation": [
+        "tests.test_units"
+       ],
+       "shortener.__init__": [],
+       "shortener.api": [
+        "tests.conftest",
+        "tests.test_api"
+       ]
+      },
+      "risk": "high",
+      "risk_rationale": "schema and public API both impacted"
+     }
+    }
+   ],
+   "clarifications": [
+    {
+     "name": "clarifications",
+     "version": 1,
+     "hash": "43eaaea2c3183f42",
+     "producer": "human:product-owner@example.com",
+     "attempt": 1,
+     "derived_from": [],
+     "created_at": 1790806701.9261634,
+     "content": {
+      "Q2": "create_and_redirect"
+     }
+    }
+   ],
+   "design": [
+    {
+     "name": "design",
+     "version": 1,
+     "hash": "dc16e0dcd2961c96",
+     "producer": "design",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v2",
+      "impact_analysis@v2"
+     ],
+     "created_at": 1790806701.9610271,
+     "content": {
+      "title": "Destination denylist + privacy-preserving visitor analytics",
+      "approach": "Denylist is configuration (SHORTENER_BLOCKED_DOMAINS) checked in URL validation with parent-domain matching. Unique visitors are counted from a keyed HMAC of day|ip|user-agent stored in a new nullable clicks.visitor_hash column (migration v2); the raw IP exists only in memory for the request. A retention job nulls hashes older than the window while keeping click counts.",
+      "api_changes": [
+       "GET /api/v1/links/{code}/stats: + unique_visitors",
+       "POST /api/v1/links: 422 for denylisted destinations",
+       "GET /{code}: 410 when the destination is denylisted"
+      ],
+      "schema_changes": [
+       {
+        "table": "clicks",
+        "column": "visitor_hash",
+        "change": "add nullable TEXT (migration v2)"
+       }
+      ],
+      "data_handling": {
+       "personal_data": [
+        "client IP (transient, in memory only)",
+        "user agent (hash input)"
+       ],
+       "storage": "pseudonymised",
+       "keyed_hash": true,
+       "hashing": "HMAC-SHA256(server secret, day|ip|user-agent), truncated to 128 bits",
+       "rotation": "day is part of the hash input, so visitors cannot be linked across days",
+       "retention_days": 90,
+       "purpose": "aggregate unique-visitor counts for marketing; no individual profiles or exports"
+      },
+      "tasks": [
+       {
+        "id": "T1",
+        "title": "Config: denylist, visitor secret, retention",
+        "deps": [],
+        "satisfies": [],
+        "files": [
+         "shortener/config.py"
+        ]
+       },
+       {
+        "id": "T2",
+        "title": "Denylist check with parent-domain matching (creation)",
+        "deps": [
+         "T1"
+        ],
+        "satisfies": [
+         "AC1"
+        ],
+        "files": [
+         "shortener/validation.py"
+        ]
+       },
+       {
+        "id": "T2b",
+        "title": "Enforce denylist on redirect for existing links",
+        "deps": [
+         "T2"
+        ],
+        "satisfies": [
+         "AC2"
+        ],
+        "files": [
+         "shortener/service.py"
+        ]
+       },
+       {
+        "id": "T3",
+        "title": "Migration v2: clicks.visitor_hash; repository write/aggregate/purge",
+        "deps": [],
+        "satisfies": [
+         "AC3",
+         "AC6"
+        ],
+        "files": [
+         "shortener/db.py",
+         "shortener/models.py",
+         "shortener/repository.py"
+        ]
+       },
+       {
+        "id": "T4",
+        "title": "Service: keyed daily visitor hash, retention purge",
+        "deps": [
+         "T1",
+         "T3"
+        ],
+        "satisfies": [
+         "AC4",
+         "AC5",
+         "AC6"
+        ],
+        "files": [
+         "shortener/service.py"
+        ]
+       },
+       {
+        "id": "T5",
+        "title": "API: pass client IP to service, expose unique_visitors",
+        "deps": [
+         "T4"
+        ],
+        "satisfies": [
+         "AC3",
+         "AC7"
+        ],
+        "files": [
+         "shortener/api.py",
+         "shortener/schemas.py"
+        ]
+       },
+       {
+        "id": "T6",
+        "title": "Tests from ACs",
+        "deps": [
+         "T1"
+        ],
+        "satisfies": [
+         "AC1",
+         "AC3",
+         "AC4",
+         "AC5",
+         "AC6",
+         "AC7"
+        ],
+        "files": [
+         "tests/test_safety_analytics.py"
+        ]
+       }
+      ],
+      "alternatives_considered": [
+       {
+        "option": "Meaning of 'who is clicking'",
+        "decision": "Aggregate unique visitors from a pseudonymous daily hash",
+        "why": "Answers the marketing question (reach) without processing identities; keeps the change inside privacy policy.",
+        "rejected": [
+         "Store raw IPs (personal data; needs legal basis, DPIA, access controls)",
+         "Cookies/fingerprinting (consent requirements)"
+        ]
+       },
+       {
+        "option": "Visitor hash construction",
+        "decision": "HMAC-SHA256 with a server secret, day in the input",
+        "why": "Unkeyed hashes of IPv4 are trivially brute-forced; the day component prevents cross-day tracking.",
+        "rejected": [
+         "sha256(ip) (reversible by enumeration)",
+         "Static salt (enables long-term tracking)"
+        ]
+       },
+       {
+        "option": "Denylist source",
+        "decision": "Operator-managed config list with parent-domain matching",
+        "why": "No new network dependency on the redirect path; deterministic; feeds can populate it later.",
+        "rejected": [
+         "Live threat-intel API call per redirect (latency + availability coupling)"
+        ]
+       }
+      ],
+      "risks": [
+       {
+        "risk": "Denylist is only as good as its curation",
+        "likelihood": "high",
+        "impact": "medium",
+        "mitigation": "follow-up: scheduled sync from a threat-intel feed"
+       },
+       {
+        "risk": "Random default secret makes unique counts restart-dependent",
+        "likelihood": "medium",
+        "impact": "low",
+        "mitigation": "SHORTENER_VISITOR_SECRET documented as required in production"
+       },
+       {
+        "risk": "Unique visitors undercount users behind shared NAT",
+        "likelihood": "medium",
+        "impact": "low",
+        "mitigation": "user agent is part of the hash; documented as an estimate"
+       }
+      ],
+      "rollback_plan": "Redeploy the previous version. Migration v2 only adds a nullable column, so old code runs unchanged; optionally run UPDATE clicks SET visitor_hash = NULL to drop pseudonymous data.",
+      "changelog": [
+       "Operator-managed destination denylist (SHORTENER_BLOCKED_DOMAINS), including subdomains",
+       "Denylisted destinations also stop existing links (410)",
+       "Stats: `unique_visitors` from a keyed, daily-rotating pseudonymous hash (raw IPs are never stored)",
+       "Retention: `LinkService.purge_visitor_data()` for the daily retention job",
+       "DB migration v2: nullable `clicks.visitor_hash`"
+      ],
+      "task_waves": [
+       [
+        "T1",
+        "T3"
+       ],
+       [
+        "T2",
+        "T4",
+        "T6"
+       ],
+       [
+        "T2b",
+        "T5"
+       ]
+      ],
+      "critical_path_length": 3,
+      "unpredicted_files": [
+       "shortener/config.py"
+      ]
+     }
+    }
+   ],
+   "privacy_review": [
+    {
+     "name": "privacy_review",
+     "version": 1,
+     "hash": "7da0af8b586d0166",
+     "producer": "privacy_review",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v2",
+      "design@v1"
+     ],
+     "created_at": 1790806701.9660437,
+     "content": {
+      "checks": [
+       {
+        "check": "no raw personal identifiers persisted",
+        "passed": true,
+        "detail": "storage=pseudonymised, pii-named columns=[]"
+       },
+       {
+        "check": "identifiers pseudonymised with a keyed hash",
+        "passed": true,
+        "detail": "HMAC-SHA256(server secret, day|ip|user-agent), truncated to 128 bits"
+       },
+       {
+        "check": "retention <= 90 days",
+        "passed": true,
+        "detail": "90 days"
+       },
+       {
+        "check": "purpose limitation documented",
+        "passed": true,
+        "detail": "aggregate unique-visitor counts for marketing; no individual profiles or exports"
+       },
+       {
+        "check": "cross-day linkage prevented",
+        "passed": true,
+        "detail": "day is part of the hash input, so visitors cannot be linked across days"
+       }
+      ],
+      "personal_data": [
+       "client IP (transient, in memory only)",
+       "user agent (hash input)"
+      ]
+     }
+    }
+   ],
+   "change_set": [
+    {
+     "name": "change_set",
+     "version": 1,
+     "hash": "6913a41010a4880a",
+     "producer": "implement",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v2",
+      "design@v1",
+      "test_plan@v2"
+     ],
+     "created_at": 1790806701.988855,
+     "content": {
+      "summary": "denylist + pseudonymous unique-visitor analytics with retention",
+      "files": [
+       "shortener/api.py",
+       "shortener/config.py",
+       "shortener/db.py",
+       "shortener/models.py",
+       "shortener/repository.py",
+       "shortener/schemas.py",
+       "shortener/service.py",
+       "shortener/validation.py",
+       "tests/test_safety_analytics.py"
+      ],
+      "operations": 24
+     }
+    }
+   ],
+   "security_report": [
+    {
+     "name": "security_report",
+     "version": 1,
+     "hash": "193a73b6a7f3d6c9",
+     "producer": "security_scan",
+     "attempt": 1,
+     "derived_from": [],
+     "created_at": 1790806702.0276177,
+     "content": {
+      "files_scanned": [
+       "shortener/api.py",
+       "shortener/config.py",
+       "shortener/db.py",
+       "shortener/models.py",
+       "shortener/repository.py",
+       "shortener/schemas.py",
+       "shortener/service.py",
+       "shortener/validation.py",
+       "tests/test_safety_analytics.py"
+      ],
+      "findings": [],
+      "max_severity": "info",
+      "rules": [
+       "hardcoded-secret",
+       "forbidden-call",
+       "shell-injection",
+       "sql-injection",
+       "pii-column",
+       "dependency-change",
+       "security-test-missing"
+      ]
+     }
+    }
+   ],
+   "docs_report": [
+    {
+     "name": "docs_report",
+     "version": 1,
+     "hash": "ee1cc67f4f79b455",
+     "producer": "docs",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v2",
+      "design@v1"
+     ],
+     "created_at": 1790806702.400784,
+     "content": {
+      "routes": 7,
+      "undocumented_routes": [],
+      "files": [
+       "CHANGELOG.md",
+       "docs/API.md",
+       "docs/adr/ADR-001-meaning-of-who-is-clicking.md",
+       "docs/adr/ADR-002-visitor-hash-construction.md",
+       "docs/adr/ADR-003-denylist-source.md"
+      ]
+     }
+    }
+   ],
+   "test_report": [
+    {
+     "name": "test_report",
+     "version": 1,
+     "hash": "30f8bbc9767087ef",
+     "producer": "run_tests",
+     "attempt": 1,
+     "derived_from": [
+      "test_plan@v2"
+     ],
+     "created_at": 1790806704.3442695,
+     "content": {
+      "total": 62,
+      "passed": 62,
+      "failed": 0,
+      "errors": 0,
+      "coverage": 99.36,
+      "failures": [],
+      "passed_tests": [
+       "tests/test_api.py::test_api_key_enforced_on_writes_when_configured",
+       "tests/test_api.py::test_create_link_returns_201_with_short_url",
+       "tests/test_api.py::test_custom_alias_and_conflict",
+       "tests/test_api.py::test_delete_deactivates_link",
+       "tests/test_api.py::test_expired_link_returns_410_and_does_not_count",
+       "tests/test_api.py::test_expiry_in_past_rejected",
+       "tests/test_api.py::test_health_and_readiness",
+       "tests/test_api.py::test_invalid_url_rejected",
+       "tests/test_api.py::test_openapi_contract_lists_core_routes",
+       "tests/test_api.py::test_rate_limit_returns_429_with_retry_after",
+       "tests/test_api.py::test_redirect_is_307_and_counts_click",
+       "tests/test_api.py::test_reserved_alias_rejected_case_insensitively",
+       "tests/test_api.py::test_stats_aggregate_by_day_and_referrer",
+       "tests/test_api.py::test_unknown_code_is_404",
+       "tests/test_api.py::test_unknown_fields_rejected",
+       "tests/test_safety_analytics.py::test_denylist_matches_parent_domains_only",
+       "tests/test_safety_analytics.py::test_http_denylisted_destination_rejected",
+       "tests/test_safety_analytics.py::test_http_existing_link_blocked_after_denylisting",
+       "tests/test_safety_analytics.py::test_http_unique_visitors_in_stats",
+       "tests/test_safety_analytics.py::test_raw_ip_never_persisted",
+       "tests/test_safety_analytics.py::test_visitor_hash_is_keyed_and_rotates_daily",
+       "tests/test_safety_analytics.py::test_visitor_hashes_purged_after_retention",
+       "tests/test_units.py::test_collision_exhaustion_raises",
+       "tests/test_units.py::test_collision_retries_then_succeeds",
+       "tests/test_units.py::test_generate_code_length_and_alphabet",
+       "tests/test_units.py::test_generate_code_rejects_short_length",
+       "tests/test_units.py::test_invalid_aliases",
+       "tests/test_units.py::test_json_log_formatter_includes_request_fields",
+       "tests/test_units.py::test_long_headers_are_truncated",
+       "tests/test_units.py::test_migration_versions_strictly_increase",
+       "tests/test_units.py::test_migrations_are_idempotent_and_versioned",
+       "tests/test_units.py::test_private_targets_allowed_when_configured",
+       "tests/test_units.py::test_rejected_urls",
+       "tests/test_units.py::test_repository_duplicate_code_raises_conflict",
+       "tests/test_units.py::test_token_bucket_bounds_memory",
+       "tests/test_units.py::test_token_bucket_refills_over_time",
+       "tests/test_units.py::test_url_length_limit",
+       "tests/test_units.py::test_valid_alias_passthrough",
+       "tests/test_units.py::test_valid_urls"
+      ],
+      "command": "pytest -q -p no:cacheprovider --junitxml=<run_dir>/test-output/exec1-attempt1/junit.xml --cov=shortener --cov-report=json:<run_dir>/test-output/exec1-attempt1/coverage.json tests",
+      "exit_code": 0
+     }
+    }
+   ],
+   "release_readiness": [
+    {
+     "name": "release_readiness",
+     "version": 1,
+     "hash": "3a3ff163b552f222",
+     "producer": "release_readiness",
+     "attempt": 1,
+     "derived_from": [
+      "requirements_spec@v2",
+      "design@v1",
+      "test_plan@v2",
+      "test_report@v1",
+      "security_report@v1",
+      "docs_report@v1",
+      "privacy_review@v1"
+     ],
+     "created_at": 1790806704.355248,
+     "content": {
+      "recommendation": "GO",
+      "checklist": [
+       {
+        "item": "full test suite green",
+        "passed": true,
+        "evidence": "62/62"
+       },
+       {
+        "item": "coverage >= 85.0%",
+        "passed": true,
+        "evidence": "99.36%"
+       },
+       {
+        "item": "every acceptance criterion verified by a passing test",
+        "passed": true,
+        "evidence": "7/7 ACs"
+       },
+       {
+        "item": "no blocking security findings",
+        "passed": true,
+        "evidence": "0 findings, max=info"
+       },
+       {
+        "item": "migrations forward-only and additive",
+        "passed": true,
+        "evidence": "no destructive statements"
+       },
+       {
+        "item": "API reference covers all routes",
+        "passed": true,
+        "evidence": "7 routes"
+       },
+       {
+        "item": "rollback plan defined",
+        "passed": true,
+        "evidence": "Redeploy the previous version. Migration v2 only adds a nullable column, so old code runs unchanged; optionally run UPDA"
+       },
+       {
+        "item": "privacy review passed",
+        "passed": true,
+        "evidence": "privacy_review"
+       }
+      ],
+      "traceability": [
+       {
+        "ac": "AC1",
+        "text": "Creating a link to a denylisted domain or any of its subdomains returns 422",
+        "tasks": [
+         "T2",
+         "T6"
+        ],
+        "tests": [
+         "tests/test_safety_analytics.py::test_http_denylisted_destination_rejected",
+         "tests/test_safety_analytics.py::test_denylist_matches_parent_domains_only"
+        ],
+        "verified": true
+       },
+       {
+        "ac": "AC2",
+        "text": "An existing link to a newly denylisted domain returns 410 and records no click",
+        "tasks": [
+         "T2b"
+        ],
+        "tests": [
+         "tests/test_safety_analytics.py::test_http_existing_link_blocked_after_denylisting"
+        ],
+        "verified": true
+       },
+       {
+        "ac": "AC3",
+        "text": "Stats include unique_visitors (distinct visitors per day)",
+        "tasks": [
+         "T3",
+         "T5",
+         "T6"
+        ],
+        "tests": [
+         "tests/test_safety_analytics.py::test_http_unique_visitors_in_stats"
+        ],
+        "verified": true
+       },
+       {
+        "ac": "AC4",
+        "text": "The raw client IP never reaches storage",
+        "tasks": [
+         "T4",
+         "T6"
+        ],
+        "tests": [
+         "tests/test_safety_analytics.py::test_raw_ip_never_persisted"
+        ],
+        "verified": true
+       },
+       {
+        "ac": "AC5",
+        "text": "Visitor hash is keyed (secret) and rotates daily",
+        "tasks": [
+         "T4",
+         "T6"
+        ],
+        "tests": [
+         "tests/test_safety_analytics.py::test_visitor_hash_is_keyed_and_rotates_daily"
+        ],
+        "verified": true
+       },
+       {
+        "ac": "AC6",
+        "text": "Visitor hashes older than the retention window are purged; click counts remain",
+        "tasks": [
+         "T3",
+         "T4",
+         "T6"
+        ],
+        "tests": [
+         "tests/test_safety_analytics.py::test_visitor_hashes_purged_after_retention"
+        ],
+        "verified": true
+       },
+       {
+        "ac": "AC7",
+        "text": "Existing behaviour is unchanged for links and clients (regression)",
+        "tasks": [
+         "T5",
+         "T6"
+        ],
+        "tests": [
+         "tests/test_api.py::test_redirect_is_307_and_counts_click",
+         "tests/test_api.py::test_invalid_url_rejected"
+        ],
+        "verified": true
+       }
+      ],
+      "risk_register": [
+       {
+        "risk": "Denylist is only as good as its curation",
+        "likelihood": "high",
+        "impact": "medium",
+        "mitigation": "follow-up: scheduled sync from a threat-intel feed",
+        "source": "design"
+       },
+       {
+        "risk": "Random default secret makes unique counts restart-dependent",
+        "likelihood": "medium",
+        "impact": "low",
+        "mitigation": "SHORTENER_VISITOR_SECRET documented as required in production",
+        "source": "design"
+       },
+       {
+        "risk": "Unique visitors undercount users behind shared NAT",
+        "likelihood": "medium",
+        "impact": "low",
+        "mitigation": "user agent is part of the hash; documented as an estimate",
+        "source": "design"
+       },
+       {
+        "risk": "assumption Q1 unconfirmed: block harmful destinations via an operator-managed domain denylist",
+        "likelihood": "medium",
+        "impact": "medium",
+        "mitigation": "confirm with product owner before GA",
+        "source": "requirements"
+       },
+       {
+        "risk": "assumption Q3 unconfirmed: no: aggregate unique-visitor counts from a pseudonymous daily hash; no personal profiles",
+        "likelihood": "medium",
+        "impact": "medium",
+        "mitigation": "confirm with product owner before GA",
+        "source": "requirements"
+       },
+       {
+        "risk": "assumption Q4 unconfirmed: latency (read together with 'without slowing redirects'); no deadline was given",
+        "likelihood": "medium",
+        "impact": "medium",
+        "mitigation": "confirm with product owner before GA",
+        "source": "requirements"
+       },
+       {
+        "risk": "assumption Q5 unconfirmed: no new I/O on the redirect path; one HMAC (~microseconds); p95 unchanged",
+        "likelihood": "medium",
+        "impact": "medium",
+        "mitigation": "confirm with product owner before GA",
+        "source": "requirements"
+       },
+       {
+        "risk": "assumption Q6 unconfirmed: 90 days (policy maximum)",
+        "likelihood": "medium",
+        "impact": "medium",
+        "mitigation": "confirm with product owner before GA",
+        "source": "requirements"
+       }
+      ],
+      "rollback_plan": "Redeploy the previous version. Migration v2 only adds a nullable column, so old code runs unchanged; optionally run UPDATE clicks SET visitor_hash = NULL to drop pseudonymous data.",
+      "release_notes": [
+       "Operator-managed destination denylist (SHORTENER_BLOCKED_DOMAINS), including subdomains",
+       "Denylisted destinations also stop existing links (410)",
+       "Stats: `unique_visitors` from a keyed, daily-rotating pseudonymous hash (raw IPs are never stored)",
+       "Retention: `LinkService.purge_visitor_data()` for the daily retention job",
+       "DB migration v2: nullable `clicks.visitor_hash`"
+      ],
+      "files_changed": [
+       "CHANGELOG.md",
+       "docs/API.md",
+       "docs/adr/ADR-001-meaning-of-who-is-clicking.md",
+       "docs/adr/ADR-002-visitor-hash-construction.md",
+       "docs/adr/ADR-003-denylist-source.md",
+       "shortener/api.py",
+       "shortener/config.py",
+       "shortener/db.py",
+       "shortener/models.py",
+       "shortener/repository.py",
+       "shortener/schemas.py",
+       "shortener/service.py",
+       "shortener/validation.py",
+       "tests/test_safety_analytics.py"
+      ]
+     }
+    }
+   ]
+  },
+  "decisions": [
+   {
+    "id": "D001",
+    "node": "intake",
+    "kind": "approval",
+    "summary": "approve: high-impact change: pii, requirement contains ambiguities resolved only by assumptions",
+    "actor": "product-owner@example.com",
+    "rationale": "auto-approved under scripted policy",
+    "refs": [
+     "requirements_spec@pending"
+    ],
+    "at": 1790806701.88925
+   },
+   {
+    "id": "D002",
+    "node": "intake",
+    "kind": "assumption",
+    "summary": "Q1: assumed 'block harmful destinations via an operator-managed domain denylist'",
+    "actor": "requirements_analyst",
+    "rationale": "What threat does 'safer' address?",
+    "refs": [
+     "requirements_spec@v1"
+    ],
+    "at": 1790806701.8893456
+   },
+   {
+    "id": "D003",
+    "node": "intake",
+    "kind": "assumption",
+    "summary": "Q2: assumed 'creation_only'",
+    "actor": "requirements_analyst",
+    "rationale": "Does the denylist apply only to new links, or also stop existing links?",
+    "refs": [
+     "requirements_spec@v1"
+    ],
+    "at": 1790806701.889348
+   },
+   {
+    "id": "D004",
+    "node": "intake",
+    "kind": "assumption",
+    "summary": "Q3: assumed 'no: aggregate unique-visitor counts from a pseudonymous daily hash; no personal profiles'",
+    "actor": "requirements_analyst",
+    "rationale": "Does 'see who is clicking' mean identifying individuals?",
+    "refs": [
+     "requirements_spec@v1"
+    ],
+    "at": 1790806701.8893497
+   },
+   {
+    "id": "D005",
+    "node": "intake",
+    "kind": "assumption",
+    "summary": "Q4: assumed 'latency (read together with 'without slowing redirects'); no deadline was given'",
+    "actor": "requirements_analyst",
+    "rationale": "Is 'quickly' a delivery deadline or a latency requirement?",
+    "refs": [
+     "requirements_spec@v1"
+    ],
+    "at": 1790806701.889351
+   },
+   {
+    "id": "D006",
+    "node": "intake",
+    "kind": "assumption",
+    "summary": "Q5: assumed 'no new I/O on the redirect path; one HMAC (~microseconds); p95 unchanged'",
+    "actor": "requirements_analyst",
+    "rationale": "What latency budget must redirects keep?",
+    "refs": [
+     "requirements_spec@v1"
+    ],
+    "at": 1790806701.8893528
+   },
+   {
+    "id": "D007",
+    "node": "intake",
+    "kind": "assumption",
+    "summary": "Q6: assumed '90 days (policy maximum)'",
+    "actor": "requirements_analyst",
+    "rationale": "How long may visitor hashes be kept?",
+    "refs": [
+     "requirements_spec@v1"
+    ],
+    "at": 1790806701.8893545
+   },
+   {
+    "id": "D008",
+    "node": "intake",
+    "kind": "replan",
+    "summary": "inserted 'privacy_review' between ['design'] and ['implement']",
+    "actor": "orchestrator",
+    "rationale": "requirement involves personal data (signals: ['\\\\bwho\\\\b[^.]*\\\\bclick'])",
+    "refs": [],
+    "at": 1790806701.8894973
+   },
+   {
+    "id": "D009",
+    "node": "design",
+    "kind": "approval",
+    "summary": "revise: high-impact change: pii, high-impact change: public_api_change, high-impact change: schema_change",
+    "actor": "product-owner@example.com",
+    "rationale": "Security team: denylisted domains must also stop EXISTING links, not only new ones.",
+    "refs": [
+     "design@pending"
+    ],
+    "at": 1790806701.9261289
+   },
+   {
+    "id": "D010",
+    "node": "design",
+    "kind": "assumption",
+    "summary": "human clarified ['Q2']",
+    "actor": "product-owner@example.com",
+    "rationale": "Security team: denylisted domains must also stop EXISTING links, not only new ones.",
+    "refs": [
+     "clarifications@v1"
+    ],
+    "at": 1790806701.9261715
+   },
+   {
+    "id": "D011",
+    "node": "intake",
+    "kind": "approval",
+    "summary": "approve: high-impact change: pii, requirement contains ambiguities resolved only by assumptions",
+    "actor": "product-owner@example.com",
+    "rationale": "auto-approved under scripted policy",
+    "refs": [
+     "requirements_spec@pending"
+    ],
+    "at": 1790806701.9272265
+   },
+   {
+    "id": "D012",
+    "node": "intake",
+    "kind": "assumption",
+    "summary": "Q1: assumed 'block harmful destinations via an operator-managed domain denylist'",
+    "actor": "requirements_analyst",
+    "rationale": "What threat does 'safer' address?",
+    "refs": [
+     "requirements_spec@v2"
+    ],
+    "at": 1790806701.9274032
+   },
+   {
+    "id": "D013",
+    "node": "intake",
+    "kind": "assumption",
+    "summary": "Q3: assumed 'no: aggregate unique-visitor counts from a pseudonymous daily hash; no personal profiles'",
+    "actor": "requirements_analyst",
+    "rationale": "Does 'see who is clicking' mean identifying individuals?",
+    "refs": [
+     "requirements_spec@v2"
+    ],
+    "at": 1790806701.9274063
+   },
+   {
+    "id": "D014",
+    "node": "intake",
+    "kind": "assumption",
+    "summary": "Q4: assumed 'latency (read together with 'without slowing redirects'); no deadline was given'",
+    "actor": "requirements_analyst",
+    "rationale": "Is 'quickly' a delivery deadline or a latency requirement?",
+    "refs": [
+     "requirements_spec@v2"
+    ],
+    "at": 1790806701.9274075
+   },
+   {
+    "id": "D015",
+    "node": "intake",
+    "kind": "assumption",
+    "summary": "Q5: assumed 'no new I/O on the redirect path; one HMAC (~microseconds); p95 unchanged'",
+    "actor": "requirements_analyst",
+    "rationale": "What latency budget must redirects keep?",
+    "refs": [
+     "requirements_spec@v2"
+    ],
+    "at": 1790806701.9274094
+   },
+   {
+    "id": "D016",
+    "node": "intake",
+    "kind": "assumption",
+    "summary": "Q6: assumed '90 days (policy maximum)'",
+    "actor": "requirements_analyst",
+    "rationale": "How long may visitor hashes be kept?",
+    "refs": [
+     "requirements_spec@v2"
+    ],
+    "at": 1790806701.9274116
+   },
+   {
+    "id": "D017",
+    "node": "intake",
+    "kind": "replan",
+    "summary": "'requirements_spec' changed; invalidating ['codebase_analysis', 'test_plan']",
+    "actor": "orchestrator",
+    "rationale": "downstream work was derived from a superseded artifact version",
+    "refs": [],
+    "at": 1790806701.927515
+   },
+   {
+    "id": "D018",
+    "node": "design",
+    "kind": "approval",
+    "summary": "approve: high-impact change: pii, high-impact change: public_api_change, high-impact change: schema_change",
+    "actor": "product-owner@example.com",
+    "rationale": "Design approved after scope clarification.",
+    "refs": [
+     "design@pending"
+    ],
+    "at": 1790806701.9609582
+   },
+   {
+    "id": "D019",
+    "node": "design",
+    "kind": "design_choice",
+    "summary": "Meaning of 'who is clicking': Aggregate unique visitors from a pseudonymous daily hash",
+    "actor": "architect",
+    "rationale": "Answers the marketing question (reach) without processing identities; keeps the change inside privacy policy.",
+    "refs": [
+     "design@v1"
+    ],
+    "at": 1790806701.9610674
+   },
+   {
+    "id": "D020",
+    "node": "design",
+    "kind": "design_choice",
+    "summary": "Visitor hash construction: HMAC-SHA256 with a server secret, day in the input",
+    "actor": "architect",
+    "rationale": "Unkeyed hashes of IPv4 are trivially brute-forced; the day component prevents cross-day tracking.",
+    "refs": [
+     "design@v1"
+    ],
+    "at": 1790806701.96107
+   },
+   {
+    "id": "D021",
+    "node": "design",
+    "kind": "design_choice",
+    "summary": "Denylist source: Operator-managed config list with parent-domain matching",
+    "actor": "architect",
+    "rationale": "No new network dependency on the redirect path; deterministic; feeds can populate it later.",
+    "refs": [
+     "design@v1"
+    ],
+    "at": 1790806701.961072
+   },
+   {
+    "id": "D022",
+    "node": "privacy_review",
+    "kind": "approval",
+    "summary": "approve: high-impact change: pii",
+    "actor": "product-owner@example.com",
+    "rationale": "auto-approved under scripted policy",
+    "refs": [
+     "privacy_review@pending"
+    ],
+    "at": 1790806701.9660203
+   },
+   {
+    "id": "D023",
+    "node": "implement",
+    "kind": "approval",
+    "summary": "approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/config.py, change to protected path: shortener/db.py",
+    "actor": "product-owner@example.com",
+    "rationale": "auto-approved under scripted policy",
+    "refs": [
+     "change_set@pending"
+    ],
+    "at": 1790806701.9862342
+   },
+   {
+    "id": "D024",
+    "node": "release_readiness",
+    "kind": "approval",
+    "summary": "approve: 'release_readiness' always requires human sign-off",
+    "actor": "product-owner@example.com",
+    "rationale": "auto-approved under scripted policy",
+    "refs": [
+     "release_readiness@pending"
+    ],
+    "at": 1790806704.3551543
+   }
+  ],
+  "feedback": {}
+ }
+}

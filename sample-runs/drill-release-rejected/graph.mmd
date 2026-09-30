@@ -1,0 +1,24 @@
+flowchart LR
+    intake["intake<br/><small>requirements</small><br/><small>[succeeded]</small>"]
+    codebase_analysis["codebase_analysis<br/><small>analysis</small><br/><small>[succeeded]</small>"]
+    test_plan["test_plan<br/><small>test-design</small><br/><small>[succeeded]</small>"]
+    design["design<br/><small>architecture</small><br/><small>[succeeded]</small>"]
+    implement["implement<br/><small>implementation</small><br/><small>[succeeded]</small>"]
+    docs["docs<br/><small>documentation</small><br/><small>[succeeded]</small>"]
+    run_tests["run_tests<br/><small>testing</small><br/><small>[succeeded]</small>"]
+    security_scan["security_scan<br/><small>security</small><br/><small>[succeeded]</small>"]
+    release_readiness["release_readiness<br/><small>release</small><br/><small>[failed]</small>"]
+    intake --> codebase_analysis
+    intake --> test_plan
+    intake --> design
+    codebase_analysis --> design
+    design --> implement
+    test_plan --> implement
+    implement --> run_tests
+    run_tests -. rework .-> implement
+    implement --> security_scan
+    security_scan -. rework .-> implement
+    implement --> docs
+    run_tests --> release_readiness
+    security_scan --> release_readiness
+    docs --> release_readiness

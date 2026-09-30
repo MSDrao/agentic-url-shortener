@@ -1,0 +1,63 @@
+# Governance policy for the agentic SDLC orchestrator.
+# Changing this file changes agent autonomy without touching code.
+
+budgets:
+  max_total_attempts: 40        # safe-stop if exceeded (runaway-loop guard)
+  max_wall_seconds: 900
+  max_rework_cycles: 2          # test/security failure -> rollback + re-implement, at most N times
+  test_timeout_seconds: 300
+
+autonomy:
+  # Only these agents may propose file writes, and only inside these globs.
+  # Any write outside scope is a CRITICAL violation -> nothing committed, safe-stop.
+  write_scopes:
+    implementer: ["shortener/*.py", "tests/*.py", "pytest.ini", "requirements.txt"]
+    implementer_offline: ["shortener/*.py", "tests/*.py", "pytest.ini", "requirements.txt"]
+    tech_writer: ["docs/*.md", "docs/adr/*.md", "CHANGELOG.md"]
+  max_files_per_commit: 40
+
+approvals:
+  always: [release_readiness]            # humans own the final release decision
+  on_impact: [schema_change, public_api_change, dependency_change, pii]
+  on_unresolved_ambiguity: true          # assumptions must be signed off
+  rollback_on_reject: [release_readiness]
+  max_revision_rounds: 3
+
+change_control:
+  protected_paths: ["shortener/db.py", "shortener/config.py"]
+  schema_paths: ["shortener/db.py"]
+  api_contract_paths: ["shortener/schemas.py", "shortener/api.py"]
+  dependency_paths: ["requirements.txt", "pyproject.toml"]
+  allow_deletes: false
+
+security:
+  block_at_or_above: high
+  forbidden_calls: [eval, exec, os.system, pickle.loads, marshal.loads, yaml.load, __import__]
+  secret_patterns:
+    - "(?i)(api[_-]?key|secret|password|token)\\s*=\\s*['\"][A-Za-z0-9/+_\\-]{12,}['\"]"
+    - "AKIA[0-9A-Z]{16}"
+    - "-----BEGIN (RSA |EC )?PRIVATE KEY-----"
+    - "sk-[A-Za-z0-9]{20,}"
+  required_security_tests:
+    - test_invalid_url_rejected
+    - test_rejected_urls
+    - test_api_key_enforced_on_writes_when_configured
+
+compliance:
+  # Regexes over the raw requirement that indicate personal data is in play.
+  pii_signals:
+    - "\\bwho\\b[^.]*\\bclick"
+    - "\\bidentif(y|ies|ication)\\b"
+    - "\\bip address(es)?\\b"
+    - "\\bemail\\b"
+    - "\\b(geo)?location\\b"
+    - "\\btrack (users|people|visitors)\\b"
+  pii_fields: [ip, ip_address, client_ip, remote_addr, email, phone, full_name, "raw_*"]
+  require_privacy_review_on_pii: true
+  max_retention_days: 90
+
+replanning:
+  allowed_templates: [privacy_review]
+
+quality:
+  min_coverage: 85

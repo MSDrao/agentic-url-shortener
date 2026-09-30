@@ -1,0 +1,1396 @@
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,14 @@
++# Changelog
++
++## [Unreleased] - 2026-09-30
++
++### URL shortener service v1
++
++- Create, read, deactivate short links (custom alias, expiry)
++- 307 redirect with click recording; stats by day and referrer
++- API-key protection for writes, per-client rate limiting, unsafe-URL rejection
++- Health/readiness endpoints, request IDs, versioned migrations
++
++Assumptions (not confirmed by stakeholders):
++- Q1: 307: browsers do not cache it, so every click reaches the service and is counted
++- Q2: SQLite behind a repository interface; Postgres is a later, local swap
+--- /dev/null
++++ b/docs/API.md
+@@ -0,0 +1,56 @@
++# URL Shortener API reference
++
++Version 1.0.0. Generated from the OpenAPI contract - do not edit by hand.
++
++## `GET /healthz`
++
++Tags: ops
++
++Responses: `200`
++
++## `GET /readyz`
++
++Tags: ops
++
++Responses: `200`
++
++## `POST /api/v1/links`
++
++Tags: links
++Parameters: `x-api-key` (header)
++
++Request body:
++- `url` (string, required) Destination http(s) URL
++- `custom_alias` (string/null) Optional vanity code: 3-32 chars [A-Za-z0-9_-]
++- `expires_at` (string/null) Optional expiry (ISO-8601). Naive times are UTC.
++
++Responses: `201`, `401`, `404`, `409`, `410`, `422`, `429`
++
++## `GET /api/v1/links/{code}`
++
++Tags: links
++Parameters: `code` (path)
++
++Responses: `200`, `401`, `404`, `409`, `410`, `422`, `429`
++
++## `DELETE /api/v1/links/{code}`
++
++Tags: links
++Parameters: `code` (path), `x-api-key` (header)
++
++Responses: `204`, `401`, `404`, `409`, `410`, `422`, `429`
++
++## `GET /api/v1/links/{code}/stats`
++
++Tags: analytics
++Parameters: `code` (path)
++
++Responses: `200`, `401`, `404`, `409`, `410`, `422`, `429`
++
++## `GET /{code}`
++
++Tags: redirect
++Parameters: `code` (path)
++
++Responses: `200`, `401`, `404`, `409`, `410`, `422`, `429`
++
+--- /dev/null
++++ b/docs/adr/ADR-001-redirect-status-code.md
+@@ -0,0 +1,13 @@
++# ADR-001: Redirect status code
++
++Status: accepted
++
++## Decision
++307 Temporary Redirect with Cache-Control max-age=0
++
++## Rationale
++301 is cached by browsers, so repeat clicks bypass the service and analytics undercount; 307 also preserves the method.
++
++## Alternatives
++- 301 Moved Permanently (cached, breaks analytics)
++- 302 Found (legacy method-change ambiguity)
+--- /dev/null
++++ b/docs/adr/ADR-002-short-code-generation.md
+@@ -0,0 +1,13 @@
++# ADR-002: Short code generation
++
++Status: accepted
++
++## Decision
++Cryptographically random base62, length 7, bounded retry on collision
++
++## Rationale
++Non-enumerable (codes cannot be walked), no coordination between replicas, 62^7 ~ 3.5e12 space.
++
++## Alternatives
++- Auto-increment id in base62 (enumerable, leaks volume)
++- Hash of URL (same URL -> same code prevents per-campaign links)
+--- /dev/null
++++ b/docs/adr/ADR-003-storage.md
+@@ -0,0 +1,13 @@
++# ADR-003: Storage
++
++Status: accepted
++
++## Decision
++SQLite with versioned forward-only migrations behind a repository
++
++## Rationale
++Zero-ops for v1; the repository boundary keeps a Postgres migration local to one module.
++
++## Alternatives
++- Postgres now (ops cost before product fit)
++- In-memory map (no durability)
+--- /dev/null
++++ b/docs/adr/ADR-004-click-recording.md
+@@ -0,0 +1,12 @@
++# ADR-004: Click recording
++
++Status: accepted
++
++## Decision
++Synchronous insert on the redirect path
++
++## Rationale
++Simplest correct option; sub-millisecond at v1 scale; no loss-on-crash semantics to explain.
++
++## Alternatives
++- Async queue with batch writes (better p99 at scale, adds delivery semantics)
+--- /dev/null
++++ b/pytest.ini
+@@ -0,0 +1,4 @@
++[pytest]
++testpaths = tests
++pythonpath = .
++addopts = -q
+--- /dev/null
++++ b/requirements.txt
+@@ -0,0 +1,5 @@
++fastapi>=0.110
++uvicorn>=0.29
++httpx>=0.27
++pytest>=8.0
++pytest-cov>=5.0
+--- /dev/null
++++ b/shortener/__init__.py
+@@ -0,0 +1,3 @@
++"""URL shortener service: core link APIs, redirect, click analytics."""
++
++__version__ = "1.0.0"
+--- /dev/null
++++ b/shortener/api.py
+@@ -0,0 +1,194 @@
++"""HTTP layer: routing, auth, rate limiting, error mapping, request tracing."""
++
++from __future__ import annotations
++
++import hmac
++import logging
++import time
++import uuid
++
++from fastapi import Depends, FastAPI, Header, Request, Response, status
++from fastapi.responses import JSONResponse, RedirectResponse
++
++from . import __version__
++from .config import Settings
++from .db import Database
++from .errors import DomainError
++from .models import Link
++from .ratelimit import TokenBucketLimiter
++from .repository import LinkRepository
++from .schemas import (
++    CreateLinkRequest,
++    DayCount,
++    ErrorResponse,
++    LinkResponse,
++    ReferrerCount,
++    StatsResponse,
++)
++from .service import LinkService
++
++logger = logging.getLogger("shortener")
++
++ERROR_RESPONSES = {
++    401: {"model": ErrorResponse},
++    404: {"model": ErrorResponse},
++    409: {"model": ErrorResponse},
++    410: {"model": ErrorResponse},
++    422: {"model": ErrorResponse},
++    429: {"model": ErrorResponse},
++}
++
++
++class _HTTPError(Exception):
++    def __init__(self, status_code: int, detail: str, headers: dict[str, str] | None = None):
++        self.status_code = status_code
++        self.detail = detail
++        self.headers = headers
++
++
++def _to_response(link: Link, settings: Settings) -> LinkResponse:
++    return LinkResponse(
++        code=link.code,
++        short_url=f"{settings.base_url}/{link.code}",
++        target_url=link.target_url,
++        created_at=link.created_at,
++        expires_at=link.expires_at,
++        is_active=link.is_active,
++    )
++
++
++def create_app(settings: Settings | None = None, service: LinkService | None = None) -> FastAPI:
++    settings = settings or Settings.from_env()
++    if service is None:
++        db = Database(settings.database_path)
++        db.migrate()
++        service = LinkService(LinkRepository(db), settings)
++    limiter = TokenBucketLimiter(settings.rate_limit_per_minute)
++
++    app = FastAPI(title="URL Shortener", version=__version__)
++    app.state.settings = settings
++    app.state.service = service
++
++    @app.middleware("http")
++    async def request_context(request: Request, call_next):
++        request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
++        request.state.request_id = request_id
++        started = time.perf_counter()
++        response = await call_next(request)
++        response.headers["X-Request-ID"] = request_id
++        logger.info(
++            "request",
++            extra={
++                "request_id": request_id,
++                "method": request.method,
++                "path": request.url.path,
++                "status": response.status_code,
++                "duration_ms": round((time.perf_counter() - started) * 1000, 2),
++            },
++        )
++        return response
++
++    @app.exception_handler(DomainError)
++    async def domain_error_handler(request: Request, exc: DomainError):
++        return JSONResponse(
++            status_code=exc.status_code,
++            content={"detail": exc.message, "request_id": getattr(request.state, "request_id", None)},
++        )
++
++    def require_api_key(x_api_key: str | None = Header(default=None)) -> None:
++        if settings.api_key is None:
++            return
++        if x_api_key is None or not hmac.compare_digest(x_api_key, settings.api_key):
++            raise _HTTPError(401, "missing or invalid API key")
++
++    def rate_limited(request: Request) -> None:
++        client = request.client.host if request.client else "unknown"
++        allowed, retry_after = limiter.allow(client)
++        if not allowed:
++            raise _HTTPError(429, "rate limit exceeded", {"Retry-After": str(int(retry_after) + 1)})
++
++    @app.exception_handler(_HTTPError)
++    async def http_error_handler(request: Request, exc: _HTTPError):
++        return JSONResponse(
++            status_code=exc.status_code,
++            content={"detail": exc.detail, "request_id": getattr(request.state, "request_id", None)},
++            headers=exc.headers,
++        )
++
++    @app.get("/healthz", tags=["ops"])
++    def healthz() -> dict:
++        return {"status": "ok", "version": __version__}
++
++    @app.get("/readyz", tags=["ops"])
++    def readyz() -> JSONResponse:
++        try:
++            service.repo.db.ping()
++        except Exception:  # pragma: no cover - exercised only on a broken DB
++            logger.exception("readiness check failed")
++            return JSONResponse(status_code=503, content={"status": "unavailable"})
++        return JSONResponse(content={"status": "ready"})
++
++    @app.post(
++        "/api/v1/links",
++        status_code=status.HTTP_201_CREATED,
++        response_model=LinkResponse,
++        responses=ERROR_RESPONSES,
++        tags=["links"],
++        dependencies=[Depends(require_api_key), Depends(rate_limited)],
++    )
++    def create_link(body: CreateLinkRequest, response: Response) -> LinkResponse:
++        link = service.create_link(body.url, body.custom_alias, body.expires_at)
++        response.headers["Location"] = f"/api/v1/links/{link.code}"
++        return _to_response(link, settings)
++
++    @app.get(
++        "/api/v1/links/{code}",
++        response_model=LinkResponse,
++        responses=ERROR_RESPONSES,
++        tags=["links"],
++    )
++    def get_link(code: str) -> LinkResponse:
++        return _to_response(service.get_link(code), settings)
++
++    @app.get(
++        "/api/v1/links/{code}/stats",
++        response_model=StatsResponse,
++        responses=ERROR_RESPONSES,
++        tags=["analytics"],
++    )
++    def get_stats(code: str) -> StatsResponse:
++        link, stats = service.get_stats(code)
++        return StatsResponse(
++            code=link.code,
++            total_clicks=stats.total_clicks,
++            clicks_by_day=[DayCount(day=d, clicks=n) for d, n in stats.clicks_by_day],
++            top_referrers=[ReferrerCount(referrer=r, clicks=n) for r, n in stats.top_referrers],
++        )
++
++    @app.delete(
++        "/api/v1/links/{code}",
++        status_code=status.HTTP_204_NO_CONTENT,
++        responses=ERROR_RESPONSES,
++        tags=["links"],
++        dependencies=[Depends(require_api_key)],
++    )
++    def delete_link(code: str) -> Response:
++        service.delete_link(code)
++        return Response(status_code=status.HTTP_204_NO_CONTENT)
++
++    # Registered last so it never shadows the API/ops routes above.
++    @app.get("/{code}", responses=ERROR_RESPONSES, tags=["redirect"])
++    def redirect(code: str, request: Request) -> RedirectResponse:
++        link = service.resolve(
++            code,
++            referrer=request.headers.get("referer"),
++            user_agent=request.headers.get("user-agent"),
++        )
++        # 307 (not 301) so browsers do not cache the hop and every click is counted.
++        return RedirectResponse(
++            link.target_url,
++            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
++            headers={"Cache-Control": "private, max-age=0"},
++        )
++
++    return app
+--- /dev/null
++++ b/shortener/codes.py
+@@ -0,0 +1,30 @@
++"""Short-code generation and custom-alias validation."""
++
++from __future__ import annotations
++
++import re
++import secrets
++import string
++
++ALPHABET = string.ascii_letters + string.digits  # base62
++ALIAS_RE = re.compile(r"^[A-Za-z0-9_-]{3,32}$")
++
++# Paths the service owns; a code must never shadow them.
++RESERVED_CODES = frozenset(
++    {"api", "healthz", "readyz", "docs", "redoc", "openapi.json", "static", "admin"}
++)
++
++
++def generate_code(length: int) -> str:
++    """Cryptographically random base62 code (62^7 ~= 3.5e12 space at length 7)."""
++    if length < 4:
++        raise ValueError("code length must be >= 4")
++    return "".join(secrets.choice(ALPHABET) for _ in range(length))
++
++
++def validate_alias(alias: str, extra_reserved: frozenset[str] = frozenset()) -> str:
++    if not ALIAS_RE.fullmatch(alias):
++        raise ValueError("alias must be 3-32 chars of letters, digits, '_' or '-'")
++    if alias.lower() in RESERVED_CODES or alias.lower() in extra_reserved:
++        raise ValueError(f"alias '{alias}' is reserved")
++    return alias
+--- /dev/null
++++ b/shortener/config.py
+@@ -0,0 +1,42 @@
++"""Runtime configuration, read from environment variables (12-factor)."""
++
++from __future__ import annotations
++
++import os
++from dataclasses import dataclass, field
++
++
++def _bool(value: str | None, default: bool) -> bool:
++    if value is None:
++        return default
++    return value.strip().lower() in {"1", "true", "yes", "on"}
++
++
++@dataclass(frozen=True)
++class Settings:
++    database_path: str = "shortener.db"
++    base_url: str = "http://localhost:8000"
++    # When set, write operations (create/delete) require header X-API-Key.
++    api_key: str | None = None
++    code_length: int = 7
++    max_code_attempts: int = 5
++    max_url_length: int = 2048
++    rate_limit_per_minute: int = 60
++    # Private/loopback targets are rejected by default (SSRF / internal-network abuse).
++    allow_private_targets: bool = False
++    extra_reserved_codes: frozenset[str] = field(default_factory=frozenset)
++
++    @classmethod
++    def from_env(cls) -> "Settings":
++        env = os.environ
++        return cls(
++            database_path=env.get("SHORTENER_DB_PATH", cls.database_path),
++            base_url=env.get("SHORTENER_BASE_URL", cls.base_url).rstrip("/"),
++            api_key=env.get("SHORTENER_API_KEY") or None,
++            code_length=int(env.get("SHORTENER_CODE_LENGTH", cls.code_length)),
++            max_url_length=int(env.get("SHORTENER_MAX_URL_LENGTH", cls.max_url_length)),
++            rate_limit_per_minute=int(
++                env.get("SHORTENER_RATE_LIMIT_PER_MINUTE", cls.rate_limit_per_minute)
++            ),
++            allow_private_targets=_bool(env.get("SHORTENER_ALLOW_PRIVATE_TARGETS"), False),
++        )
+--- /dev/null
++++ b/shortener/db.py
+@@ -0,0 +1,106 @@
++"""SQLite access with forward-only, versioned migrations.
++
++Migrations are append-only: never edit an applied migration, add a new one.
++Each migration runs in its own transaction and records its version, so a
++failed migration leaves the schema at the previous version.
++"""
++
++from __future__ import annotations
++
++import sqlite3
++import threading
++from collections.abc import Iterator
++from contextlib import contextmanager
++
++MIGRATIONS: list[tuple[int, list[str]]] = [
++    (
++        1,
++        [
++            """
++            CREATE TABLE links (
++                id          INTEGER PRIMARY KEY AUTOINCREMENT,
++                code        TEXT    NOT NULL UNIQUE,
++                target_url  TEXT    NOT NULL,
++                created_at  TEXT    NOT NULL,
++                expires_at  TEXT,
++                is_active   INTEGER NOT NULL DEFAULT 1
++            )
++            """,
++            """
++            CREATE TABLE clicks (
++                id          INTEGER PRIMARY KEY AUTOINCREMENT,
++                link_id     INTEGER NOT NULL REFERENCES links(id) ON DELETE CASCADE,
++                clicked_at  TEXT    NOT NULL,
++                referrer    TEXT,
++                user_agent  TEXT
++            )
++            """,
++            "CREATE INDEX idx_clicks_link_time ON clicks(link_id, clicked_at)",
++        ],
++    ),
++]
++
++
++class Database:
++    def __init__(self, path: str):
++        self.path = path
++        self._lock = threading.Lock()  # serialises writers; SQLite allows one writer
++
++    def _connect(self) -> sqlite3.Connection:
++        conn = sqlite3.connect(self.path, timeout=5.0, check_same_thread=False)
++        conn.row_factory = sqlite3.Row
++        conn.execute("PRAGMA foreign_keys = ON")
++        return conn
++
++    @contextmanager
++    def read(self) -> Iterator[sqlite3.Connection]:
++        conn = self._connect()
++        try:
++            yield conn
++        finally:
++            conn.close()
++
++    @contextmanager
++    def write(self) -> Iterator[sqlite3.Connection]:
++        with self._lock:
++            conn = self._connect()
++            try:
++                yield conn
++                conn.commit()
++            except Exception:
++                conn.rollback()
++                raise
++            finally:
++                conn.close()
++
++    def schema_version(self) -> int:
++        with self.read() as conn:
++            conn.execute(
++                "CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL)"
++            )
++            row = conn.execute("SELECT MAX(version) AS v FROM schema_version").fetchone()
++            return int(row["v"] or 0)
++
++    def migrate(self) -> int:
++        with self.write() as conn:
++            conn.execute(
++                "CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL)"
++            )
++        if self.path != ":memory:":
++            with self.write() as conn:
++                conn.execute("PRAGMA journal_mode = WAL")
++        current = self.schema_version()
++        for version, statements in MIGRATIONS:
++            if version <= current:
++                continue
++            with self.write() as conn:
++                for sql in statements:
++                    conn.execute(sql)
++                conn.execute("INSERT INTO schema_version (version) VALUES (?)", (version,))
++            current = version
++        return current
++
++    def ping(self) -> bool:
++        with self.read() as conn:
++            conn.execute("SELECT 1").fetchone()
++        return True
+--- /dev/null
++++ b/shortener/errors.py
+@@ -0,0 +1,29 @@
++"""Domain errors. The API layer maps these to HTTP status codes."""
++
++
++class DomainError(Exception):
++    status_code = 400
++
++    def __init__(self, message: str):
++        super().__init__(message)
++        self.message = message
++
++
++class InvalidInput(DomainError):
++    status_code = 422
++
++
++class NotFound(DomainError):
++    status_code = 404
++
++
++class Gone(DomainError):
++    status_code = 410
++
++
++class Conflict(DomainError):
++    status_code = 409
++
++
++class CodeSpaceExhausted(DomainError):
++    status_code = 503
+--- /dev/null
++++ b/shortener/main.py
+@@ -0,0 +1,27 @@
++"""ASGI entrypoint: `uvicorn shortener.main:app`."""
++
++import json
++import logging
++
++from .api import create_app
++
++_STD = set(vars(logging.makeLogRecord({})))
++
++
++class JsonFormatter(logging.Formatter):
++    """One JSON object per line, including structured `extra=` fields (request_id, status, ...)."""
++
++    def format(self, record: logging.LogRecord) -> str:
++        payload = {"ts": self.formatTime(record), "level": record.levelname, "logger": record.name,
++                   "msg": record.getMessage()}
++        payload.update({k: v for k, v in vars(record).items() if k not in _STD and k != "message"})
++        if record.exc_info:
++            payload["exc"] = self.formatException(record.exc_info)
++        return json.dumps(payload, default=str)
++
++
++_handler = logging.StreamHandler()
++_handler.setFormatter(JsonFormatter())
++logging.basicConfig(level=logging.INFO, handlers=[_handler])
++
++app = create_app()
+--- /dev/null
++++ b/shortener/models.py
+@@ -0,0 +1,26 @@
++"""Internal domain models (persistence-agnostic)."""
++
++from __future__ import annotations
++
++from dataclasses import dataclass
++from datetime import datetime
++
++
++@dataclass(frozen=True)
++class Link:
++    id: int
++    code: str
++    target_url: str
++    created_at: datetime
++    expires_at: datetime | None
++    is_active: bool
++
++    def is_expired(self, now: datetime) -> bool:
++        return self.expires_at is not None and now >= self.expires_at
++
++
++@dataclass(frozen=True)
++class LinkStats:
++    total_clicks: int
++    clicks_by_day: list[tuple[str, int]]
++    top_referrers: list[tuple[str, int]]
+--- /dev/null
++++ b/shortener/ratelimit.py
+@@ -0,0 +1,47 @@
++"""In-process token-bucket rate limiter.
++
++Per-instance only: with N replicas the effective limit is N x the configured
++rate. A shared store (e.g. Redis) is the production upgrade path.
++"""
++
++from __future__ import annotations
++
++import threading
++import time
++from collections import OrderedDict
++from collections.abc import Callable
++
++
++class TokenBucketLimiter:
++    def __init__(
++        self,
++        rate_per_minute: int,
++        burst: int | None = None,
++        max_keys: int = 10_000,
++        clock: Callable[[], float] = time.monotonic,
++    ):
++        if rate_per_minute <= 0:
++            raise ValueError("rate_per_minute must be positive")
++        self.rate = rate_per_minute / 60.0
++        self.capacity = float(burst or rate_per_minute)
++        self.max_keys = max_keys
++        self.clock = clock
++        self._buckets: OrderedDict[str, tuple[float, float]] = OrderedDict()
++        self._lock = threading.Lock()
++
++    def allow(self, key: str) -> tuple[bool, float]:
++        """Return (allowed, retry_after_seconds)."""
++        now = self.clock()
++        with self._lock:
++            tokens, last = self._buckets.get(key, (self.capacity, now))
++            tokens = min(self.capacity, tokens + (now - last) * self.rate)
++            if tokens >= 1.0:
++                self._buckets[key] = (tokens - 1.0, now)
++                allowed, retry_after = True, 0.0
++            else:
++                self._buckets[key] = (tokens, now)
++                allowed, retry_after = False, (1.0 - tokens) / self.rate
++            self._buckets.move_to_end(key)
++            while len(self._buckets) > self.max_keys:  # bound memory (LRU eviction)
++                self._buckets.popitem(last=False)
++        return allowed, retry_after
+--- /dev/null
++++ b/shortener/repository.py
+@@ -0,0 +1,121 @@
++"""Persistence for links and click events. All SQL lives here."""
++
++from __future__ import annotations
++
++import sqlite3
++from datetime import datetime
++
++from .db import Database
++from .errors import Conflict
++from .models import Link, LinkStats
++
++LINK_COLUMNS = "id, code, target_url, created_at, expires_at, is_active"
++
++
++def _dt(value: str | None) -> datetime | None:
++    return datetime.fromisoformat(value) if value else None
++
++
++def _row_to_link(row: sqlite3.Row) -> Link:
++    return Link(
++        id=row["id"],
++        code=row["code"],
++        target_url=row["target_url"],
++        created_at=datetime.fromisoformat(row["created_at"]),
++        expires_at=_dt(row["expires_at"]),
++        is_active=bool(row["is_active"]),
++    )
++
++
++class LinkRepository:
++    def __init__(self, db: Database):
++        self.db = db
++
++    def create(
++        self,
++        code: str,
++        target_url: str,
++        created_at: datetime,
++        expires_at: datetime | None,
++    ) -> Link:
++        try:
++            with self.db.write() as conn:
++                cur = conn.execute(
++                    "INSERT INTO links (code, target_url, created_at, expires_at) "
++                    "VALUES (?, ?, ?, ?)",
++                    (
++                        code,
++                        target_url,
++                        created_at.isoformat(),
++                        expires_at.isoformat() if expires_at else None,
++                    ),
++                )
++                link_id = cur.lastrowid
++        except sqlite3.IntegrityError as exc:
++            raise Conflict(f"code '{code}' is already in use") from exc
++        link = self.get_by_id(link_id)
++        assert link is not None
++        return link
++
++    def get_by_id(self, link_id: int) -> Link | None:
++        with self.db.read() as conn:
++            row = conn.execute(
++                f"SELECT {LINK_COLUMNS} FROM links WHERE id = ?", (link_id,)
++            ).fetchone()
++        return _row_to_link(row) if row else None
++
++    def get_by_code(self, code: str) -> Link | None:
++        with self.db.read() as conn:
++            row = conn.execute(
++                f"SELECT {LINK_COLUMNS} FROM links WHERE code = ?", (code,)
++            ).fetchone()
++        return _row_to_link(row) if row else None
++
++    def deactivate(self, code: str) -> bool:
++        with self.db.write() as conn:
++            cur = conn.execute(
++                "UPDATE links SET is_active = 0 WHERE code = ? AND is_active = 1", (code,)
++            )
++            return cur.rowcount > 0
++
++    def record_click(
++        self,
++        link_id: int,
++        clicked_at: datetime,
++        referrer: str | None,
++        user_agent: str | None,
++    ) -> None:
++        with self.db.write() as conn:
++            conn.execute(
++                "INSERT INTO clicks (link_id, clicked_at, referrer, user_agent) "
++                "VALUES (?, ?, ?, ?)",
++                (link_id, clicked_at.isoformat(), referrer, user_agent),
++            )
++
++    def count_clicks(self, link_id: int) -> int:
++        with self.db.read() as conn:
++            row = conn.execute(
++                "SELECT COUNT(*) AS n FROM clicks WHERE link_id = ?", (link_id,)
++            ).fetchone()
++        return int(row["n"])
++
++    def stats(self, link_id: int, top_n: int = 5) -> LinkStats:
++        with self.db.read() as conn:
++            total = conn.execute(
++                "SELECT COUNT(*) AS n FROM clicks WHERE link_id = ?", (link_id,)
++            ).fetchone()["n"]
++            by_day = conn.execute(
++                "SELECT substr(clicked_at, 1, 10) AS day, COUNT(*) AS n FROM clicks "
++                "WHERE link_id = ? GROUP BY day ORDER BY day",
++                (link_id,),
++            ).fetchall()
++            referrers = conn.execute(
++                "SELECT COALESCE(referrer, '(direct)') AS ref, COUNT(*) AS n FROM clicks "
++                "WHERE link_id = ? GROUP BY ref ORDER BY n DESC, ref LIMIT ?",
++                (link_id, top_n),
++            ).fetchall()
++        return LinkStats(
++            total_clicks=int(total),
++            clicks_by_day=[(r["day"], int(r["n"])) for r in by_day],
++            top_referrers=[(r["ref"], int(r["n"])) for r in referrers],
++        )
+--- /dev/null
++++ b/shortener/schemas.py
+@@ -0,0 +1,50 @@
++"""Public API contract (request/response models). Changes here are API changes."""
++
++from __future__ import annotations
++
++from datetime import datetime
++
++from pydantic import BaseModel, ConfigDict, Field
++
++
++class CreateLinkRequest(BaseModel):
++    model_config = ConfigDict(extra="forbid")
++
++    url: str = Field(..., description="Destination http(s) URL", max_length=4096)
++    custom_alias: str | None = Field(
++        default=None, description="Optional vanity code: 3-32 chars [A-Za-z0-9_-]"
++    )
++    expires_at: datetime | None = Field(
++        default=None, description="Optional expiry (ISO-8601). Naive times are UTC."
++    )
++
++
++class LinkResponse(BaseModel):
++    code: str
++    short_url: str
++    target_url: str
++    created_at: datetime
++    expires_at: datetime | None
++    is_active: bool
++
++
++class DayCount(BaseModel):
++    day: str
++    clicks: int
++
++
++class ReferrerCount(BaseModel):
++    referrer: str
++    clicks: int
++
++
++class StatsResponse(BaseModel):
++    code: str
++    total_clicks: int
++    clicks_by_day: list[DayCount]
++    top_referrers: list[ReferrerCount]
++
++
++class ErrorResponse(BaseModel):
++    detail: str
++    request_id: str | None = None
+--- /dev/null
++++ b/shortener/service.py
+@@ -0,0 +1,91 @@
++"""Business logic. Framework-free so it can be unit tested without HTTP."""
++
++from __future__ import annotations
++
++from collections.abc import Callable
++from datetime import datetime, timezone
++
++from .codes import generate_code, validate_alias
++from .config import Settings
++from .errors import CodeSpaceExhausted, Conflict, Gone, InvalidInput, NotFound
++from .models import Link, LinkStats
++from .repository import LinkRepository
++from .validation import validate_target_url
++
++MAX_HEADER_LEN = 512
++
++
++def utcnow() -> datetime:
++    return datetime.now(timezone.utc)
++
++
++def _as_utc(value: datetime) -> datetime:
++    return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
++
++
++def _truncate(value: str | None) -> str | None:
++    return value[:MAX_HEADER_LEN] if value else None
++
++
++class LinkService:
++    def __init__(
++        self,
++        repo: LinkRepository,
++        settings: Settings,
++        clock: Callable[[], datetime] = utcnow,
++    ):
++        self.repo = repo
++        self.settings = settings
++        self.clock = clock
++
++    def create_link(
++        self,
++        url: str,
++        custom_alias: str | None = None,
++        expires_at: datetime | None = None,
++    ) -> Link:
++        target = validate_target_url(url, self.settings)
++        now = self.clock()
++        expiry = _as_utc(expires_at) if expires_at else None
++        if expiry is not None and expiry <= now:
++            raise InvalidInput("expires_at must be in the future")
++
++        if custom_alias is not None:
++            try:
++                code = validate_alias(custom_alias, self.settings.extra_reserved_codes)
++            except ValueError as exc:
++                raise InvalidInput(str(exc)) from exc
++            return self.repo.create(code, target, now, expiry)
++
++        for _ in range(self.settings.max_code_attempts):
++            code = generate_code(self.settings.code_length)
++            try:
++                return self.repo.create(code, target, now, expiry)
++            except Conflict:
++                continue  # random collision: retry with a fresh code
++        raise CodeSpaceExhausted("could not allocate a unique code; retry later")
++
++    def get_link(self, code: str) -> Link:
++        link = self.repo.get_by_code(code)
++        if link is None or not link.is_active:
++            raise NotFound(f"link '{code}' not found")
++        return link
++
++    def resolve(
++        self, code: str, referrer: str | None = None, user_agent: str | None = None
++    ) -> Link:
++        """Look up a link for redirect and record the click."""
++        link = self.get_link(code)
++        now = self.clock()
++        if link.is_expired(now):
++            raise Gone(f"link '{code}' has expired")
++        self.repo.record_click(link.id, now, _truncate(referrer), _truncate(user_agent))
++        return link
++
++    def get_stats(self, code: str) -> tuple[Link, LinkStats]:
++        link = self.get_link(code)
++        return link, self.repo.stats(link.id)
++
++    def delete_link(self, code: str) -> None:
++        if not self.repo.deactivate(code):
++            raise NotFound(f"link '{code}' not found")
+--- /dev/null
++++ b/shortener/validation.py
+@@ -0,0 +1,66 @@
++"""Target-URL validation.
++
++Guards against: non-web schemes (javascript:, data:, file:), credential-bearing
++URLs used for phishing (https://bank.com@evil.test), redirects into private
++networks, and redirect loops through the shortener itself.
++"""
++
++from __future__ import annotations
++
++import ipaddress
++from urllib.parse import urlsplit
++
++from .config import Settings
++from .errors import InvalidInput
++
++ALLOWED_SCHEMES = {"http", "https"}
++LOCAL_HOSTNAMES = {"localhost", "localhost.localdomain", "ip6-localhost"}
++
++
++def _is_private_host(host: str) -> bool:
++    if host in LOCAL_HOSTNAMES or host.endswith(".localhost"):
++        return True
++    try:
++        ip = ipaddress.ip_address(host)
++    except ValueError:
++        return False
++    return (
++        ip.is_private
++        or ip.is_loopback
++        or ip.is_link_local
++        or ip.is_reserved
++        or ip.is_multicast
++        or ip.is_unspecified
++    )
++
++
++def validate_target_url(url: str, settings: Settings) -> str:
++    candidate = (url or "").strip()
++    if not candidate:
++        raise InvalidInput("url is required")
++    if len(candidate) > settings.max_url_length:
++        raise InvalidInput(f"url exceeds {settings.max_url_length} characters")
++    if any(ch.isspace() or ord(ch) < 0x20 for ch in candidate):
++        raise InvalidInput("url must not contain whitespace or control characters")
++
++    parts = urlsplit(candidate)
++    if parts.scheme.lower() not in ALLOWED_SCHEMES:
++        raise InvalidInput("only http and https urls are allowed")
++    if not parts.netloc or not parts.hostname:
++        raise InvalidInput("url must include a host")
++    if parts.username is not None or parts.password is not None:
++        raise InvalidInput("urls with embedded credentials are not allowed")
++    try:
++        parts.port  # noqa: B018 - raises ValueError on an invalid port
++    except ValueError as exc:
++        raise InvalidInput("url has an invalid port") from exc
++
++    host = parts.hostname.lower().rstrip(".")
++    if not settings.allow_private_targets and _is_private_host(host):
++        raise InvalidInput("urls pointing at private or local addresses are not allowed")
++
++    own_host = (urlsplit(settings.base_url).hostname or "").lower()
++    if own_host and host == own_host:
++        raise InvalidInput("urls pointing at this shortener are not allowed")
++
++    return candidate
+--- /dev/null
++++ b/tests/conftest.py
+@@ -0,0 +1,59 @@
++from __future__ import annotations
++
++from datetime import datetime, timedelta, timezone
++
++import pytest
++from fastapi.testclient import TestClient
++
++from shortener.api import create_app
++from shortener.config import Settings
++from shortener.db import Database
++from shortener.repository import LinkRepository
++from shortener.service import LinkService
++
++
++class FakeClock:
++    def __init__(self, start: datetime):
++        self.now = start
++
++    def __call__(self) -> datetime:
++        return self.now
++
++    def advance(self, **kwargs) -> None:
++        self.now += timedelta(**kwargs)
++
++
++@pytest.fixture
++def clock() -> FakeClock:
++    return FakeClock(datetime(2026, 1, 15, 12, 0, tzinfo=timezone.utc))
++
++
++@pytest.fixture
++def settings(tmp_path) -> Settings:
++    return Settings(
++        database_path=str(tmp_path / "test.db"),
++        base_url="https://sho.rt",
++        rate_limit_per_minute=1000,
++    )
++
++
++@pytest.fixture
++def db(settings) -> Database:
++    database = Database(settings.database_path)
++    database.migrate()
++    return database
++
++
++@pytest.fixture
++def repo(db) -> LinkRepository:
++    return LinkRepository(db)
++
++
++@pytest.fixture
++def service(repo, settings, clock) -> LinkService:
++    return LinkService(repo, settings, clock=clock)
++
++
++@pytest.fixture
++def client(settings, service) -> TestClient:
++    return TestClient(create_app(settings, service=service), follow_redirects=False)
+--- /dev/null
++++ b/tests/test_api.py
+@@ -0,0 +1,138 @@
++"""Integration tests through the HTTP layer (real SQLite, fake clock)."""
++
++from __future__ import annotations
++
++from datetime import timedelta
++
++from fastapi.testclient import TestClient
++
++from shortener.api import create_app
++from shortener.config import Settings
++
++
++def _create(client, **body):
++    body.setdefault("url", "https://example.com/some/page?x=1")
++    return client.post("/api/v1/links", json=body)
++
++
++def test_health_and_readiness(client):
++    assert client.get("/healthz").json()["status"] == "ok"
++    assert client.get("/readyz").json() == {"status": "ready"}
++
++
++def test_create_link_returns_201_with_short_url(client):
++    resp = _create(client)
++    assert resp.status_code == 201
++    data = resp.json()
++    assert len(data["code"]) == 7
++    assert data["short_url"] == f"https://sho.rt/{data['code']}"
++    assert data["target_url"] == "https://example.com/some/page?x=1"
++    assert data["is_active"] is True
++    assert resp.headers["Location"] == f"/api/v1/links/{data['code']}"
++    assert "X-Request-ID" in resp.headers
++
++
++def test_redirect_is_307_and_counts_click(client):
++    code = _create(client).json()["code"]
++    resp = client.get(f"/{code}", headers={"Referer": "https://news.test/"})
++    assert resp.status_code == 307
++    assert resp.headers["location"] == "https://example.com/some/page?x=1"
++    assert "max-age=0" in resp.headers["cache-control"]
++    stats = client.get(f"/api/v1/links/{code}/stats").json()
++    assert stats["total_clicks"] == 1
++    assert stats["top_referrers"] == [{"referrer": "https://news.test/", "clicks": 1}]
++    assert stats["clicks_by_day"] == [{"day": "2026-01-15", "clicks": 1}]
++
++
++def test_stats_aggregate_by_day_and_referrer(client, clock):
++    code = _create(client).json()["code"]
++    client.get(f"/{code}")
++    client.get(f"/{code}", headers={"Referer": "https://a.test/"})
++    clock.advance(days=1)
++    client.get(f"/{code}", headers={"Referer": "https://a.test/"})
++    stats = client.get(f"/api/v1/links/{code}/stats").json()
++    assert stats["total_clicks"] == 3
++    assert stats["clicks_by_day"] == [
++        {"day": "2026-01-15", "clicks": 2},
++        {"day": "2026-01-16", "clicks": 1},
++    ]
++    assert stats["top_referrers"][0] == {"referrer": "https://a.test/", "clicks": 2}
++
++
++def test_custom_alias_and_conflict(client):
++    assert _create(client, custom_alias="launch-2026").status_code == 201
++    dup = _create(client, custom_alias="launch-2026")
++    assert dup.status_code == 409
++    assert "already in use" in dup.json()["detail"]
++
++
++def test_reserved_alias_rejected_case_insensitively(client):
++    for alias in ("api", "API", "Healthz"):
++        assert _create(client, custom_alias=alias).status_code == 422
++
++
++def test_invalid_url_rejected(client):
++    for url in ("javascript:alert(1)", "ftp://x.test/file", "http://127.0.0.1/admin", ""):
++        assert _create(client, url=url).status_code == 422, url
++
++
++def test_unknown_fields_rejected(client):
++    assert _create(client, owner="someone").status_code == 422
++
++
++def test_unknown_code_is_404(client):
++    resp = client.get("/nope123")
++    assert resp.status_code == 404
++    assert resp.json()["request_id"]
++
++
++def test_expired_link_returns_410_and_does_not_count(client, clock):
++    expiry = (clock.now + timedelta(hours=1)).isoformat()
++    code = _create(client, expires_at=expiry).json()["code"]
++    assert client.get(f"/{code}").status_code == 307
++    clock.advance(hours=2)
++    assert client.get(f"/{code}").status_code == 410
++    assert client.get(f"/api/v1/links/{code}/stats").json()["total_clicks"] == 1
++
++
++def test_expiry_in_past_rejected(client, clock):
++    past = (clock.now - timedelta(minutes=1)).isoformat()
++    assert _create(client, expires_at=past).status_code == 422
++
++
++def test_delete_deactivates_link(client):
++    code = _create(client).json()["code"]
++    assert client.delete(f"/api/v1/links/{code}").status_code == 204
++    assert client.get(f"/{code}").status_code == 404
++    assert client.delete(f"/api/v1/links/{code}").status_code == 404
++
++
++def test_api_key_enforced_on_writes_when_configured(tmp_path):
++    settings = Settings(database_path=str(tmp_path / "k.db"), api_key="s3cret")
++    client = TestClient(create_app(settings), follow_redirects=False)
++    body = {"url": "https://example.com"}
++    assert client.post("/api/v1/links", json=body).status_code == 401
++    assert client.post("/api/v1/links", json=body, headers={"X-API-Key": "wrong"}).status_code == 401
++    created = client.post("/api/v1/links", json=body, headers={"X-API-Key": "s3cret"})
++    assert created.status_code == 201
++    code = created.json()["code"]
++    # reads and redirects stay public
++    assert client.get(f"/api/v1/links/{code}").status_code == 200
++    assert client.delete(f"/api/v1/links/{code}").status_code == 401
++
++
++def test_rate_limit_returns_429_with_retry_after(tmp_path):
++    settings = Settings(database_path=str(tmp_path / "r.db"), rate_limit_per_minute=2)
++    client = TestClient(create_app(settings))
++    body = {"url": "https://example.com"}
++    assert client.post("/api/v1/links", json=body).status_code == 201
++    assert client.post("/api/v1/links", json=body).status_code == 201
++    limited = client.post("/api/v1/links", json=body)
++    assert limited.status_code == 429
++    assert int(limited.headers["Retry-After"]) >= 1
++
++
++def test_openapi_contract_lists_core_routes(client):
++    paths = client.get("/openapi.json").json()["paths"]
++    for path in ("/api/v1/links", "/api/v1/links/{code}", "/api/v1/links/{code}/stats", "/{code}"):
++        assert path in paths
+--- /dev/null
++++ b/tests/test_units.py
+@@ -0,0 +1,165 @@
++"""Unit tests for pure components: codes, URL validation, limiter, service, migrations."""
++
++from __future__ import annotations
++
++import pytest
++
++from shortener import codes
++from shortener.config import Settings
++from shortener.db import MIGRATIONS, Database
++from shortener.errors import CodeSpaceExhausted, Conflict, InvalidInput
++from shortener.ratelimit import TokenBucketLimiter
++from shortener.validation import validate_target_url
++
++SETTINGS = Settings(base_url="https://sho.rt")
++
++
++# --- codes -----------------------------------------------------------------
++
++def test_generate_code_length_and_alphabet():
++    code = codes.generate_code(9)
++    assert len(code) == 9 and set(code) <= set(codes.ALPHABET)
++
++
++def test_generate_code_rejects_short_length():
++    with pytest.raises(ValueError):
++        codes.generate_code(3)
++
++
++@pytest.mark.parametrize("alias", ["ab", "has space", "x" * 33, "emoji😀", "../etc"])
++def test_invalid_aliases(alias):
++    with pytest.raises(ValueError):
++        codes.validate_alias(alias)
++
++
++def test_valid_alias_passthrough():
++    assert codes.validate_alias("Promo_2026-q1") == "Promo_2026-q1"
++
++
++# --- URL validation --------------------------------------------------------
++
++@pytest.mark.parametrize(
++    "url",
++    [
++        "https://example.com",
++        "http://example.com:8080/path?q=1#frag",
++        "https://sub.domain.example.org/a/b",
++        "https://93.184.216.34/",
++    ],
++)
++def test_valid_urls(url):
++    assert validate_target_url(url, SETTINGS) == url
++
++
++@pytest.mark.parametrize(
++    "url",
++    [
++        "javascript:alert(1)",
++        "data:text/html,hi",
++        "file:///etc/passwd",
++        "https://",
++        "https://user:pw@bank.example.com",
++        "https://bank.example.com@evil.test",
++        "http://localhost/admin",
++        "http://app.localhost/",
++        "http://10.0.0.5/",
++        "http://192.168.1.1/",
++        "http://169.254.169.254/latest/meta-data",
++        "http://[::1]/",
++        "https://sho.rt/abc",
++        "https://example.com/has space",
++        "https://example.com:99999/",
++    ],
++)
++def test_rejected_urls(url):
++    with pytest.raises(InvalidInput):
++        validate_target_url(url, SETTINGS)
++
++
++def test_url_length_limit():
++    with pytest.raises(InvalidInput):
++        validate_target_url("https://example.com/" + "a" * 2100, SETTINGS)
++
++
++def test_private_targets_allowed_when_configured():
++    s = Settings(allow_private_targets=True)
++    assert validate_target_url("http://10.0.0.5/", s) == "http://10.0.0.5/"
++
++
++# --- rate limiter ----------------------------------------------------------
++
++def test_token_bucket_refills_over_time():
++    t = [0.0]
++    limiter = TokenBucketLimiter(rate_per_minute=60, burst=2, clock=lambda: t[0])
++    assert limiter.allow("a")[0] and limiter.allow("a")[0]
++    allowed, retry_after = limiter.allow("a")
++    assert not allowed and retry_after == pytest.approx(1.0)
++    assert limiter.allow("b")[0]  # keys are independent
++    t[0] += 1.0
++    assert limiter.allow("a")[0]
++
++
++def test_token_bucket_bounds_memory():
++    limiter = TokenBucketLimiter(rate_per_minute=10, max_keys=3)
++    for key in "abcdef":
++        limiter.allow(key)
++    assert len(limiter._buckets) == 3
++
++
++# --- service ---------------------------------------------------------------
++
++def test_collision_retries_then_succeeds(service, monkeypatch):
++    service.create_link("https://example.com", custom_alias="AAAAAAA")
++    seq = iter(["AAAAAAA", "AAAAAAA", "BBBBBBB"])
++    monkeypatch.setattr("shortener.service.generate_code", lambda n: next(seq))
++    assert service.create_link("https://example.com").code == "BBBBBBB"
++
++
++def test_collision_exhaustion_raises(service, monkeypatch):
++    service.create_link("https://example.com", custom_alias="AAAAAAA")
++    monkeypatch.setattr("shortener.service.generate_code", lambda n: "AAAAAAA")
++    with pytest.raises(CodeSpaceExhausted):
++        service.create_link("https://example.com")
++
++
++def test_repository_duplicate_code_raises_conflict(repo, clock):
++    repo.create("dup1234", "https://a.test", clock.now, None)
++    with pytest.raises(Conflict):
++        repo.create("dup1234", "https://b.test", clock.now, None)
++
++
++def test_long_headers_are_truncated(service, repo):
++    link = service.create_link("https://example.com")
++    service.resolve(link.code, referrer="r" * 5000, user_agent="u" * 5000)
++    stats = repo.stats(link.id)
++    assert len(stats.top_referrers[0][0]) == 512
++
++
++# --- migrations ------------------------------------------------------------
++
++def test_migrations_are_idempotent_and_versioned(tmp_path):
++    db = Database(str(tmp_path / "m.db"))
++    latest = max(v for v, _ in MIGRATIONS)
++    assert db.migrate() == latest
++    assert db.migrate() == latest  # re-running is a no-op
++    assert db.schema_version() == latest
++
++
++def test_migration_versions_strictly_increase():
++    versions = [v for v, _ in MIGRATIONS]
++    assert versions == sorted(set(versions))
++
++
++# --- structured logging ----------------------------------------------------
++
++def test_json_log_formatter_includes_request_fields(tmp_path, monkeypatch):
++    import importlib
++    import json
++    import logging
++
++    monkeypatch.setenv("SHORTENER_DB_PATH", str(tmp_path / "main.db"))
++    main = importlib.import_module("shortener.main")
++    record = logging.LogRecord("shortener", logging.INFO, __file__, 1, "request", None, None)
++    record.request_id, record.status = "abc", 201
++    out = json.loads(main.JsonFormatter().format(record))
++    assert out["msg"] == "request" and out["request_id"] == "abc" and out["status"] == 201

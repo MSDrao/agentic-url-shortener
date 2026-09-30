@@ -1,0 +1,21 @@
+id: ambiguous
+title: "Ambiguous: 'make links safer and show who is clicking'"
+type: ambiguous
+baseline: service
+playbook: scenarios/playbooks/ambiguous.yaml
+requirement: |
+  Our short links need to be safer, and marketing wants to see who is clicking them.
+  Please get this done quickly without slowing redirects down.
+approver: "product-owner@example.com"
+# Scripted human decisions (use --approvals interactive to make them yourself).
+# The design reviewer sends the work back upstream with a clarification; the orchestrator
+# re-runs intake, detects the spec changed, invalidates dependent work and re-plans.
+approvals:
+  design:
+    - decision: revise
+      revise_target: intake
+      comment: "Security team: denylisted domains must also stop EXISTING links, not only new ones."
+      answers: {Q2: create_and_redirect}
+    - decision: approve
+      comment: "Design approved after scope clarification."
+faults: {}
