@@ -19,8 +19,8 @@
     "variant": "buggy"
    }
   },
-  "approver": "eng-manager@example.com",
-  "approvals": {},
+  "simulated_role": "eng-manager",
+  "simulated_approvals": {},
   "_path": "scenarios/drills/rework-exhausted.yaml"
  },
  "run_status": "halted",
@@ -248,7 +248,7 @@
     "kind": "exit",
     "gate": "tests_pass",
     "passed": false,
-    "detail": "61/63 passed, 2 failed, 0 errors"
+    "detail": "75/77 passed, 2 failed, 0 errors, exit_code=1"
    },
    {
     "kind": "exit",
@@ -278,7 +278,7 @@
     "kind": "exit",
     "gate": "tests_pass",
     "passed": false,
-    "detail": "61/63 passed, 2 failed, 0 errors"
+    "detail": "75/77 passed, 2 failed, 0 errors, exit_code=1"
    },
    {
     "kind": "exit",
@@ -308,7 +308,7 @@
     "kind": "exit",
     "gate": "tests_pass",
     "passed": false,
-    "detail": "61/63 passed, 2 failed, 0 errors"
+    "detail": "75/77 passed, 2 failed, 0 errors, exit_code=1"
    },
    {
     "kind": "exit",
@@ -365,104 +365,104 @@
  "timeline": [
   {
    "node": "intake",
-   "start": 0.0010585784912109375,
-   "end": 0.001077890396118164,
+   "start": 0.002088308334350586,
+   "end": 0.0021202564239501953,
    "attempt": 1
   },
   {
    "node": "test_plan",
-   "start": 0.0032355785369873047,
-   "end": 0.0032536983489990234,
+   "start": 0.01505589485168457,
+   "end": 0.015092611312866211,
    "attempt": 1
   },
   {
    "node": "codebase_analysis",
-   "start": 0.0024764537811279297,
-   "end": 0.025697946548461914,
+   "start": 0.008105278015136719,
+   "end": 0.03850865364074707,
    "attempt": 1
   },
   {
    "node": "design",
-   "start": 0.02807760238647461,
-   "end": 0.028400897979736328,
+   "start": 0.0450742244720459,
+   "end": 0.04564237594604492,
    "attempt": 1
   },
   {
    "node": "implement",
-   "start": 0.031121253967285156,
-   "end": 0.03372311592102051,
+   "start": 0.05462646484375,
+   "end": 0.05726456642150879,
    "attempt": 1
   },
   {
    "node": "security_scan",
-   "start": 0.052403926849365234,
-   "end": 0.062285423278808594,
+   "start": 0.0948481559753418,
+   "end": 0.12289166450500488,
    "attempt": 1
   },
   {
    "node": "docs",
-   "start": 0.04817819595336914,
-   "end": 0.4562664031982422,
+   "start": 0.08798027038574219,
+   "end": 0.5008125305175781,
    "attempt": 1
   },
   {
    "node": "run_tests",
-   "start": 0.04956817626953125,
-   "end": 2.5327978134155273,
+   "start": 0.09053468704223633,
+   "end": 2.4823999404907227,
    "attempt": 1
   },
   {
    "node": "implement",
-   "start": 2.5371110439300537,
-   "end": 2.5397655963897705,
+   "start": 2.4932000637054443,
+   "end": 2.495912790298462,
    "attempt": 1
   },
   {
    "node": "security_scan",
-   "start": 2.5577197074890137,
-   "end": 2.5843312740325928,
+   "start": 2.5272083282470703,
+   "end": 2.5589494705200195,
    "attempt": 1
   },
   {
    "node": "docs",
-   "start": 2.5563509464263916,
-   "end": 2.972853422164917,
+   "start": 2.519375801086426,
+   "end": 2.946608304977417,
    "attempt": 1
   },
   {
    "node": "run_tests",
-   "start": 2.557615280151367,
-   "end": 5.0554070472717285,
+   "start": 2.5219907760620117,
+   "end": 4.905597925186157,
    "attempt": 1
   },
   {
    "node": "implement",
-   "start": 5.062451362609863,
-   "end": 5.0650715827941895,
+   "start": 4.9152398109436035,
+   "end": 4.918461322784424,
    "attempt": 1
   },
   {
    "node": "security_scan",
-   "start": 5.083900451660156,
-   "end": 5.108327865600586,
+   "start": 4.953017950057983,
+   "end": 4.99323582649231,
    "attempt": 1
   },
   {
    "node": "docs",
-   "start": 5.08270525932312,
-   "end": 5.468953847885132,
+   "start": 4.942498445510864,
+   "end": 5.362827301025391,
    "attempt": 1
   },
   {
    "node": "run_tests",
-   "start": 5.083810806274414,
-   "end": 7.593701124191284,
+   "start": 4.9452903270721436,
+   "end": 7.322916269302368,
    "attempt": 1
   }
  ],
  "metrics": {
-  "started_at": 1790806707.1350465,
-  "finished_at": 1790806714.7296033,
+  "started_at": 1790809197.6535592,
+  "finished_at": 1790809204.9802504,
   "attempts": 16,
   "attempt_successes": 13,
   "attempt_failures": 3,
@@ -473,22 +473,30 @@
   "replans": 0,
   "approvals_requested": 5,
   "approvals_rejected": 0,
+  "approvals_human": 0,
+  "approvals_simulated": 5,
   "policy_violations": 0,
   "stage_latency": {
-   "requirements": 1.7642974853515625e-05,
-   "test-design": 1.6450881958007812e-05,
-   "analysis": 0.02321791648864746,
-   "architecture": 0.00032138824462890625,
-   "implementation": 0.00786590576171875,
-   "security": 0.0609126091003418,
-   "documentation": 1.210829734802246,
-   "testing": 7.49089789390564
+   "requirements": 2.956390380859375e-05,
+   "test-design": 3.409385681152344e-05,
+   "analysis": 0.03040146827697754,
+   "architecture": 0.0005645751953125,
+   "implementation": 0.00856328010559082,
+   "security": 0.09998106956481934,
+   "documentation": 1.2603843212127686,
+   "testing": 7.153081893920898
   },
   "open_incidents": {
-   "run_tests": 1790806709.6681113
+   "run_tests": 1790809200.1369555
   },
   "repair_times": []
  },
+ "audit_head": {
+  "seq": 112,
+  "hash": "a080657f8880cf96ab98321fff2f60b3b31911ce3115d44f1745e2130367a45b"
+ },
+ "pending_approvals": {},
+ "release_signoff": null,
  "context": {
   "artifacts": {
    "requirements_spec": [
@@ -499,7 +507,7 @@
      "producer": "intake",
      "attempt": 1,
      "derived_from": [],
-     "created_at": 1790806707.1363845,
+     "created_at": 1790809197.6581573,
      "content": {
       "problem_statement": "Support limited-use short links: a link may carry a maximum number of successful redirects, after which it stops redirecting - without changing behaviour for existing links or clients.",
       "functional": [
@@ -620,7 +628,20 @@
       "detected_terms": [],
       "pii_involved": false,
       "pii_signals": []
-     }
+     },
+     "provenance": [
+      {
+       "key": "requirements",
+       "provider": "offline",
+       "execution": 1,
+       "prompt_sha256": "a66263247b2f27bafec8ee9e46cf10a40247926e66363505d968fd8e5c0b4447",
+       "content_origin": "recorded",
+       "source": "scenarios/playbooks/brownfield.yaml#requirements",
+       "fault_injected": false,
+       "response_sha256": "9ca219d2d7f0ceb232417a6793257862623e4b070371f4aba4733787bd0b7ba1",
+       "latency_s": 0.0
+      }
+     ]
     }
    ],
    "test_plan": [
@@ -633,7 +654,7 @@
      "derived_from": [
       "requirements_spec@v1"
      ],
-     "created_at": 1790806707.1385427,
+     "created_at": 1790809197.673712,
      "content": {
       "strategy": [
        "unit: pure functions and service logic with a fake clock",
@@ -717,7 +738,13 @@
        "unit": 4,
        "integration": 6
       }
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "test_planner"
+      }
+     ]
     }
    ],
    "impact_analysis": [
@@ -730,7 +757,7 @@
      "derived_from": [
       "requirements_spec@v1"
      ],
-     "created_at": 1790806707.1610043,
+     "created_at": 1790809197.6931396,
      "content": {
       "terms": [
        "accept",
@@ -994,25 +1021,31 @@
        "shortener.db"
       ],
       "tests_touching": {
-       "shortener.service": [
-        "tests.conftest"
-       ],
-       "shortener.schemas": [],
        "shortener.db": [
         "tests.conftest",
         "tests.test_units"
        ],
-       "shortener.repository": [
-        "tests.conftest"
-       ],
        "shortener.api": [
         "tests.conftest",
         "tests.test_api"
-       ]
+       ],
+       "shortener.service": [
+        "tests.conftest"
+       ],
+       "shortener.repository": [
+        "tests.conftest"
+       ],
+       "shortener.schemas": []
       },
       "risk": "high",
       "risk_rationale": "schema and public API both impacted"
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "codebase_analyst"
+      }
+     ]
     }
    ],
    "design": [
@@ -1026,7 +1059,7 @@
       "requirements_spec@v1",
       "impact_analysis@v1"
      ],
-     "created_at": 1790806707.1637878,
+     "created_at": 1790809197.702083,
      "content": {
       "title": "Limited-use links (max_clicks)",
       "approach": "Add a nullable links.max_clicks column (migration v2). Enforce the limit in the repository with a single conditional INSERT ... SELECT so check-and-record is atomic. The service maps 'not recorded' to 410 Gone (same semantics as expiry). The API contract change is additive: an optional request field and two nullable response fields, so existing clients are unaffected.",
@@ -1193,7 +1226,20 @@
       "unpredicted_files": [
        "shortener/models.py"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "key": "design",
+       "provider": "offline",
+       "execution": 1,
+       "prompt_sha256": "2b4e707388bfe2531e404ad2ab4b9fd03a80ae64fdd7a5317aa7a37649e9feaa",
+       "content_origin": "recorded",
+       "source": "scenarios/playbooks/brownfield.yaml#design",
+       "fault_injected": false,
+       "response_sha256": "6bc058dcddee99c16e1616466e5640aacf447d6710122ae4ae3ffb960554c8bd",
+       "latency_s": 0.0
+      }
+     ]
     }
    ],
    "change_set": [
@@ -1208,7 +1254,7 @@
       "design@v1",
       "test_plan@v1"
      ],
-     "created_at": 1790806707.1808372,
+     "created_at": 1790809197.7359807,
      "content": {
       "summary": "max_clicks (first attempt)",
       "files": [
@@ -1221,7 +1267,20 @@
        "tests/test_max_clicks.py"
       ],
       "operations": 20
-     }
+     },
+     "provenance": [
+      {
+       "key": "implement",
+       "provider": "offline",
+       "execution": 1,
+       "prompt_sha256": "da13549c23dd6077259965c71979a6bdf674edbbe052987efab2fafb11357ecf",
+       "content_origin": "recorded",
+       "source": "scenarios/playbooks/brownfield.yaml#implement__buggy",
+       "fault_injected": true,
+       "response_sha256": "587d5b6a66b5ab26294f58e584431ba0843ccd07369b60b7a205457023d1a3c9",
+       "latency_s": 0.0
+      }
+     ]
     },
     {
      "name": "change_set",
@@ -1234,7 +1293,7 @@
       "design@v1",
       "test_plan@v1"
      ],
-     "created_at": 1790806709.6887507,
+     "created_at": 1790809200.1673603,
      "content": {
       "summary": "max_clicks (first attempt)",
       "files": [
@@ -1247,7 +1306,20 @@
        "tests/test_max_clicks.py"
       ],
       "operations": 20
-     }
+     },
+     "provenance": [
+      {
+       "key": "implement",
+       "provider": "offline",
+       "execution": 2,
+       "prompt_sha256": "cb399b1c120f5a920ceba3fc1a36ba64c3d781de8bb84d8d9c0d082b75cc04ed",
+       "content_origin": "recorded",
+       "source": "scenarios/playbooks/brownfield.yaml#implement__buggy",
+       "fault_injected": true,
+       "response_sha256": "587d5b6a66b5ab26294f58e584431ba0843ccd07369b60b7a205457023d1a3c9",
+       "latency_s": 0.0
+      }
+     ]
     },
     {
      "name": "change_set",
@@ -1260,7 +1332,7 @@
       "design@v1",
       "test_plan@v1"
      ],
-     "created_at": 1790806712.214603,
+     "created_at": 1790809202.5910442,
      "content": {
       "summary": "max_clicks (first attempt)",
       "files": [
@@ -1273,7 +1345,20 @@
        "tests/test_max_clicks.py"
       ],
       "operations": 20
-     }
+     },
+     "provenance": [
+      {
+       "key": "implement",
+       "provider": "offline",
+       "execution": 3,
+       "prompt_sha256": "cb399b1c120f5a920ceba3fc1a36ba64c3d781de8bb84d8d9c0d082b75cc04ed",
+       "content_origin": "recorded",
+       "source": "scenarios/playbooks/brownfield.yaml#implement__buggy",
+       "fault_injected": true,
+       "response_sha256": "587d5b6a66b5ab26294f58e584431ba0843ccd07369b60b7a205457023d1a3c9",
+       "latency_s": 0.001
+      }
+     ]
     }
    ],
    "security_report": [
@@ -1284,7 +1369,7 @@
      "producer": "security_scan",
      "attempt": 1,
      "derived_from": [],
-     "created_at": 1790806707.197452,
+     "created_at": 1790809197.7804854,
      "content": {
       "files_scanned": [
        "shortener/api.py",
@@ -1306,7 +1391,13 @@
        "dependency-change",
        "security-test-missing"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "security_scanner"
+      }
+     ]
     },
     {
      "name": "security_report",
@@ -1315,7 +1406,7 @@
      "producer": "security_scan",
      "attempt": 1,
      "derived_from": [],
-     "created_at": 1790806709.719574,
+     "created_at": 1790809200.2135108,
      "content": {
       "files_scanned": [
        "shortener/api.py",
@@ -1337,7 +1428,13 @@
        "dependency-change",
        "security-test-missing"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "security_scanner"
+      }
+     ]
     },
     {
      "name": "security_report",
@@ -1346,7 +1443,7 @@
      "producer": "security_scan",
      "attempt": 1,
      "derived_from": [],
-     "created_at": 1790806712.2435358,
+     "created_at": 1790809202.6478112,
      "content": {
       "files_scanned": [
        "shortener/api.py",
@@ -1368,7 +1465,13 @@
        "dependency-change",
        "security-test-missing"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "security_scanner"
+      }
+     ]
     }
    ],
    "docs_report": [
@@ -1382,7 +1485,7 @@
       "requirements_spec@v1",
       "design@v1"
      ],
-     "created_at": 1790806707.5937088,
+     "created_at": 1790809198.1581864,
      "content": {
       "routes": 7,
       "undocumented_routes": [],
@@ -1393,7 +1496,13 @@
        "docs/adr/ADR-002-response-when-exhausted.md",
        "docs/adr/ADR-003-remaining-clicks-source.md"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "tech_writer"
+      }
+     ]
     },
     {
      "name": "docs_report",
@@ -1405,7 +1514,7 @@
       "requirements_spec@v1",
       "design@v1"
      ],
-     "created_at": 1790806710.1111588,
+     "created_at": 1790809200.6125267,
      "content": {
       "routes": 7,
       "undocumented_routes": [],
@@ -1416,7 +1525,13 @@
        "docs/adr/ADR-002-response-when-exhausted.md",
        "docs/adr/ADR-003-remaining-clicks-source.md"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "tech_writer"
+      }
+     ]
     },
     {
      "name": "docs_report",
@@ -1428,7 +1543,7 @@
       "requirements_spec@v1",
       "design@v1"
      ],
-     "created_at": 1790806712.6073756,
+     "created_at": 1790809203.0213954,
      "content": {
       "routes": 7,
       "undocumented_routes": [],
@@ -1439,7 +1554,13 @@
        "docs/adr/ADR-002-response-when-exhausted.md",
        "docs/adr/ADR-003-remaining-clicks-source.md"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "tech_writer"
+      }
+     ]
     }
    ]
   },
@@ -1449,12 +1570,12 @@
     "node": "intake",
     "kind": "approval",
     "summary": "approve: requirement contains ambiguities resolved only by assumptions",
-    "actor": "eng-manager@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:eng-manager",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "requirements_spec@pending"
     ],
-    "at": 1790806707.1363425
+    "at": 1790809197.6580925
    },
    {
     "id": "D002",
@@ -1466,7 +1587,7 @@
     "refs": [
      "requirements_spec@v1"
     ],
-    "at": 1790806707.1364224
+    "at": 1790809197.6587002
    },
    {
     "id": "D003",
@@ -1478,7 +1599,7 @@
     "refs": [
      "requirements_spec@v1"
     ],
-    "at": 1790806707.1364245
+    "at": 1790809197.6587038
    },
    {
     "id": "D004",
@@ -1490,19 +1611,19 @@
     "refs": [
      "requirements_spec@v1"
     ],
-    "at": 1790806707.1364264
+    "at": 1790809197.6587057
    },
    {
     "id": "D005",
     "node": "design",
     "kind": "approval",
     "summary": "approve: high-impact change: public_api_change, high-impact change: schema_change",
-    "actor": "eng-manager@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:eng-manager",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "design@pending"
     ],
-    "at": 1790806707.163729
+    "at": 1790809197.7019806
    },
    {
     "id": "D006",
@@ -1514,7 +1635,7 @@
     "refs": [
      "design@v1"
     ],
-    "at": 1790806707.1638298
+    "at": 1790809197.702719
    },
    {
     "id": "D007",
@@ -1526,7 +1647,7 @@
     "refs": [
      "design@v1"
     ],
-    "at": 1790806707.1638327
+    "at": 1790809197.7027233
    },
    {
     "id": "D008",
@@ -1538,19 +1659,19 @@
     "refs": [
      "design@v1"
     ],
-    "at": 1790806707.163834
+    "at": 1790809197.7027256
    },
    {
     "id": "D009",
     "node": "implement",
     "kind": "approval",
     "summary": "approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/db.py",
-    "actor": "eng-manager@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:eng-manager",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "change_set@pending"
     ],
-    "at": 1790806707.1786895
+    "at": 1790809197.7322583
    },
    {
     "id": "D010",
@@ -1558,21 +1679,21 @@
     "kind": "rollback",
     "summary": "rolled back 'implement' and re-running it with failure feedback",
     "actor": "orchestrator",
-    "rationale": "exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'])",
+    "rationale": "exit gate failed: tests_pass (75/77 passed, 2 failed, 0 errors, exit_code=1); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'])",
     "refs": [],
-    "at": 1790806709.6717503
+    "at": 1790809200.1430318
    },
    {
     "id": "D011",
     "node": "implement",
     "kind": "approval",
     "summary": "approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/db.py",
-    "actor": "eng-manager@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:eng-manager",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "change_set@pending"
     ],
-    "at": 1790806709.6855235
+    "at": 1790809200.1636686
    },
    {
     "id": "D012",
@@ -1580,21 +1701,21 @@
     "kind": "rollback",
     "summary": "rolled back 'implement' and re-running it with failure feedback",
     "actor": "orchestrator",
-    "rationale": "exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'])",
+    "rationale": "exit gate failed: tests_pass (75/77 passed, 2 failed, 0 errors, exit_code=1); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'])",
     "refs": [],
-    "at": 1790806712.1970327
+    "at": 1790809202.5663602
    },
    {
     "id": "D013",
     "node": "implement",
     "kind": "approval",
     "summary": "approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/db.py",
-    "actor": "eng-manager@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:eng-manager",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "change_set@pending"
     ],
-    "at": 1790806712.2111735
+    "at": 1790809202.5870082
    },
    {
     "id": "D014",
@@ -1604,14 +1725,14 @@
     "actor": "orchestrator",
     "rationale": "no further nodes dispatched; uncommitted results discarded; state persisted for resume",
     "refs": [],
-    "at": 1790806714.72926
+    "at": 1790809204.9797378
    }
   ],
   "feedback": {
    "run_tests": [
-    "exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'])",
-    "exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'])",
-    "exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'])"
+    "exit gate failed: tests_pass (75/77 passed, 2 failed, 0 errors, exit_code=1); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'])",
+    "exit gate failed: tests_pass (75/77 passed, 2 failed, 0 errors, exit_code=1); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'])",
+    "exit gate failed: tests_pass (75/77 passed, 2 failed, 0 errors, exit_code=1); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'])"
    ]
   }
  }

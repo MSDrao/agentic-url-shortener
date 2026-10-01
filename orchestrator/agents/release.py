@@ -35,8 +35,9 @@ class ReleaseManagerAgent(Agent):
 
         blocking = [f for f in sec.get("findings", []) if policy.is_blocking(f["severity"])]
         checklist = [
-            {"item": "full test suite green", "passed": tests.get("failed", 1) == 0 and tests.get("errors", 1) == 0,
-             "evidence": f"{tests.get('passed')}/{tests.get('total')}"},
+            {"item": "full test suite green (pytest exit code 0)",
+             "passed": tests.get("failed", 1) == 0 and tests.get("errors", 1) == 0 and tests.get("exit_code") == 0,
+             "evidence": f"{tests.get('passed')}/{tests.get('total')}, exit_code={tests.get('exit_code')}"},
             {"item": f"coverage >= {policy.min_coverage}%", "passed": (tests.get("coverage") or 0) >= policy.min_coverage,
              "evidence": f"{tests.get('coverage')}%"},
             {"item": "every acceptance criterion verified by a passing test", "passed": all(m["verified"] for m in matrix),

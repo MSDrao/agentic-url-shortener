@@ -15,8 +15,8 @@
     "variant": "error"
    }
   },
-  "approver": "tech-lead@example.com",
-  "approvals": {},
+  "simulated_role": "tech-lead",
+  "simulated_approvals": {},
   "_path": "scenarios/greenfield.yaml"
  },
  "run_status": "succeeded",
@@ -166,13 +166,13 @@
     "kind": "exit",
     "gate": "tests_pass",
     "passed": true,
-    "detail": "53/53 passed, 0 failed, 0 errors"
+    "detail": "67/67 passed, 0 failed, 0 errors, exit_code=0"
    },
    {
     "kind": "exit",
     "gate": "coverage_min",
     "passed": true,
-    "detail": "98.6% (min 85.0%)"
+    "detail": "98.7% (min 85.0%)"
    },
    {
     "kind": "exit",
@@ -213,62 +213,62 @@
  "timeline": [
   {
    "node": "intake",
-   "start": 0.009897708892822266,
-   "end": 0.009950399398803711,
+   "start": 0.0028100013732910156,
+   "end": 0.002843618392944336,
    "attempt": 1
   },
   {
    "node": "design",
-   "start": 0.011729240417480469,
-   "end": 0.013154745101928711,
+   "start": 0.008924484252929688,
+   "end": 0.01071786880493164,
    "attempt": 1
   },
   {
    "node": "test_plan",
-   "start": 0.013116598129272461,
-   "end": 0.013359308242797852,
+   "start": 0.010689020156860352,
+   "end": 0.012439966201782227,
    "attempt": 1
   },
   {
    "node": "design",
-   "start": 0.21686935424804688,
-   "end": 0.21749663352966309,
+   "start": 0.21865415573120117,
+   "end": 0.21932458877563477,
    "attempt": 2
   },
   {
    "node": "implement",
-   "start": 0.22092986106872559,
-   "end": 0.22481417655944824,
+   "start": 0.22641277313232422,
+   "end": 0.22980856895446777,
    "attempt": 1
   },
   {
    "node": "security_scan",
-   "start": 0.24793601036071777,
-   "end": 0.286846399307251,
+   "start": 0.27578115463256836,
+   "end": 0.3311641216278076,
    "attempt": 1
   },
   {
    "node": "docs",
-   "start": 0.2457733154296875,
-   "end": 0.6675817966461182,
+   "start": 0.2598280906677246,
+   "end": 0.6631453037261963,
    "attempt": 1
   },
   {
    "node": "run_tests",
-   "start": 0.2475266456604004,
-   "end": 2.085585117340088,
+   "start": 0.26394224166870117,
+   "end": 2.1394808292388916,
    "attempt": 1
   },
   {
    "node": "release_readiness",
-   "start": 2.0888261795043945,
-   "end": 2.0942587852478027,
+   "start": 2.145627498626709,
+   "end": 2.1506175994873047,
    "attempt": 1
   }
  ],
  "metrics": {
-  "started_at": 1790806694.824523,
-  "finished_at": 1790806696.9222684,
+  "started_at": 1790809185.1893246,
+  "finished_at": 1790809187.3474329,
   "attempts": 9,
   "attempt_successes": 8,
   "attempt_failures": 1,
@@ -279,21 +279,34 @@
   "replans": 0,
   "approvals_requested": 4,
   "approvals_rejected": 0,
+  "approvals_human": 0,
+  "approvals_simulated": 4,
   "policy_violations": 0,
   "stage_latency": {
-   "requirements": 4.7206878662109375e-05,
-   "architecture": 0.0020406246185302734,
-   "test-design": 0.00024056434631347656,
-   "implementation": 0.0038797855377197266,
-   "security": 0.03890514373779297,
-   "documentation": 0.421802282333374,
-   "testing": 1.8380506038665771,
-   "release": 0.0054285526275634766
+   "requirements": 2.9325485229492188e-05,
+   "architecture": 0.0024559497833251953,
+   "test-design": 0.0017490386962890625,
+   "implementation": 0.0033903121948242188,
+   "security": 0.05537915229797363,
+   "documentation": 0.40331149101257324,
+   "testing": 1.8755314350128174,
+   "release": 0.00498199462890625
   },
   "open_incidents": {},
   "repair_times": [
-   0.20504236221313477
+   0.21095585823059082
   ]
+ },
+ "audit_head": {
+  "seq": 60,
+  "hash": "0d3d5164cf15e21e2f001e591614cb22ae65c686c45506711768b6afbfd4d278"
+ },
+ "pending_approvals": {},
+ "release_signoff": {
+  "node": "release_readiness",
+  "approver": "simulated:tech-lead",
+  "human": false,
+  "request_hash": "4804d9d9898115e9"
  },
  "context": {
   "artifacts": {
@@ -305,7 +318,7 @@
      "producer": "intake",
      "attempt": 1,
      "derived_from": [],
-     "created_at": 1790806694.8349612,
+     "created_at": 1790809185.1949046,
      "content": {
       "problem_statement": "Provide an HTTP service that maps short, unguessable codes to http(s) destinations, redirects visitors while recording click analytics, and protects itself and its users from abuse.",
       "functional": [
@@ -454,7 +467,20 @@
       "detected_terms": [],
       "pii_involved": false,
       "pii_signals": []
-     }
+     },
+     "provenance": [
+      {
+       "key": "requirements",
+       "provider": "offline",
+       "execution": 1,
+       "prompt_sha256": "5c3b27563fc123b45030e1dad7fb0a0203a9952cb0967f9dc1bbaadc00441c62",
+       "content_origin": "recorded",
+       "source": "scenarios/playbooks/greenfield.yaml#requirements",
+       "fault_injected": false,
+       "response_sha256": "589e72cbba34a9940ac26cdd60f8ac8723d04194beb64877f75ddd425cc0973d",
+       "latency_s": 0.0
+      }
+     ]
     }
    ],
    "test_plan": [
@@ -467,7 +493,7 @@
      "derived_from": [
       "requirements_spec@v1"
      ],
-     "created_at": 1790806694.8380117,
+     "created_at": 1790809185.2023444,
      "content": {
       "strategy": [
        "unit: pure functions and service logic with a fake clock",
@@ -593,7 +619,13 @@
        "unit": 4,
        "integration": 12
       }
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "test_planner"
+      }
+     ]
     }
    ],
    "design": [
@@ -606,7 +638,7 @@
      "derived_from": [
       "requirements_spec@v1"
      ],
-     "created_at": 1790806695.0426571,
+     "created_at": 1790809185.4114053,
      "content": {
       "title": "URL shortener service v1",
       "approach": "Layered FastAPI service: HTTP layer (routing, auth, rate limit, error mapping, request IDs) -> framework-free LinkService (business rules, injectable clock) -> LinkRepository (all SQL) -> SQLite with versioned forward-only migrations. Validation and code generation are pure modules.",
@@ -849,7 +881,20 @@
        ]
       ],
       "critical_path_length": 5
-     }
+     },
+     "provenance": [
+      {
+       "key": "design",
+       "provider": "offline",
+       "execution": 2,
+       "prompt_sha256": "2cb7c3981d5d8c9c53efe83a156634def2e4191352f4b035c758d56b14cf12a5",
+       "content_origin": "recorded",
+       "source": "scenarios/playbooks/greenfield.yaml#design",
+       "fault_injected": false,
+       "response_sha256": "35127a6979480fa903301ac722b0dc1de96e4651e447f52d0fd1b9f1fe823653",
+       "latency_s": 0.0
+      }
+     ]
     }
    ],
    "change_set": [
@@ -864,7 +909,7 @@
       "design@v1",
       "test_plan@v1"
      ],
-     "created_at": 1790806695.0680463,
+     "created_at": 1790809185.4452314,
      "content": {
       "summary": "Scaffold the v1 service and its test suites per tasks T1-T7",
       "files": [
@@ -888,7 +933,20 @@
        "tests/test_units.py"
       ],
       "operations": 18
-     }
+     },
+     "provenance": [
+      {
+       "key": "implement",
+       "provider": "offline",
+       "execution": 1,
+       "prompt_sha256": "a14e757f03e1ef1403e542614823e979ab4faa43afcb00ec72fa8e82e45849e4",
+       "content_origin": "recorded",
+       "source": "scenarios/playbooks/greenfield.yaml#implement",
+       "fault_injected": false,
+       "response_sha256": "4ace236b1172613fe0da8503da4d3e2607ed06ad7385a4292c3f445b0953798f",
+       "latency_s": 0.0
+      }
+     ]
     }
    ],
    "security_report": [
@@ -899,7 +957,7 @@
      "producer": "security_scan",
      "attempt": 1,
      "derived_from": [],
-     "created_at": 1790806695.1116247,
+     "created_at": 1790809185.521415,
      "content": {
       "files_scanned": [
        "pytest.ini",
@@ -940,7 +998,13 @@
        "dependency-change",
        "security-test-missing"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "security_scanner"
+      }
+     ]
     }
    ],
    "docs_report": [
@@ -954,7 +1018,7 @@
       "requirements_spec@v1",
       "design@v1"
      ],
-     "created_at": 1790806695.4946268,
+     "created_at": 1790809185.8563676,
      "content": {
       "routes": 7,
       "undocumented_routes": [],
@@ -966,26 +1030,32 @@
        "docs/adr/ADR-003-storage.md",
        "docs/adr/ADR-004-click-recording.md"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "tech_writer"
+      }
+     ]
     }
    ],
    "test_report": [
     {
      "name": "test_report",
      "version": 1,
-     "hash": "ad3c152d583a078b",
+     "hash": "62dabf2e1948ca04",
      "producer": "run_tests",
      "attempt": 1,
      "derived_from": [
       "test_plan@v1"
      ],
-     "created_at": 1790806696.9104683,
+     "created_at": 1790809187.3298192,
      "content": {
-      "total": 53,
-      "passed": 53,
+      "total": 67,
+      "passed": 67,
       "failed": 0,
       "errors": 0,
-      "coverage": 98.64,
+      "coverage": 98.68,
       "failures": [],
       "passed_tests": [
        "tests/test_api.py::test_api_key_enforced_on_writes_when_configured",
@@ -1012,6 +1082,7 @@
        "tests/test_units.py::test_long_headers_are_truncated",
        "tests/test_units.py::test_migration_versions_strictly_increase",
        "tests/test_units.py::test_migrations_are_idempotent_and_versioned",
+       "tests/test_units.py::test_numeric_looking_domain_names_are_allowed",
        "tests/test_units.py::test_private_targets_allowed_when_configured",
        "tests/test_units.py::test_rejected_urls",
        "tests/test_units.py::test_repository_duplicate_code_raises_conflict",
@@ -1022,15 +1093,28 @@
        "tests/test_units.py::test_valid_urls"
       ],
       "command": "pytest -q -p no:cacheprovider --junitxml=<run_dir>/test-output/exec1-attempt1/junit.xml --cov=shortener --cov-report=json:<run_dir>/test-output/exec1-attempt1/coverage.json tests",
-      "exit_code": 0
-     }
+      "exit_code": 0,
+      "sandbox": {
+       "backend": "process",
+       "env": "allowlist",
+       "rlimits": true,
+       "network": "none (netns)",
+       "filesystem": "not isolated (use docker backend)"
+      }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "test_runner"
+      }
+     ]
     }
    ],
    "release_readiness": [
     {
      "name": "release_readiness",
      "version": 1,
-     "hash": "5f36f5cc3ba912b4",
+     "hash": "e6a33f4dd45eedd5",
      "producer": "release_readiness",
      "attempt": 1,
      "derived_from": [
@@ -1041,19 +1125,19 @@
       "security_report@v1",
       "docs_report@v1"
      ],
-     "created_at": 1790806696.9192402,
+     "created_at": 1790809187.3424745,
      "content": {
       "recommendation": "GO",
       "checklist": [
        {
-        "item": "full test suite green",
+        "item": "full test suite green (pytest exit code 0)",
         "passed": true,
-        "evidence": "53/53"
+        "evidence": "67/67, exit_code=0"
        },
        {
         "item": "coverage >= 85.0%",
         "passed": true,
-        "evidence": "98.64%"
+        "evidence": "98.68%"
        },
        {
         "item": "every acceptance criterion verified by a passing test",
@@ -1317,7 +1401,13 @@
        "tests/test_api.py",
        "tests/test_units.py"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "release_manager"
+      }
+     ]
     }
    ]
   },
@@ -1327,12 +1417,12 @@
     "node": "intake",
     "kind": "approval",
     "summary": "approve: requirement contains ambiguities resolved only by assumptions",
-    "actor": "tech-lead@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:tech-lead",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "requirements_spec@pending"
     ],
-    "at": 1790806694.8348968
+    "at": 1790809185.1947868
    },
    {
     "id": "D002",
@@ -1344,7 +1434,7 @@
     "refs": [
      "requirements_spec@v1"
     ],
-    "at": 1790806694.8350127
+    "at": 1790809185.195348
    },
    {
     "id": "D003",
@@ -1356,19 +1446,19 @@
     "refs": [
      "requirements_spec@v1"
     ],
-    "at": 1790806694.8350158
+    "at": 1790809185.195352
    },
    {
     "id": "D004",
     "node": "design",
     "kind": "approval",
     "summary": "approve: high-impact change: public_api_change, high-impact change: schema_change",
-    "actor": "tech-lead@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:tech-lead",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "design@pending"
     ],
-    "at": 1790806695.0425372
+    "at": 1790809185.4113257
    },
    {
     "id": "D005",
@@ -1380,7 +1470,7 @@
     "refs": [
      "design@v1"
     ],
-    "at": 1790806695.0427206
+    "at": 1790809185.4117641
    },
    {
     "id": "D006",
@@ -1392,7 +1482,7 @@
     "refs": [
      "design@v1"
     ],
-    "at": 1790806695.042724
+    "at": 1790809185.411768
    },
    {
     "id": "D007",
@@ -1404,7 +1494,7 @@
     "refs": [
      "design@v1"
     ],
-    "at": 1790806695.042727
+    "at": 1790809185.4117713
    },
    {
     "id": "D008",
@@ -1416,31 +1506,31 @@
     "refs": [
      "design@v1"
     ],
-    "at": 1790806695.0427313
+    "at": 1790809185.4117756
    },
    {
     "id": "D009",
     "node": "implement",
     "kind": "approval",
     "summary": "approve: high-impact change: dependency_change, high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/config.py, change to protected path: shortener/db.py",
-    "actor": "tech-lead@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:tech-lead",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "change_set@pending"
     ],
-    "at": 1790806695.0661674
+    "at": 1790809185.4426339
    },
    {
     "id": "D010",
     "node": "release_readiness",
     "kind": "approval",
     "summary": "approve: 'release_readiness' always requires human sign-off",
-    "actor": "tech-lead@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:tech-lead",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "release_readiness@pending"
     ],
-    "at": 1790806696.9191437
+    "at": 1790809187.3423102
    }
   ],
   "feedback": {}

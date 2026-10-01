@@ -4,7 +4,7 @@ extends: ../brownfield.yaml
 id: drill-release-rejected
 title: "Drill: release rejected at the final human gate -> rollback"
 faults: {}
-approvals:
+simulated_approvals:
   release_readiness:
     - decision: reject
       comment: "Promotion cancelled by marketing; do not ship this change."

@@ -6,11 +6,12 @@ playbook: scenarios/playbooks/ambiguous.yaml
 requirement: |
   Our short links need to be safer, and marketing wants to see who is clicking them.
   Please get this done quickly without slowing redirects down.
-approver: "product-owner@example.com"
-# Scripted human decisions (use --approvals interactive to make them yourself).
+simulated_role: "product-owner"
+# Scripted decisions used ONLY with --approvals simulated (recorded as human=false).
+# With --approvals interactive/queue a real person makes these calls.
 # The design reviewer sends the work back upstream with a clarification; the orchestrator
 # re-runs intake, detects the spec changed, invalidates dependent work and re-plans.
-approvals:
+simulated_approvals:
   design:
     - decision: revise
       revise_target: intake

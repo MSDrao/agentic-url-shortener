@@ -8,8 +8,8 @@
   "playbook": "scenarios/playbooks/brownfield.yaml",
   "requirement": "Marketing wants limited-use links for promotions, for example a code that is valid only for the\nfirst 100 visits. Add an optional maximum number of clicks when creating a link. Once the limit\nis reached, the short link must stop redirecting and respond 410 Gone. Link metadata must show the\nlimit and the remaining clicks. Existing links, and clients that do not send the new field, must\nkeep working unchanged.\n",
   "faults": {},
-  "approver": "eng-manager@example.com",
-  "approvals": {
+  "simulated_role": "eng-manager",
+  "simulated_approvals": {
    "release_readiness": [
     {
      "decision": "reject",
@@ -20,7 +20,7 @@
   "_path": "scenarios/drills/release-rejected.yaml"
  },
  "run_status": "rolled_back",
- "stop_reason": "'release_readiness' rejected by eng-manager@example.com: Promotion cancelled by marketing; do not ship this change.",
+ "stop_reason": "'release_readiness' rejected by simulated:eng-manager: [SIMULATED] Promotion cancelled by marketing; do not ship this change.",
  "status": {
   "intake": "succeeded",
   "codebase_analysis": "succeeded",
@@ -183,7 +183,7 @@
     "kind": "exit",
     "gate": "tests_pass",
     "passed": true,
-    "detail": "63/63 passed, 0 failed, 0 errors"
+    "detail": "77/77 passed, 0 failed, 0 errors, exit_code=0"
    },
    {
     "kind": "exit",
@@ -230,62 +230,62 @@
  "timeline": [
   {
    "node": "intake",
-   "start": 0.0011458396911621094,
-   "end": 0.001165151596069336,
+   "start": 0.002337217330932617,
+   "end": 0.002361297607421875,
    "attempt": 1
   },
   {
    "node": "test_plan",
-   "start": 0.0034389495849609375,
-   "end": 0.0034637451171875,
+   "start": 0.015578746795654297,
+   "end": 0.015610456466674805,
    "attempt": 1
   },
   {
    "node": "codebase_analysis",
-   "start": 0.002753734588623047,
-   "end": 0.026177167892456055,
+   "start": 0.008142232894897461,
+   "end": 0.0361483097076416,
    "attempt": 1
   },
   {
    "node": "design",
-   "start": 0.02843928337097168,
-   "end": 0.028890609741210938,
+   "start": 0.04087471961975098,
+   "end": 0.0414280891418457,
    "attempt": 1
   },
   {
    "node": "implement",
-   "start": 0.03191018104553223,
-   "end": 0.03409838676452637,
+   "start": 0.04859304428100586,
+   "end": 0.0509645938873291,
    "attempt": 1
   },
   {
    "node": "security_scan",
-   "start": 0.05075979232788086,
-   "end": 0.07175779342651367,
+   "start": 0.08774638175964355,
+   "end": 0.12329578399658203,
    "attempt": 1
   },
   {
    "node": "docs",
-   "start": 0.04937481880187988,
-   "end": 0.4419374465942383,
+   "start": 0.07251501083374023,
+   "end": 0.4624300003051758,
    "attempt": 1
   },
   {
    "node": "run_tests",
-   "start": 0.05051302909851074,
-   "end": 2.62170147895813,
+   "start": 0.07514309883117676,
+   "end": 2.523973226547241,
    "attempt": 1
   },
   {
    "node": "release_readiness",
-   "start": 2.62544846534729,
-   "end": 2.630758285522461,
+   "start": 2.53102970123291,
+   "end": 2.5364646911621094,
    "attempt": 1
   }
  ],
  "metrics": {
-  "started_at": 1790806704.3953276,
-  "finished_at": 1790806707.031091,
+  "started_at": 1790809194.9526742,
+  "finished_at": 1790809197.497134,
   "attempts": 9,
   "attempt_successes": 8,
   "attempt_failures": 0,
@@ -296,21 +296,29 @@
   "replans": 0,
   "approvals_requested": 4,
   "approvals_rejected": 1,
+  "approvals_human": 0,
+  "approvals_simulated": 4,
   "policy_violations": 0,
   "stage_latency": {
-   "requirements": 1.7642974853515625e-05,
-   "test-design": 2.2649765014648438e-05,
-   "analysis": 0.023419618606567383,
-   "architecture": 0.0004467964172363281,
-   "implementation": 0.0021860599517822266,
-   "security": 0.02099466323852539,
-   "documentation": 0.39255833625793457,
-   "testing": 2.5711841583251953,
-   "release": 0.00530695915222168
+   "requirements": 2.2411346435546875e-05,
+   "test-design": 2.9325485229492188e-05,
+   "analysis": 0.02800440788269043,
+   "architecture": 0.0005507469177246094,
+   "implementation": 0.002368927001953125,
+   "security": 0.03553938865661621,
+   "documentation": 0.38991236686706543,
+   "testing": 2.4488253593444824,
+   "release": 0.005431413650512695
   },
   "open_incidents": {},
   "repair_times": []
  },
+ "audit_head": {
+  "seq": 60,
+  "hash": "fe440154d30136955940018b75d9bce0715e0449c9e9066a086c7ec01e0e8558"
+ },
+ "pending_approvals": {},
+ "release_signoff": null,
  "context": {
   "artifacts": {
    "requirements_spec": [
@@ -321,7 +329,7 @@
      "producer": "intake",
      "attempt": 1,
      "derived_from": [],
-     "created_at": 1790806704.396804,
+     "created_at": 1790809194.957649,
      "content": {
       "problem_statement": "Support limited-use short links: a link may carry a maximum number of successful redirects, after which it stops redirecting - without changing behaviour for existing links or clients.",
       "functional": [
@@ -442,7 +450,20 @@
       "detected_terms": [],
       "pii_involved": false,
       "pii_signals": []
-     }
+     },
+     "provenance": [
+      {
+       "key": "requirements",
+       "provider": "offline",
+       "execution": 1,
+       "prompt_sha256": "a66263247b2f27bafec8ee9e46cf10a40247926e66363505d968fd8e5c0b4447",
+       "content_origin": "recorded",
+       "source": "scenarios/playbooks/brownfield.yaml#requirements",
+       "fault_injected": false,
+       "response_sha256": "9ca219d2d7f0ceb232417a6793257862623e4b070371f4aba4733787bd0b7ba1",
+       "latency_s": 0.0
+      }
+     ]
     }
    ],
    "test_plan": [
@@ -455,7 +476,7 @@
      "derived_from": [
       "requirements_spec@v1"
      ],
-     "created_at": 1790806704.399046,
+     "created_at": 1790809194.9731705,
      "content": {
       "strategy": [
        "unit: pure functions and service logic with a fake clock",
@@ -539,7 +560,13 @@
        "unit": 4,
        "integration": 6
       }
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "test_planner"
+      }
+     ]
     }
    ],
    "impact_analysis": [
@@ -552,7 +579,7 @@
      "derived_from": [
       "requirements_spec@v1"
      ],
-     "created_at": 1790806704.4218142,
+     "created_at": 1790809194.9896958,
      "content": {
       "terms": [
        "accept",
@@ -816,25 +843,31 @@
        "shortener.db"
       ],
       "tests_touching": {
-       "shortener.service": [
-        "tests.conftest"
-       ],
-       "shortener.schemas": [],
        "shortener.db": [
         "tests.conftest",
         "tests.test_units"
        ],
-       "shortener.repository": [
-        "tests.conftest"
-       ],
        "shortener.api": [
         "tests.conftest",
         "tests.test_api"
-       ]
+       ],
+       "shortener.service": [
+        "tests.conftest"
+       ],
+       "shortener.repository": [
+        "tests.conftest"
+       ],
+       "shortener.schemas": []
       },
       "risk": "high",
       "risk_rationale": "schema and public API both impacted"
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "codebase_analyst"
+      }
+     ]
     }
    ],
    "design": [
@@ -848,7 +881,7 @@
       "requirements_spec@v1",
       "impact_analysis@v1"
      ],
-     "created_at": 1790806704.424705,
+     "created_at": 1790809194.9966717,
      "content": {
       "title": "Limited-use links (max_clicks)",
       "approach": "Add a nullable links.max_clicks column (migration v2). Enforce the limit in the repository with a single conditional INSERT ... SELECT so check-and-record is atomic. The service maps 'not recorded' to 410 Gone (same semantics as expiry). The API contract change is additive: an optional request field and two nullable response fields, so existing clients are unaffected.",
@@ -1015,7 +1048,20 @@
       "unpredicted_files": [
        "shortener/models.py"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "key": "design",
+       "provider": "offline",
+       "execution": 1,
+       "prompt_sha256": "2b4e707388bfe2531e404ad2ab4b9fd03a80ae64fdd7a5317aa7a37649e9feaa",
+       "content_origin": "recorded",
+       "source": "scenarios/playbooks/brownfield.yaml#design",
+       "fault_injected": false,
+       "response_sha256": "6bc058dcddee99c16e1616466e5640aacf447d6710122ae4ae3ffb960554c8bd",
+       "latency_s": 0.0
+      }
+     ]
     }
    ],
    "change_set": [
@@ -1030,7 +1076,7 @@
       "design@v1",
       "test_plan@v1"
      ],
-     "created_at": 1790806704.4423697,
+     "created_at": 1790809195.0207934,
      "content": {
       "summary": "max_clicks: migration v2, atomic limit enforcement, additive API fields, tests",
       "files": [
@@ -1043,7 +1089,20 @@
        "tests/test_max_clicks.py"
       ],
       "operations": 20
-     }
+     },
+     "provenance": [
+      {
+       "key": "implement",
+       "provider": "offline",
+       "execution": 1,
+       "prompt_sha256": "da13549c23dd6077259965c71979a6bdf674edbbe052987efab2fafb11357ecf",
+       "content_origin": "recorded",
+       "source": "scenarios/playbooks/brownfield.yaml#implement",
+       "fault_injected": false,
+       "response_sha256": "34d675075d4a3a03d83ba8b2880b9adb5ce040f32ab5c9183278791d41611ced",
+       "latency_s": 0.0
+      }
+     ]
     }
    ],
    "security_report": [
@@ -1054,7 +1113,7 @@
      "producer": "security_scan",
      "attempt": 1,
      "derived_from": [],
-     "created_at": 1790806704.4673088,
+     "created_at": 1790809195.076843,
      "content": {
       "files_scanned": [
        "shortener/api.py",
@@ -1076,7 +1135,13 @@
        "dependency-change",
        "security-test-missing"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "security_scanner"
+      }
+     ]
     }
    ],
    "docs_report": [
@@ -1090,7 +1155,7 @@
       "requirements_spec@v1",
       "design@v1"
      ],
-     "created_at": 1790806704.8393707,
+     "created_at": 1790809195.4190483,
      "content": {
       "routes": 7,
       "undocumented_routes": [],
@@ -1101,26 +1166,32 @@
        "docs/adr/ADR-002-response-when-exhausted.md",
        "docs/adr/ADR-003-remaining-clicks-source.md"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "tech_writer"
+      }
+     ]
     }
    ],
    "test_report": [
     {
      "name": "test_report",
      "version": 1,
-     "hash": "55df701a14f36003",
+     "hash": "24a836c996b2c75b",
      "producer": "run_tests",
      "attempt": 1,
      "derived_from": [
       "test_plan@v1"
      ],
-     "created_at": 1790806707.0173826,
+     "created_at": 1790809197.4779255,
      "content": {
-      "total": 63,
-      "passed": 63,
+      "total": 77,
+      "passed": 77,
       "failed": 0,
       "errors": 0,
-      "coverage": 98.91,
+      "coverage": 98.94,
       "failures": [],
       "passed_tests": [
        "tests/test_api.py::test_api_key_enforced_on_writes_when_configured",
@@ -1154,6 +1225,7 @@
        "tests/test_units.py::test_long_headers_are_truncated",
        "tests/test_units.py::test_migration_versions_strictly_increase",
        "tests/test_units.py::test_migrations_are_idempotent_and_versioned",
+       "tests/test_units.py::test_numeric_looking_domain_names_are_allowed",
        "tests/test_units.py::test_private_targets_allowed_when_configured",
        "tests/test_units.py::test_rejected_urls",
        "tests/test_units.py::test_repository_duplicate_code_raises_conflict",
@@ -1164,8 +1236,21 @@
        "tests/test_units.py::test_valid_urls"
       ],
       "command": "pytest -q -p no:cacheprovider --junitxml=<run_dir>/test-output/exec1-attempt1/junit.xml --cov=shortener --cov-report=json:<run_dir>/test-output/exec1-attempt1/coverage.json tests",
-      "exit_code": 0
-     }
+      "exit_code": 0,
+      "sandbox": {
+       "backend": "process",
+       "env": "allowlist",
+       "rlimits": true,
+       "network": "none (netns)",
+       "filesystem": "not isolated (use docker backend)"
+      }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "test_runner"
+      }
+     ]
     }
    ]
   },
@@ -1175,12 +1260,12 @@
     "node": "intake",
     "kind": "approval",
     "summary": "approve: requirement contains ambiguities resolved only by assumptions",
-    "actor": "eng-manager@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:eng-manager",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "requirements_spec@pending"
     ],
-    "at": 1790806704.3967493
+    "at": 1790809194.9575942
    },
    {
     "id": "D002",
@@ -1192,7 +1277,7 @@
     "refs": [
      "requirements_spec@v1"
     ],
-    "at": 1790806704.396854
+    "at": 1790809194.958126
    },
    {
     "id": "D003",
@@ -1204,7 +1289,7 @@
     "refs": [
      "requirements_spec@v1"
     ],
-    "at": 1790806704.3968563
+    "at": 1790809194.9581292
    },
    {
     "id": "D004",
@@ -1216,19 +1301,19 @@
     "refs": [
      "requirements_spec@v1"
     ],
-    "at": 1790806704.3968577
+    "at": 1790809194.9581316
    },
    {
     "id": "D005",
     "node": "design",
     "kind": "approval",
     "summary": "approve: high-impact change: public_api_change, high-impact change: schema_change",
-    "actor": "eng-manager@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:eng-manager",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "design@pending"
     ],
-    "at": 1790806704.4246387
+    "at": 1790809194.996564
    },
    {
     "id": "D006",
@@ -1240,7 +1325,7 @@
     "refs": [
      "design@v1"
     ],
-    "at": 1790806704.4247608
+    "at": 1790809194.9972608
    },
    {
     "id": "D007",
@@ -1252,7 +1337,7 @@
     "refs": [
      "design@v1"
     ],
-    "at": 1790806704.424764
+    "at": 1790809194.9972641
    },
    {
     "id": "D008",
@@ -1264,31 +1349,31 @@
     "refs": [
      "design@v1"
     ],
-    "at": 1790806704.4247656
+    "at": 1790809194.9972663
    },
    {
     "id": "D009",
     "node": "implement",
     "kind": "approval",
     "summary": "approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/db.py",
-    "actor": "eng-manager@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:eng-manager",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "change_set@pending"
     ],
-    "at": 1790806704.4401286
+    "at": 1790809195.017712
    },
    {
     "id": "D010",
     "node": "release_readiness",
     "kind": "approval",
     "summary": "reject: 'release_readiness' always requires human sign-off",
-    "actor": "eng-manager@example.com",
-    "rationale": "Promotion cancelled by marketing; do not ship this change.",
+    "actor": "simulated:eng-manager",
+    "rationale": "[SIMULATED] Promotion cancelled by marketing; do not ship this change.",
     "refs": [
      "release_readiness@pending"
     ],
-    "at": 1790806707.0264034
+    "at": 1790809197.4916236
    },
    {
     "id": "D011",
@@ -1296,9 +1381,9 @@
     "kind": "rollback",
     "summary": "workspace restored to baseline",
     "actor": "orchestrator",
-    "rationale": "'release_readiness' rejected by eng-manager@example.com: Promotion cancelled by marketing; do not ship this change.",
+    "rationale": "'release_readiness' rejected by simulated:eng-manager: [SIMULATED] Promotion cancelled by marketing; do not ship this change.",
     "refs": [],
-    "at": 1790806707.0307975
+    "at": 1790809197.4968014
    }
   ],
   "feedback": {}

@@ -1,5 +1,5 @@
 {
-  "end_to_end_latency_s": 7.595,
+  "end_to_end_latency_s": 7.327,
   "attempts": 16,
   "attempt_success_rate": 0.812,
   "retries": 0,
@@ -10,18 +10,20 @@
   "replans": 0,
   "approvals_requested": 5,
   "approvals_rejected": 0,
+  "approvals_human": 0,
+  "approvals_simulated": 5,
   "policy_violations": 0,
   "incidents_recovered": 0,
   "incidents_unrecovered": 1,
   "mttr_s": null,
   "stage_latency_s": {
-    "analysis": 0.023,
-    "architecture": 0.0,
-    "documentation": 1.211,
-    "implementation": 0.008,
+    "analysis": 0.03,
+    "architecture": 0.001,
+    "documentation": 1.26,
+    "implementation": 0.009,
     "requirements": 0.0,
-    "security": 0.061,
+    "security": 0.1,
     "test-design": 0.0,
-    "testing": 7.491
+    "testing": 7.153
   }
 }

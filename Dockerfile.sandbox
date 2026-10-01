@@ -1,0 +1,7 @@
+# Image for the docker sandbox backend (ORCH_SANDBOX=docker).
+# Contains only what generated code needs to be tested; it runs with --network none,
+# a read-only root filesystem, no capabilities and an unprivileged user.
+FROM python:3.11-slim
+RUN pip install --no-cache-dir "fastapi>=0.110" "httpx>=0.27" "pydantic>=2.5" "pytest>=8.0" "pytest-cov>=5.0"
+USER 65534:65534
+WORKDIR /work

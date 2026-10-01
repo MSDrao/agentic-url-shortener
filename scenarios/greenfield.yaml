@@ -15,5 +15,5 @@ requirement: |
 # Expected: bounded retry with backoff, then success; the incident feeds MTTR.
 faults:
   design: {on_executions: [1], variant: error}
-approver: "tech-lead@example.com"
-approvals: {}             # approve every gate (decisions still recorded under the approver identity)
+simulated_role: "tech-lead"
+simulated_approvals: {}   # --approvals simulated: approve every gate (recorded as simulated, human=false)

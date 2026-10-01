@@ -5,7 +5,6 @@ budgets:
   max_total_attempts: 40        # safe-stop if exceeded (runaway-loop guard)
   max_wall_seconds: 900
   max_rework_cycles: 2          # test/security failure -> rollback + re-implement, at most N times
-  test_timeout_seconds: 300
 
 autonomy:
   # Only these agents may propose file writes, and only inside these globs.
@@ -21,6 +20,10 @@ approvals:
   on_impact: [schema_change, public_api_change, dependency_change, pii]
   on_unresolved_ambiguity: true          # assumptions must be signed off
   rollback_on_reject: [release_readiness]
+  # Simulated (scripted) approvals exist for demos/CI and are always recorded as human=false.
+  # Set to false wherever a run could lead to a real release: the engine then refuses to start
+  # in simulated mode, so every gate needs an interactive or queued human decision.
+  allow_simulated_approvals: true
   max_revision_rounds: 3
 
 change_control:
@@ -61,3 +64,16 @@ replanning:
 
 quality:
   min_coverage: 85
+
+# Execution sandbox for agent-generated code (tests, app import). See orchestrator/sandbox.py.
+# backend: process (portable: env allowlist, rlimits, no network on Linux) | docker (container isolation)
+# Override per run with ORCH_SANDBOX=docker.
+sandbox:
+  backend: process
+  network: deny
+  timeout_seconds: 300
+  cpu_seconds: 300
+  memory_mb: 2048
+  file_size_mb: 128
+  pids_limit: 128
+  docker_image: orchestrator-sandbox:py311

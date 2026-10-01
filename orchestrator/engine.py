@@ -25,14 +25,14 @@ from pathlib import Path
 from typing import Any
 
 from . import gates as gates_mod
-from .agents.base import Agent, AgentTask
+from .agents.base import Agent, AgentTask, InfrastructureError
 from .approval import ApprovalRequest, Approver
 from .audit import AuditLog
 from .context import RunContext
 from .graph import GraphError, WorkflowGraph
-from .llm import LLMProvider
+from .llm import LLMProvider, RecordingLLM
 from .metrics import Metrics
-from .model import TERMINAL, AgentResult, NodeSpec, NodeStatus, RunStatus
+from .model import TERMINAL, AgentResult, NodeSpec, NodeStatus, RunStatus, content_hash
 from .policy import Policy
 from .workspace import Workspace
 
@@ -87,6 +87,15 @@ class Engine:
         self.gate_log: dict[str, list[dict[str, Any]]] = {}
         self.mutations: list[dict[str, Any]] = []
         self.timeline: list[dict[str, Any]] = []
+        # Human-gate state: proposals awaiting a decision are persisted verbatim so that
+        # what the human approved is exactly what gets committed (the agent is not re-run).
+        self.paused = False
+        self._llm_calls: dict[str, list[dict[str, Any]]] = {}
+        self.pending: dict[str, dict[str, Any]] = {}
+        self.release_signoff: dict[str, Any] | None = None
+        if getattr(approver, "human", True) is False and not self.policy.section("approvals").get(
+                "allow_simulated_approvals", False):
+            raise ValueError("policy forbids simulated approvals (approvals.allow_simulated_approvals: false)")
 
     # ------------------------------------------------------------------ run
     def run(self) -> RunStatus:
@@ -98,6 +107,9 @@ class Engine:
             waves=self.graph.parallel_levels(),
         )
         self._persist()
+        self._session_start = time.time()
+        self._session_wait = 0.0
+        self._drain_pending()  # on resume: apply decisions recorded while the run was paused
         budgets = self.policy.budgets
         running: dict[Future, tuple[str, int, float]] = {}
         with ThreadPoolExecutor(max_workers=self.max_parallel, thread_name_prefix="agent") as pool:
@@ -108,13 +120,13 @@ class Engine:
                 if self.metrics.attempts >= int(budgets.get("max_total_attempts", 1000)):
                     self._safe_stop("budget exceeded: max_total_attempts", running)
                     break
-                if time.time() - self.metrics.started_at > float(budgets.get("max_wall_seconds", 3600)):
+                if self._active_seconds() > float(budgets.get("max_wall_seconds", 3600)):
                     self._safe_stop("budget exceeded: max_wall_seconds", running)
                     break
 
                 self._propagate_blocked()
                 busy = {n for n, _, _ in running.values()}
-                for node_id in self._ready(busy):
+                for node_id in ([] if self.paused else self._ready(busy)):  # paused: finish in-flight work only
                     if len(running) >= self.max_parallel:
                         break
                     fut = self._dispatch(pool, node_id)
@@ -125,6 +137,8 @@ class Engine:
                     break
 
                 if not running:
+                    if self.paused:
+                        break
                     if any(self.not_before.get(k, 0) > time.time() for k, s in self.status.items() if s == NodeStatus.PENDING):
                         time.sleep(0.05)
                         continue
@@ -176,6 +190,8 @@ class Engine:
         agent_name = node.fallback_agent if self.use_fallback[node_id] and node.fallback_agent else node.agent
         agent = self.agents[agent_name]
         inputs = {c.lstrip("?"): self.ctx.get(c.lstrip("?")) for c in node.consumes}
+        sink: list[dict[str, Any]] = []
+        self._llm_calls[node_id] = sink
         task = AgentTask(
             node=node,
             attempt=self.attempts[node_id],
@@ -184,10 +200,11 @@ class Engine:
             feedback=list(self.ctx.feedback.get(node_id, [])),
             scenario=self.scenario,
             workspace=self.workspace,
-            llm=getattr(agent, "llm", None) or self.llm,
+            llm=RecordingLLM(getattr(agent, "llm", None) or self.llm, sink),
             policy=self.policy,
             run_dir=self.run_dir,
             repo_root=self.repo_root,
+            live_run=self.llm.name != "offline",
         )
         self._set(node_id, NodeStatus.RUNNING, agent=agent_name, attempt=self.attempts[node_id])
         return pool.submit(agent.run, task)
@@ -198,11 +215,21 @@ class Engine:
         elapsed = time.time() - started
         self.metrics.add_latency(node.stage, elapsed)
         self.timeline.append({"node": node_id, "start": started - self.metrics.started_at, "end": time.time() - self.metrics.started_at, "attempt": self.attempts[node_id]})
+        calls = self._llm_calls.pop(node_id, [])
+        for call in calls:
+            self.audit.record("reasoning_call", node=node_id, **call)
         if epoch != self.epoch[node_id]:
             self.audit.record("stale_result_discarded", node=node_id, reason="node was invalidated while running")
             return
         try:
             result: AgentResult = fut.result()
+            result.provenance = calls
+        except InfrastructureError as exc:  # environment problem: do not rework correct code
+            self.metrics.attempt_failures += 1
+            self.metrics.open_incident(node_id)
+            self._set(node_id, NodeStatus.FAILED, reason=f"infrastructure: {exc}"[:300])
+            self._safe_stop(f"infrastructure failure in '{node_id}': {str(exc)[:200]}", {})
+            return
         except Exception as exc:  # agent crash = failed attempt
             self._attempt_failed(node_id, f"{type(exc).__name__}: {exc}")
             return
@@ -243,22 +270,52 @@ class Engine:
         # 4) commit
         self._commit(node_id, result)
 
-    def _approve(self, node_id: str, reasons: list[str], result: AgentResult) -> bool:
-        self._set(node_id, NodeStatus.WAITING_APPROVAL, reasons=reasons)
-        rnd = self.approval_rounds.get(node_id, 0) + 1
-        self.approval_rounds[node_id] = rnd
-        self.metrics.approvals_requested += 1
+    def _approve(self, node_id: str, reasons: list[str], result: AgentResult, rnd: int | None = None) -> bool:
+        """Return True to commit. False means: rejected, sent back for revision, or paused pending a human."""
+        if rnd is None:
+            self._set(node_id, NodeStatus.WAITING_APPROVAL, reasons=reasons)
+            rnd = self.approval_rounds.get(node_id, 0) + 1
+            self.approval_rounds[node_id] = rnd
+            self.metrics.approvals_requested += 1
         evidence: dict[str, Any] = {k: v for k, v in result.artifacts.items()}
         if result.file_changes:
             evidence["files"] = sorted(result.file_changes)
+            evidence["diff_sha256"] = content_hash(result.file_changes)
         req = ApprovalRequest(node_id, reasons, result.summary, evidence, rnd)
         waited = time.time()
-        decision = self.approver.request(req)
+        try:
+            decision = self.approver.request(req)
+        except ValueError as exc:  # e.g. a decision recorded for a different proposal
+            self._safe_stop(f"approval for '{node_id}' could not be applied: {exc}", {})
+            return False
+        finally:
+            waited_s = time.time() - waited  # time a human spent deciding is not execution time
+            self._session_wait += waited_s
+            self.metrics.approval_wait_s += waited_s
+        if decision is None:  # no human decision yet: pause the run at this gate
+            self.pending[node_id] = {"reasons": reasons, "round": rnd, "result": _result_to_dict(result),
+                                     "request_hash": req.request_hash}
+            self.paused = True
+            self.audit.record("approval_pending", node=node_id, round=rnd, request_hash=req.request_hash, reasons=reasons)
+            self.log(f"  ⏸ '{node_id}' awaits a human decision (request {req.request_hash}); the run will pause")
+            self._persist()
+            return False
+        if decision.request_hash and decision.request_hash != req.request_hash:
+            self._safe_stop(f"approval for '{node_id}' refers to a different proposal", {})
+            return False
+        if decision.human:
+            self.metrics.approvals_human += 1
+        else:
+            self.metrics.approvals_simulated += 1
         self.audit.record("approval_decision", node=node_id, actor=decision.approver, decision=decision.decision,
+                          human=decision.human, mode=getattr(self.approver, "mode", "?"), request_hash=req.request_hash,
                           comment=decision.comment, reasons=reasons, round=rnd, revise_target=decision.revise_target,
                           answers=decision.answers, wait_s=round(time.time() - waited, 3))
         self.ctx.decide(node_id, "approval", f"{decision.decision}: {', '.join(reasons)}", decision.approver,
                         rationale=decision.comment, refs=[f"{k}@pending" for k in result.artifacts])
+        if node_id in self.policy.section("approvals").get("always", []) and decision.decision == "approve":
+            self.release_signoff = {"node": node_id, "approver": decision.approver, "human": decision.human,
+                                    "request_hash": req.request_hash}
 
         if decision.decision == "approve":
             return True
@@ -283,11 +340,12 @@ class Engine:
         if target not in self.graph.nodes or (target != node_id and node_id not in self.graph.descendants(target)):
             target = node_id
         if decision.comment:
-            self.ctx.feedback.setdefault(target, []).append(f"[human:{decision.approver}] {decision.comment}")
+            self.ctx.feedback.setdefault(target, []).append(f"[reviewer:{decision.approver}] {decision.comment}")
         if decision.answers:
             prev = self.ctx.get("clarifications") or {}
             merged = {**prev, **decision.answers}
-            self.ctx.put("clarifications", merged, producer=f"human:{decision.approver}", attempt=rnd, derived_from=[])
+            producer = f"human:{decision.approver}" if decision.human else decision.approver
+            self.ctx.put("clarifications", merged, producer=producer, attempt=rnd, derived_from=[])
             self.ctx.decide(node_id, "assumption", f"human clarified {sorted(decision.answers)}", decision.approver,
                             rationale=decision.comment, refs=[self.ctx.ref("clarifications") or ""])
         self.metrics.replans += 1
@@ -300,8 +358,17 @@ class Engine:
             self._reset([node_id], reason="awaiting re-run of upstream")
         return False
 
+    def _drain_pending(self) -> None:
+        for node_id, p in list(self.pending.items()):
+            del self.pending[node_id]
+            result = _result_from_dict(p["result"])
+            if self._approve(node_id, p["reasons"], result, rnd=p["round"]):
+                self._commit(node_id, result)
+        self.paused = bool(self.pending)
+
     def _commit(self, node_id: str, result: AgentResult) -> None:
         node = self.graph.nodes[node_id]
+        agent_name = node.fallback_agent if self.use_fallback[node_id] and node.fallback_agent else node.agent
         if result.file_changes:
             self.workspace.snapshot(f"pre-{node_id}")
             self.workspace.apply(result.file_changes)
@@ -310,11 +377,12 @@ class Engine:
         derived = [r for r in (self.ctx.ref(c.lstrip("?")) for c in node.consumes) if r]
         for name, content in result.artifacts.items():
             prev = self.ctx.latest(name)
-            av = self.ctx.put(name, content, producer=node_id, attempt=self.attempts[node_id], derived_from=derived)
+            prov = result.provenance or [{"content_origin": "computed", "agent": agent_name}]
+            av = self.ctx.put(name, content, producer=node_id, attempt=self.attempts[node_id], derived_from=derived,
+                              provenance=prov)
             self.audit.record("artifact_committed", node=node_id, artifact=f"{name}@v{av.version}", hash=av.hash, derived_from=derived)
             if prev is not None and prev.hash != av.hash:
                 changed.append(name)
-        agent_name = node.fallback_agent if self.use_fallback[node_id] and node.fallback_agent else node.agent
         for d in result.decisions:
             self.ctx.decide(node_id, d.get("kind", "design_choice"), d["summary"], agent_name,
                             rationale=d.get("rationale", ""), refs=[self.ctx.ref(n) or n for n in result.artifacts])
@@ -484,6 +552,11 @@ class Engine:
             "gate_log": self.gate_log,
             "timeline": self.timeline,
             "metrics": self.metrics.to_dict(),
+            "audit_head": self.audit.head,
+            # Execution configuration is part of the run's identity: resume restores it.
+            "config": {"llm": self.llm.name, "approvals": getattr(self.approver, "mode", "?")},
+            "pending_approvals": self.pending,
+            "release_signoff": self.release_signoff,
             "context": self.ctx.to_dict(),
         }
         tmp = self.run_dir / "state.json.tmp"
@@ -505,7 +578,11 @@ class Engine:
                 s = NodeStatus.PENDING
             if reset_failed and s in (NodeStatus.FAILED, NodeStatus.BLOCKED):
                 s = NodeStatus.PENDING
+            if k in state.get("pending_approvals", {}):
+                s = NodeStatus.WAITING_APPROVAL
             self.status[k] = s
+        self.pending = state.get("pending_approvals", {})
+        self.release_signoff = state.get("release_signoff")
         self.executions.update(state.get("executions", {}))
         self.approval_rounds = state.get("approval_rounds", {})
         self.rework_cycles = state.get("rework_cycles", {})
@@ -517,7 +594,18 @@ class Engine:
         self.metrics = m
         self.audit.record("run_resumed", reset_failed=reset_failed, previous_stop=state.get("stop_reason"))
 
+    def _active_seconds(self) -> float:
+        session = getattr(self, "_session_start", None)
+        current = (time.time() - session - self._session_wait) if session else 0.0
+        return self.metrics.active_s + current
+
     def _finalize(self) -> RunStatus:
+        if getattr(self, "_session_start", None):
+            self.metrics.active_s = self._active_seconds()
+            self._session_start = None
+        if self.run_status == RunStatus.RUNNING and self.pending:
+            self.run_status = RunStatus.AWAITING_APPROVAL
+            self.stop_reason = "awaiting human approval: " + ", ".join(sorted(self.pending))
         if self.run_status == RunStatus.RUNNING:
             if all(s == NodeStatus.SUCCEEDED for s in self.status.values()):
                 self.run_status = RunStatus.SUCCEEDED
@@ -525,7 +613,7 @@ class Engine:
                 self.run_status = RunStatus.FAILED
                 self.stop_reason = self.stop_reason or "graph could not complete"
         for k, s in self.status.items():
-            if s not in TERMINAL and self.run_status != RunStatus.HALTED:
+            if s not in TERMINAL and self.run_status not in (RunStatus.HALTED, RunStatus.AWAITING_APPROVAL):
                 self.status[k] = NodeStatus.SKIPPED
         self.metrics.finished_at = time.time()
         (self.run_dir / "change.patch").write_text(self.workspace.diff("baseline"))
@@ -536,5 +624,20 @@ class Engine:
         self._persist()
         history = self.run_dir.parent / "history.jsonl"
         with history.open("a") as fh:
-            fh.write(json.dumps({"run_id": self.run_id, "scenario": self.scenario["id"], "status": self.run_status.value, "metrics": summary}) + "\n")
+            # Second, independent copy of the audit head (see audit.py integrity model).
+            fh.write(json.dumps({"run_id": self.run_id, "scenario": self.scenario["id"], "status": self.run_status.value,
+                                 "metrics": summary, "audit_head": self.audit.head,
+                                 "release_signoff": self.release_signoff}) + "\n")
         return self.run_status
+
+
+def _result_to_dict(r: AgentResult) -> dict[str, Any]:
+    return {"artifacts": r.artifacts, "file_changes": r.file_changes, "decisions": r.decisions,
+            "plan_changes": r.plan_changes, "impact": sorted(r.impact), "summary": r.summary,
+            "provenance": r.provenance}
+
+
+def _result_from_dict(d: dict[str, Any]) -> AgentResult:
+    return AgentResult(artifacts=d["artifacts"], file_changes=d["file_changes"], decisions=d["decisions"],
+                       plan_changes=d["plan_changes"], impact=set(d["impact"]), summary=d["summary"],
+                       provenance=d.get("provenance", []))

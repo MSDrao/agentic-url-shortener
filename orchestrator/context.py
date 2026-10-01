@@ -25,6 +25,8 @@ class ArtifactVersion:
     derived_from: list[str]  # ["requirements_spec@v2", ...]
     created_at: float
     content: Any
+    # How the content was produced: recorded playbook / live model (+ hashes) / computed by agent code.
+    provenance: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -48,7 +50,8 @@ class RunContext:
         self._lock = threading.Lock()
 
     # --- artifacts ------------------------------------------------------
-    def put(self, name: str, content: Any, producer: str, attempt: int, derived_from: list[str]) -> ArtifactVersion:
+    def put(self, name: str, content: Any, producer: str, attempt: int, derived_from: list[str],
+            provenance: list[dict[str, Any]] | None = None) -> ArtifactVersion:
         with self._lock:
             versions = self.artifacts.setdefault(name, [])
             av = ArtifactVersion(
@@ -60,6 +63,7 @@ class RunContext:
                 derived_from=derived_from,
                 created_at=time.time(),
                 content=content,
+                provenance=provenance or [],
             )
             versions.append(av)
             return av

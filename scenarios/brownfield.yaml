@@ -14,5 +14,5 @@ requirement: |
 # failing-test feedback -> tests pass. Shows rework loop, rollback and MTTR.
 faults:
   implement: {on_executions: [1], variant: buggy}
-approver: "eng-manager@example.com"
-approvals: {}
+simulated_role: "eng-manager"
+simulated_approvals: {}

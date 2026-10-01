@@ -28,6 +28,7 @@ class RunStatus(str, Enum):
     FAILED = "failed"
     HALTED = "halted"            # safe-stop: resumable
     ROLLED_BACK = "rolled_back"  # release rejected: workspace restored to baseline
+    AWAITING_APPROVAL = "awaiting_approval"  # paused at a human gate: record a decision, then resume
 
 
 @dataclass
@@ -90,6 +91,7 @@ class AgentResult:
     plan_changes: list[dict[str, Any]] = field(default_factory=list)
     impact: set[str] = field(default_factory=set)  # e.g. {"schema_change", "pii"}
     summary: str = ""
+    provenance: list[dict[str, Any]] = field(default_factory=list)  # set by the engine, not the agent
 
 
 def content_hash(value: Any) -> str:

@@ -7,8 +7,8 @@
   "baseline": "service",
   "playbook": "scenarios/playbooks/ambiguous.yaml",
   "requirement": "Our short links need to be safer, and marketing wants to see who is clicking them.\nPlease get this done quickly without slowing redirects down.\n",
-  "approver": "product-owner@example.com",
-  "approvals": {
+  "simulated_role": "product-owner",
+  "simulated_approvals": {
    "design": [
     {
      "decision": "revise",
@@ -280,7 +280,7 @@
     "kind": "exit",
     "gate": "tests_pass",
     "passed": true,
-    "detail": "62/62 passed, 0 failed, 0 errors"
+    "detail": "76/76 passed, 0 failed, 0 errors, exit_code=0"
    },
    {
     "kind": "exit",
@@ -327,92 +327,92 @@
  "timeline": [
   {
    "node": "intake",
-   "start": 0.001222372055053711,
-   "end": 0.0012431144714355469,
+   "start": 0.0022559165954589844,
+   "end": 0.0022940635681152344,
    "attempt": 1
   },
   {
    "node": "test_plan",
-   "start": 0.00402069091796875,
-   "end": 0.004044055938720703,
+   "start": 0.01637721061706543,
+   "end": 0.01642918586730957,
    "attempt": 1
   },
   {
    "node": "codebase_analysis",
-   "start": 0.0032320022583007812,
-   "end": 0.034967899322509766,
+   "start": 0.008955240249633789,
+   "end": 0.043912410736083984,
    "attempt": 1
   },
   {
    "node": "design",
-   "start": 0.037515878677368164,
-   "end": 0.03797602653503418,
+   "start": 0.049166202545166016,
+   "end": 0.05000877380371094,
    "attempt": 1
   },
   {
    "node": "intake",
-   "start": 0.03889966011047363,
-   "end": 0.0392606258392334,
+   "start": 0.057038068771362305,
+   "end": 0.05752897262573242,
    "attempt": 1
   },
   {
    "node": "test_plan",
-   "start": 0.04341530799865723,
-   "end": 0.043604135513305664,
+   "start": 0.07973670959472656,
+   "end": 0.08327221870422363,
    "attempt": 1
   },
   {
    "node": "codebase_analysis",
-   "start": 0.04290962219238281,
-   "end": 0.0689241886138916,
+   "start": 0.07023119926452637,
+   "end": 0.09881305694580078,
    "attempt": 1
   },
   {
    "node": "design",
-   "start": 0.07256746292114258,
-   "end": 0.07294130325317383,
+   "start": 0.10522866249084473,
+   "end": 0.10596370697021484,
    "attempt": 1
   },
   {
    "node": "privacy_review",
-   "start": 0.07742905616760254,
-   "end": 0.07803153991699219,
+   "start": 0.1135108470916748,
+   "end": 0.11407208442687988,
    "attempt": 1
   },
   {
    "node": "implement",
-   "start": 0.08216643333435059,
-   "end": 0.08516144752502441,
+   "start": 0.12133598327636719,
+   "end": 0.12457466125488281,
    "attempt": 1
   },
   {
    "node": "security_scan",
-   "start": 0.10638904571533203,
-   "end": 0.13960647583007812,
+   "start": 0.15639948844909668,
+   "end": 0.20096445083618164,
    "attempt": 1
   },
   {
    "node": "docs",
-   "start": 0.1050567626953125,
-   "end": 0.5104897022247314,
+   "start": 0.15046095848083496,
+   "end": 0.586573600769043,
    "attempt": 1
   },
   {
    "node": "run_tests",
-   "start": 0.10615921020507812,
-   "end": 2.456159830093384,
+   "start": 0.15319037437438965,
+   "end": 2.4249165058135986,
    "attempt": 1
   },
   {
    "node": "release_readiness",
-   "start": 2.4612696170806885,
-   "end": 2.467080593109131,
+   "start": 2.4336283206939697,
+   "end": 2.4392518997192383,
    "attempt": 1
   }
  ],
  "metrics": {
-  "started_at": 1790806701.8877525,
-  "finished_at": 1790806704.3599288,
+  "started_at": 1790809192.4594755,
+  "finished_at": 1790809194.907632,
   "attempts": 14,
   "attempt_successes": 13,
   "attempt_failures": 0,
@@ -423,21 +423,34 @@
   "replans": 3,
   "approvals_requested": 7,
   "approvals_rejected": 0,
+  "approvals_human": 0,
+  "approvals_simulated": 7,
   "policy_violations": 0,
   "stage_latency": {
-   "requirements": 0.00037741661071777344,
-   "test-design": 0.0002090930938720703,
-   "analysis": 0.05774402618408203,
-   "architecture": 0.0008292198181152344,
-   "compliance": 0.0006003379821777344,
-   "implementation": 0.002992391586303711,
-   "security": 0.03321409225463867,
-   "documentation": 0.4054281711578369,
-   "testing": 2.349993944168091,
-   "release": 0.005806922912597656
+   "requirements": 0.0005235671997070312,
+   "test-design": 0.0035817623138427734,
+   "analysis": 0.06353497505187988,
+   "architecture": 0.0015711784362792969,
+   "compliance": 0.0005588531494140625,
+   "implementation": 0.003234386444091797,
+   "security": 0.04455876350402832,
+   "documentation": 0.4361093044281006,
+   "testing": 2.2717199325561523,
+   "release": 0.005620479583740234
   },
   "open_incidents": {},
   "repair_times": []
+ },
+ "audit_head": {
+  "seq": 98,
+  "hash": "77e11608e1f4acd39e3a5fedcc3dff33e197192324027fda4e72aea859706c7e"
+ },
+ "pending_approvals": {},
+ "release_signoff": {
+  "node": "release_readiness",
+  "approver": "simulated:product-owner",
+  "human": false,
+  "request_hash": "f45b17699f1cf60a"
  },
  "context": {
   "artifacts": {
@@ -449,7 +462,7 @@
      "producer": "intake",
      "attempt": 1,
      "derived_from": [],
-     "created_at": 1790806701.8893063,
+     "created_at": 1790809192.464634,
      "content": {
       "problem_statement": "Reduce abuse of the shortener as a vector for harmful destinations, and give marketing audience analytics - without identifying individuals and without adding latency to redirects.",
       "functional": [
@@ -605,7 +618,20 @@
       "pii_signals": [
        "\\bwho\\b[^.]*\\bclick"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "key": "requirements",
+       "provider": "offline",
+       "execution": 1,
+       "prompt_sha256": "0a142f38caeac3ab4223be0a19061767b54edc1ced3c88d922f3906505c3624b",
+       "content_origin": "recorded",
+       "source": "scenarios/playbooks/ambiguous.yaml#requirements",
+       "fault_injected": false,
+       "response_sha256": "0a4a7920ec559f740e42575841faed2456b167753177011c7bf005dcea435656",
+       "latency_s": 0.0
+      }
+     ]
     },
     {
      "name": "requirements_spec",
@@ -616,7 +642,7 @@
      "derived_from": [
       "clarifications@v1"
      ],
-     "created_at": 1790806701.9273422,
+     "created_at": 1790809192.5202074,
      "content": {
       "problem_statement": "Reduce abuse of the shortener as a vector for harmful destinations, and give marketing audience analytics - without identifying individuals and without adding latency to redirects.",
       "functional": [
@@ -780,7 +806,20 @@
       "pii_signals": [
        "\\bwho\\b[^.]*\\bclick"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "key": "requirements",
+       "provider": "offline",
+       "execution": 2,
+       "prompt_sha256": "d2894109ff72401e553db7714c2ca3ac5e61104dfd66f1074c2a368a3a7628ec",
+       "content_origin": "recorded",
+       "source": "scenarios/playbooks/ambiguous.yaml#requirements",
+       "fault_injected": false,
+       "response_sha256": "9971a5034cb096f2644d1b8b29cc606bbfae35498bc333922b0eb8ab5402fd18",
+       "latency_s": 0.0
+      }
+     ]
     }
    ],
    "test_plan": [
@@ -793,7 +832,7 @@
      "derived_from": [
       "requirements_spec@v1"
      ],
-     "created_at": 1790806701.8919683,
+     "created_at": 1790809192.480451,
      "content": {
       "strategy": [
        "unit: pure functions and service logic with a fake clock",
@@ -863,7 +902,13 @@
        "unit": 4,
        "integration": 4
       }
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "test_planner"
+      }
+     ]
     },
     {
      "name": "test_plan",
@@ -874,7 +919,7 @@
      "derived_from": [
       "requirements_spec@v2"
      ],
-     "created_at": 1790806701.932417,
+     "created_at": 1790809192.5547297,
      "content": {
       "strategy": [
        "unit: pure functions and service logic with a fake clock",
@@ -951,20 +996,26 @@
        "unit": 4,
        "integration": 5
       }
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "test_planner"
+      }
+     ]
     }
    ],
    "impact_analysis": [
     {
      "name": "impact_analysis",
      "version": 1,
-     "hash": "8dfa1fe03d130553",
+     "hash": "1506c112d94c321c",
      "producer": "codebase_analysis",
      "attempt": 1,
      "derived_from": [
       "requirements_spec@v1"
      ],
-     "created_at": 1790806701.923007,
+     "created_at": 1790809192.504375,
      "content": {
       "terms": [
        "abuse",
@@ -1164,6 +1215,19 @@
         "score": 8.4
        },
        {
+        "module": "shortener.validation",
+        "path": "shortener/validation.py",
+        "reason": "direct",
+        "matched_terms": [
+         "addres",
+         "reject",
+         "redirect",
+         "shortener",
+         "link"
+        ],
+        "score": 7.24
+       },
+       {
         "module": "shortener.models",
         "path": "shortener/models.py",
         "reason": "direct",
@@ -1201,18 +1265,6 @@
          "link"
         ],
         "score": 6.01
-       },
-       {
-        "module": "shortener.validation",
-        "path": "shortener/validation.py",
-        "reason": "direct",
-        "matched_terms": [
-         "addres",
-         "redirect",
-         "shortener",
-         "link"
-        ],
-        "score": 5.29
        },
        {
         "module": "shortener.main",
@@ -1264,38 +1316,44 @@
        "shortener.db"
       ],
       "tests_touching": {
-       "shortener.models": [],
-       "shortener.service": [
-        "tests.conftest"
+       "shortener.validation": [
+        "tests.test_units"
        ],
-       "shortener.schemas": [],
        "shortener.db": [
         "tests.conftest",
         "tests.test_units"
        ],
-       "shortener.validation": [
-        "tests.test_units"
-       ],
-       "shortener.__init__": [],
        "shortener.api": [
         "tests.conftest",
         "tests.test_api"
-       ]
+       ],
+       "shortener.__init__": [],
+       "shortener.service": [
+        "tests.conftest"
+       ],
+       "shortener.models": [],
+       "shortener.schemas": []
       },
       "risk": "high",
       "risk_rationale": "schema and public API both impacted"
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "codebase_analyst"
+      }
+     ]
     },
     {
      "name": "impact_analysis",
      "version": 2,
-     "hash": "623cee22c848750c",
+     "hash": "32443592dc8ad015",
      "producer": "codebase_analysis",
      "attempt": 1,
      "derived_from": [
       "requirements_spec@v2"
      ],
-     "created_at": 1790806701.9569547,
+     "created_at": 1790809192.5590682,
      "content": {
       "terms": [
        "abuse",
@@ -1497,6 +1555,19 @@
         "score": 8.4
        },
        {
+        "module": "shortener.validation",
+        "path": "shortener/validation.py",
+        "reason": "direct",
+        "matched_terms": [
+         "addres",
+         "reject",
+         "redirect",
+         "shortener",
+         "link"
+        ],
+        "score": 7.24
+       },
+       {
         "module": "shortener.models",
         "path": "shortener/models.py",
         "reason": "direct",
@@ -1534,18 +1605,6 @@
          "link"
         ],
         "score": 6.01
-       },
-       {
-        "module": "shortener.validation",
-        "path": "shortener/validation.py",
-        "reason": "direct",
-        "matched_terms": [
-         "addres",
-         "redirect",
-         "shortener",
-         "link"
-        ],
-        "score": 5.29
        },
        {
         "module": "shortener.main",
@@ -1597,27 +1656,33 @@
        "shortener.db"
       ],
       "tests_touching": {
-       "shortener.models": [],
-       "shortener.service": [
-        "tests.conftest"
+       "shortener.validation": [
+        "tests.test_units"
        ],
-       "shortener.schemas": [],
        "shortener.db": [
         "tests.conftest",
         "tests.test_units"
        ],
-       "shortener.validation": [
-        "tests.test_units"
-       ],
-       "shortener.__init__": [],
        "shortener.api": [
         "tests.conftest",
         "tests.test_api"
-       ]
+       ],
+       "shortener.__init__": [],
+       "shortener.service": [
+        "tests.conftest"
+       ],
+       "shortener.models": [],
+       "shortener.schemas": []
       },
       "risk": "high",
       "risk_rationale": "schema and public API both impacted"
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "codebase_analyst"
+      }
+     ]
     }
    ],
    "clarifications": [
@@ -1625,13 +1690,14 @@
      "name": "clarifications",
      "version": 1,
      "hash": "43eaaea2c3183f42",
-     "producer": "human:product-owner@example.com",
+     "producer": "simulated:product-owner",
      "attempt": 1,
      "derived_from": [],
-     "created_at": 1790806701.9261634,
+     "created_at": 1790809192.5126498,
      "content": {
       "Q2": "create_and_redirect"
-     }
+     },
+     "provenance": []
     }
    ],
    "design": [
@@ -1645,7 +1711,7 @@
       "requirements_spec@v2",
       "impact_analysis@v2"
      ],
-     "created_at": 1790806701.9610271,
+     "created_at": 1790809192.5677764,
      "content": {
       "title": "Destination denylist + privacy-preserving visitor analytics",
       "approach": "Denylist is configuration (SHORTENER_BLOCKED_DOMAINS) checked in URL validation with parent-domain matching. Unique visitors are counted from a keyed HMAC of day|ip|user-agent stored in a new nullable clicks.visitor_hash column (migration v2); the raw IP exists only in memory for the request. A retention job nulls hashes older than the window while keeping click counts.",
@@ -1848,7 +1914,20 @@
       "unpredicted_files": [
        "shortener/config.py"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "key": "design",
+       "provider": "offline",
+       "execution": 2,
+       "prompt_sha256": "9902f25df6eca65ec11f1161ca99e15f9d0394c04cdeeaa5685fd56fab852546",
+       "content_origin": "recorded",
+       "source": "scenarios/playbooks/ambiguous.yaml#design",
+       "fault_injected": false,
+       "response_sha256": "0640f788a008f66d0127fabf347e2afa79a095c159e1f9ef123eda5ff4dc973d",
+       "latency_s": 0.0
+      }
+     ]
     }
    ],
    "privacy_review": [
@@ -1862,7 +1941,7 @@
       "requirements_spec@v2",
       "design@v1"
      ],
-     "created_at": 1790806701.9660437,
+     "created_at": 1790809192.5751283,
      "content": {
       "checks": [
        {
@@ -1895,7 +1974,13 @@
        "client IP (transient, in memory only)",
        "user agent (hash input)"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "privacy_officer"
+      }
+     ]
     }
    ],
    "change_set": [
@@ -1910,7 +1995,7 @@
       "design@v1",
       "test_plan@v2"
      ],
-     "created_at": 1790806701.988855,
+     "created_at": 1790809192.604105,
      "content": {
       "summary": "denylist + pseudonymous unique-visitor analytics with retention",
       "files": [
@@ -1925,7 +2010,20 @@
        "tests/test_safety_analytics.py"
       ],
       "operations": 24
-     }
+     },
+     "provenance": [
+      {
+       "key": "implement",
+       "provider": "offline",
+       "execution": 1,
+       "prompt_sha256": "2173f50bc64c2a2bb956e27a847a052628f280fc12e6a2a5e794d0889c25965b",
+       "content_origin": "recorded",
+       "source": "scenarios/playbooks/ambiguous.yaml#implement",
+       "fault_injected": false,
+       "response_sha256": "fd5a854f2f0f8475d7708e8512f493055ea5eacf646db0b1be449110a5448869",
+       "latency_s": 0.0
+      }
+     ]
     }
    ],
    "security_report": [
@@ -1936,7 +2034,7 @@
      "producer": "security_scan",
      "attempt": 1,
      "derived_from": [],
-     "created_at": 1790806702.0276177,
+     "created_at": 1790809192.661414,
      "content": {
       "files_scanned": [
        "shortener/api.py",
@@ -1960,7 +2058,13 @@
        "dependency-change",
        "security-test-missing"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "security_scanner"
+      }
+     ]
     }
    ],
    "docs_report": [
@@ -1974,7 +2078,7 @@
       "requirements_spec@v2",
       "design@v1"
      ],
-     "created_at": 1790806702.400784,
+     "created_at": 1790809193.049649,
      "content": {
       "routes": 7,
       "undocumented_routes": [],
@@ -1985,26 +2089,32 @@
        "docs/adr/ADR-002-visitor-hash-construction.md",
        "docs/adr/ADR-003-denylist-source.md"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "tech_writer"
+      }
+     ]
     }
    ],
    "test_report": [
     {
      "name": "test_report",
      "version": 1,
-     "hash": "30f8bbc9767087ef",
+     "hash": "761890301ac6b552",
      "producer": "run_tests",
      "attempt": 1,
      "derived_from": [
       "test_plan@v2"
      ],
-     "created_at": 1790806704.3442695,
+     "created_at": 1790809194.8855507,
      "content": {
-      "total": 62,
-      "passed": 62,
+      "total": 76,
+      "passed": 76,
       "failed": 0,
       "errors": 0,
-      "coverage": 99.36,
+      "coverage": 99.38,
       "failures": [],
       "passed_tests": [
        "tests/test_api.py::test_api_key_enforced_on_writes_when_configured",
@@ -2038,6 +2148,7 @@
        "tests/test_units.py::test_long_headers_are_truncated",
        "tests/test_units.py::test_migration_versions_strictly_increase",
        "tests/test_units.py::test_migrations_are_idempotent_and_versioned",
+       "tests/test_units.py::test_numeric_looking_domain_names_are_allowed",
        "tests/test_units.py::test_private_targets_allowed_when_configured",
        "tests/test_units.py::test_rejected_urls",
        "tests/test_units.py::test_repository_duplicate_code_raises_conflict",
@@ -2048,15 +2159,28 @@
        "tests/test_units.py::test_valid_urls"
       ],
       "command": "pytest -q -p no:cacheprovider --junitxml=<run_dir>/test-output/exec1-attempt1/junit.xml --cov=shortener --cov-report=json:<run_dir>/test-output/exec1-attempt1/coverage.json tests",
-      "exit_code": 0
-     }
+      "exit_code": 0,
+      "sandbox": {
+       "backend": "process",
+       "env": "allowlist",
+       "rlimits": true,
+       "network": "none (netns)",
+       "filesystem": "not isolated (use docker backend)"
+      }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "test_runner"
+      }
+     ]
     }
    ],
    "release_readiness": [
     {
      "name": "release_readiness",
      "version": 1,
-     "hash": "3a3ff163b552f222",
+     "hash": "69d2d68c6cc6ac65",
      "producer": "release_readiness",
      "attempt": 1,
      "derived_from": [
@@ -2068,19 +2192,19 @@
       "docs_report@v1",
       "privacy_review@v1"
      ],
-     "created_at": 1790806704.355248,
+     "created_at": 1790809194.9010837,
      "content": {
       "recommendation": "GO",
       "checklist": [
        {
-        "item": "full test suite green",
+        "item": "full test suite green (pytest exit code 0)",
         "passed": true,
-        "evidence": "62/62"
+        "evidence": "76/76, exit_code=0"
        },
        {
         "item": "coverage >= 85.0%",
         "passed": true,
-        "evidence": "99.36%"
+        "evidence": "99.38%"
        },
        {
         "item": "every acceptance criterion verified by a passing test",
@@ -2284,7 +2408,13 @@
        "shortener/validation.py",
        "tests/test_safety_analytics.py"
       ]
-     }
+     },
+     "provenance": [
+      {
+       "content_origin": "computed",
+       "agent": "release_manager"
+      }
+     ]
     }
    ]
   },
@@ -2294,12 +2424,12 @@
     "node": "intake",
     "kind": "approval",
     "summary": "approve: high-impact change: pii, requirement contains ambiguities resolved only by assumptions",
-    "actor": "product-owner@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:product-owner",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "requirements_spec@pending"
     ],
-    "at": 1790806701.88925
+    "at": 1790809192.464531
    },
    {
     "id": "D002",
@@ -2311,7 +2441,7 @@
     "refs": [
      "requirements_spec@v1"
     ],
-    "at": 1790806701.8893456
+    "at": 1790809192.4651668
    },
    {
     "id": "D003",
@@ -2323,7 +2453,7 @@
     "refs": [
      "requirements_spec@v1"
     ],
-    "at": 1790806701.889348
+    "at": 1790809192.4651701
    },
    {
     "id": "D004",
@@ -2335,7 +2465,7 @@
     "refs": [
      "requirements_spec@v1"
     ],
-    "at": 1790806701.8893497
+    "at": 1790809192.465172
    },
    {
     "id": "D005",
@@ -2347,7 +2477,7 @@
     "refs": [
      "requirements_spec@v1"
     ],
-    "at": 1790806701.889351
+    "at": 1790809192.4651742
    },
    {
     "id": "D006",
@@ -2359,7 +2489,7 @@
     "refs": [
      "requirements_spec@v1"
     ],
-    "at": 1790806701.8893528
+    "at": 1790809192.465176
    },
    {
     "id": "D007",
@@ -2371,7 +2501,7 @@
     "refs": [
      "requirements_spec@v1"
     ],
-    "at": 1790806701.8893545
+    "at": 1790809192.4651778
    },
    {
     "id": "D008",
@@ -2381,43 +2511,43 @@
     "actor": "orchestrator",
     "rationale": "requirement involves personal data (signals: ['\\\\bwho\\\\b[^.]*\\\\bclick'])",
     "refs": [],
-    "at": 1790806701.8894973
+    "at": 1790809192.4660263
    },
    {
     "id": "D009",
     "node": "design",
     "kind": "approval",
     "summary": "revise: high-impact change: pii, high-impact change: public_api_change, high-impact change: schema_change",
-    "actor": "product-owner@example.com",
-    "rationale": "Security team: denylisted domains must also stop EXISTING links, not only new ones.",
+    "actor": "simulated:product-owner",
+    "rationale": "[SIMULATED] Security team: denylisted domains must also stop EXISTING links, not only new ones.",
     "refs": [
      "design@pending"
     ],
-    "at": 1790806701.9261289
+    "at": 1790809192.512584
    },
    {
     "id": "D010",
     "node": "design",
     "kind": "assumption",
     "summary": "human clarified ['Q2']",
-    "actor": "product-owner@example.com",
-    "rationale": "Security team: denylisted domains must also stop EXISTING links, not only new ones.",
+    "actor": "simulated:product-owner",
+    "rationale": "[SIMULATED] Security team: denylisted domains must also stop EXISTING links, not only new ones.",
     "refs": [
      "clarifications@v1"
     ],
-    "at": 1790806701.9261715
+    "at": 1790809192.512662
    },
    {
     "id": "D011",
     "node": "intake",
     "kind": "approval",
     "summary": "approve: high-impact change: pii, requirement contains ambiguities resolved only by assumptions",
-    "actor": "product-owner@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:product-owner",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "requirements_spec@pending"
     ],
-    "at": 1790806701.9272265
+    "at": 1790809192.5200963
    },
    {
     "id": "D012",
@@ -2429,7 +2559,7 @@
     "refs": [
      "requirements_spec@v2"
     ],
-    "at": 1790806701.9274032
+    "at": 1790809192.5208316
    },
    {
     "id": "D013",
@@ -2441,7 +2571,7 @@
     "refs": [
      "requirements_spec@v2"
     ],
-    "at": 1790806701.9274063
+    "at": 1790809192.5208354
    },
    {
     "id": "D014",
@@ -2453,7 +2583,7 @@
     "refs": [
      "requirements_spec@v2"
     ],
-    "at": 1790806701.9274075
+    "at": 1790809192.5208385
    },
    {
     "id": "D015",
@@ -2465,7 +2595,7 @@
     "refs": [
      "requirements_spec@v2"
     ],
-    "at": 1790806701.9274094
+    "at": 1790809192.520841
    },
    {
     "id": "D016",
@@ -2477,7 +2607,7 @@
     "refs": [
      "requirements_spec@v2"
     ],
-    "at": 1790806701.9274116
+    "at": 1790809192.5208437
    },
    {
     "id": "D017",
@@ -2487,19 +2617,19 @@
     "actor": "orchestrator",
     "rationale": "downstream work was derived from a superseded artifact version",
     "refs": [],
-    "at": 1790806701.927515
+    "at": 1790809192.5223207
    },
    {
     "id": "D018",
     "node": "design",
     "kind": "approval",
     "summary": "approve: high-impact change: pii, high-impact change: public_api_change, high-impact change: schema_change",
-    "actor": "product-owner@example.com",
-    "rationale": "Design approved after scope clarification.",
+    "actor": "simulated:product-owner",
+    "rationale": "[SIMULATED] Design approved after scope clarification.",
     "refs": [
      "design@pending"
     ],
-    "at": 1790806701.9609582
+    "at": 1790809192.5677176
    },
    {
     "id": "D019",
@@ -2511,7 +2641,7 @@
     "refs": [
      "design@v1"
     ],
-    "at": 1790806701.9610674
+    "at": 1790809192.5680964
    },
    {
     "id": "D020",
@@ -2523,7 +2653,7 @@
     "refs": [
      "design@v1"
     ],
-    "at": 1790806701.96107
+    "at": 1790809192.5680995
    },
    {
     "id": "D021",
@@ -2535,43 +2665,43 @@
     "refs": [
      "design@v1"
     ],
-    "at": 1790806701.961072
+    "at": 1790809192.5681021
    },
    {
     "id": "D022",
     "node": "privacy_review",
     "kind": "approval",
     "summary": "approve: high-impact change: pii",
-    "actor": "product-owner@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:product-owner",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "privacy_review@pending"
     ],
-    "at": 1790806701.9660203
+    "at": 1790809192.575095
    },
    {
     "id": "D023",
     "node": "implement",
     "kind": "approval",
     "summary": "approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/config.py, change to protected path: shortener/db.py",
-    "actor": "product-owner@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:product-owner",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "change_set@pending"
     ],
-    "at": 1790806701.9862342
+    "at": 1790809192.6009476
    },
    {
     "id": "D024",
     "node": "release_readiness",
     "kind": "approval",
     "summary": "approve: 'release_readiness' always requires human sign-off",
-    "actor": "product-owner@example.com",
-    "rationale": "auto-approved under scripted policy",
+    "actor": "simulated:product-owner",
+    "rationale": "[SIMULATED] scripted demo decision - not a human sign-off",
     "refs": [
      "release_readiness@pending"
     ],
-    "at": 1790806704.3551543
+    "at": 1790809194.9009037
    }
   ],
   "feedback": {}

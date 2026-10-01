@@ -69,11 +69,29 @@ def test_valid_urls(url):
         "https://sho.rt/abc",
         "https://example.com/has space",
         "https://example.com:99999/",
+        # regression: malformed authority used to raise -> HTTP 500
+        "https://[invalid",
+        "http://[::1",
+        "http://[not-an-ip]/",
+        # regression: non-canonical IPv4 spellings of loopback/private addresses
+        "http://127.1",
+        "http://2130706433",
+        "http://0x7f.0.0.1",
+        "http://0177.0.0.1",
+        "http://0x7f000001/",
+        "http://10.1/",
+        "http://192.168.001.001/",
+        "http://[::ffff:127.0.0.1]/",
     ],
 )
 def test_rejected_urls(url):
     with pytest.raises(InvalidInput):
         validate_target_url(url, SETTINGS)
+
+
+@pytest.mark.parametrize("url", ["http://1.2.3.4.nip.io/", "https://123.example.com/", "https://0x.example/"])
+def test_numeric_looking_domain_names_are_allowed(url):
+    assert validate_target_url(url, SETTINGS) == url
 
 
 def test_url_length_limit():

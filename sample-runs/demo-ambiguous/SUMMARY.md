@@ -1,8 +1,14 @@
 # Engineering summary: Ambiguous: 'make links safer and show who is clicking'
 
+> **SIMULATED APPROVALS.** Gate decisions in this run were scripted stand-ins recorded as `human: false`. This run demonstrates the workflow; it is **not** authorized for release.
+
 - Run: `demo-ambiguous`  |  scenario: `ambiguous` (ambiguous)
 - Outcome: **SUCCEEDED**
 - Release recommendation: **GO**
+- Release sign-off: **simulated:product-owner** (SIMULATED - not an authorization)
+- Approvals: 0 human, 7 simulated
+- Reasoning backend: `offline` (recorded playbook responses - content is authored, not generated); content origins in this run: computed, recorded
+- Sandbox for generated code: process (network: none (netns); filesystem: not isolated (use docker backend))
 
 ## 1. Requirement understanding
 
@@ -60,10 +66,10 @@ Scanned 16 modules; data flow: `shortener.api -> shortener.service -> shortener.
 | shortener.api | direct | analytic, domain, key, redirect, total, shortener, stat, click |
 | shortener.db | direct | add, never, unique, key, click, link |
 | shortener.service | direct | unique, redirect, stat, click, link |
+| shortener.validation | direct | addres, reject, redirect, shortener, link |
 | shortener.models | direct | domain, total, stat, click, link |
 | shortener.schemas | direct | destination, total, stat, click, link |
 | shortener.__init__ | direct | analytic, redirect, shortener, click, link |
-| shortener.validation | direct | addres, redirect, shortener, link |
 | shortener.main | imports ['shortener.api'] |  |
 | shortener.repository | imports ['shortener.db', 'shortener.models'] |  |
 | tests.conftest | imports ['shortener.api', 'shortener.db', 'shortener.service'] |  |
@@ -137,49 +143,49 @@ flowchart LR
 | seq | node | event | detail |
 |---|---|---|---|
 | 3 | intake | running | agent=requirements_analyst attempt=1 |
-| 5 | intake | waiting_approval | high-impact change: pii; requirement contains ambiguities resolved only by assumptions |
-| 6 | intake | **approval_decision** | {"answers": {}, "comment": "auto-approved under scripted policy", "decision": "approve", "revise_target": null, "round": 1, "wait_s": 0.0} |
-| 8 | intake | succeeded | 4 functional reqs, 6 ACs, 6 ambiguities (6 assumed), pii=True |
-| 9 | intake | **replan** | {"after": ["design"], "before": ["implement"], "inserted": "privacy_review", "reason": "requirement involves personal data (signals: ['\\\\bwho\\\\b[^.]*\\\\bclick'])", "trigger": "plan_change"} |
-| 11 | codebase_analysis | running | agent=codebase_analyst attempt=1 |
-| 13 | test_plan | running | agent=test_planner attempt=1 |
-| 16 | test_plan | succeeded | 8 planned cases ({'unit': 4, 'integration': 4}) |
-| 19 | codebase_analysis | succeeded | 16 modules, 7 routes, 2 tables; 7 directly + 5 indirectly impacted; risk=high |
-| 21 | design | running | agent=architect attempt=1 |
-| 23 | design | waiting_approval | high-impact change: pii; high-impact change: public_api_change; high-impact change: schema_change |
-| 24 | design | **approval_decision** | {"answers": {"Q2": "create_and_redirect"}, "comment": "Security team: denylisted domains must also stop EXISTING links, not only new ones.", "decision": "revise", "revise_target": "intake", "round": 1, "wait_s": 0.0} |
-| 25 | design | **replan** | {"target": "intake", "trigger": "approval_revise"} |
-| 29 | intake | running | agent=requirements_analyst attempt=1 |
-| 31 | intake | waiting_approval | high-impact change: pii; requirement contains ambiguities resolved only by assumptions |
-| 32 | intake | **approval_decision** | {"answers": {}, "comment": "auto-approved under scripted policy", "decision": "approve", "revise_target": null, "round": 2, "wait_s": 0.0} |
-| 34 | intake | succeeded | 5 functional reqs, 7 ACs, 6 ambiguities (5 assumed), pii=True |
-| 35 | intake | **replan** | {"artifact": "requirements_spec", "invalidated": ["codebase_analysis", "test_plan"], "trigger": "artifact_changed"} |
-| 39 | codebase_analysis | running | agent=codebase_analyst attempt=1 |
-| 41 | test_plan | running | agent=test_planner attempt=1 |
-| 44 | test_plan | succeeded | 9 planned cases ({'unit': 4, 'integration': 5}) |
-| 47 | codebase_analysis | succeeded | 16 modules, 7 routes, 2 tables; 7 directly + 5 indirectly impacted; risk=high |
-| 49 | design | running | agent=architect attempt=1 |
-| 51 | design | waiting_approval | high-impact change: pii; high-impact change: public_api_change; high-impact change: schema_change |
-| 52 | design | **approval_decision** | {"answers": {}, "comment": "Design approved after scope clarification.", "decision": "approve", "revise_target": null, "round": 2, "wait_s": 0.0} |
-| 54 | design | succeeded | 7 tasks in 3 waves; 3 API / 1 schema changes |
-| 56 | privacy_review | running | agent=privacy_officer attempt=1 |
-| 58 | privacy_review | waiting_approval | high-impact change: pii |
-| 59 | privacy_review | **approval_decision** | {"answers": {}, "comment": "auto-approved under scripted policy", "decision": "approve", "revise_target": null, "round": 1, "wait_s": 0.0} |
-| 61 | privacy_review | succeeded | 5/5 privacy checks passed |
-| 63 | implement | running | agent=implementer attempt=1 |
-| 65 | implement | waiting_approval | high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/config.py; change to protected path: shortener/db.py |
-| 66 | implement | **approval_decision** | {"answers": {}, "comment": "auto-approved under scripted policy", "decision": "approve", "revise_target": null, "round": 1, "wait_s": 0.0} |
-| 69 | implement | succeeded | 9 files (8 source, 1 test): denylist + pseudonymous unique-visitor analytics with retention |
-| 71 | docs | running | agent=tech_writer attempt=1 |
-| 73 | run_tests | running | agent=test_runner attempt=1 |
-| 75 | security_scan | running | agent=security_scanner attempt=1 |
-| 78 | security_scan | succeeded | 9 files scanned, 0 findings (max=info) |
-| 82 | docs | succeeded | API.md (7 routes), CHANGELOG, 3 ADRs |
-| 85 | run_tests | succeeded | 62/62 passed, coverage=99.36% |
-| 87 | release_readiness | running | agent=release_manager attempt=1 |
-| 89 | release_readiness | waiting_approval | 'release_readiness' always requires human sign-off |
-| 90 | release_readiness | **approval_decision** | {"answers": {}, "comment": "auto-approved under scripted policy", "decision": "approve", "revise_target": null, "round": 1, "wait_s": 0.0} |
-| 92 | release_readiness | succeeded | GO: 8/8 checks green |
+| 6 | intake | waiting_approval | high-impact change: pii; requirement contains ambiguities resolved only by assumptions |
+| 7 | intake | **approval_decision** | {"answers": {}, "comment": "[SIMULATED] scripted demo decision - not a human sign-off", "decision": "approve", "human": false, "mode": "simulated", "request_hash": "c5b8922a2d0ece99", "revise_target": null, "round": 1, " |
+| 9 | intake | succeeded | 4 functional reqs, 6 ACs, 6 ambiguities (6 assumed), pii=True |
+| 10 | intake | **replan** | {"after": ["design"], "before": ["implement"], "inserted": "privacy_review", "reason": "requirement involves personal data (signals: ['\\\\bwho\\\\b[^.]*\\\\bclick'])", "trigger": "plan_change"} |
+| 12 | codebase_analysis | running | agent=codebase_analyst attempt=1 |
+| 14 | test_plan | running | agent=test_planner attempt=1 |
+| 17 | test_plan | succeeded | 8 planned cases ({'unit': 4, 'integration': 4}) |
+| 20 | codebase_analysis | succeeded | 16 modules, 7 routes, 2 tables; 7 directly + 5 indirectly impacted; risk=high |
+| 22 | design | running | agent=architect attempt=1 |
+| 25 | design | waiting_approval | high-impact change: pii; high-impact change: public_api_change; high-impact change: schema_change |
+| 26 | design | **approval_decision** | {"answers": {"Q2": "create_and_redirect"}, "comment": "[SIMULATED] Security team: denylisted domains must also stop EXISTING links, not only new ones.", "decision": "revise", "human": false, "mode": "simulated", "request |
+| 27 | design | **replan** | {"target": "intake", "trigger": "approval_revise"} |
+| 31 | intake | running | agent=requirements_analyst attempt=1 |
+| 34 | intake | waiting_approval | high-impact change: pii; requirement contains ambiguities resolved only by assumptions |
+| 35 | intake | **approval_decision** | {"answers": {}, "comment": "[SIMULATED] scripted demo decision - not a human sign-off", "decision": "approve", "human": false, "mode": "simulated", "request_hash": "ebc5a5f9dcf4b54f", "revise_target": null, "round": 2, " |
+| 37 | intake | succeeded | 5 functional reqs, 7 ACs, 6 ambiguities (5 assumed), pii=True |
+| 38 | intake | **replan** | {"artifact": "requirements_spec", "invalidated": ["codebase_analysis", "test_plan"], "trigger": "artifact_changed"} |
+| 42 | codebase_analysis | running | agent=codebase_analyst attempt=1 |
+| 44 | test_plan | running | agent=test_planner attempt=1 |
+| 47 | test_plan | succeeded | 9 planned cases ({'unit': 4, 'integration': 5}) |
+| 50 | codebase_analysis | succeeded | 16 modules, 7 routes, 2 tables; 7 directly + 5 indirectly impacted; risk=high |
+| 52 | design | running | agent=architect attempt=1 |
+| 55 | design | waiting_approval | high-impact change: pii; high-impact change: public_api_change; high-impact change: schema_change |
+| 56 | design | **approval_decision** | {"answers": {}, "comment": "[SIMULATED] Design approved after scope clarification.", "decision": "approve", "human": false, "mode": "simulated", "request_hash": "3036bef26ad512f5", "revise_target": null, "round": 2, "wai |
+| 58 | design | succeeded | 7 tasks in 3 waves; 3 API / 1 schema changes |
+| 60 | privacy_review | running | agent=privacy_officer attempt=1 |
+| 62 | privacy_review | waiting_approval | high-impact change: pii |
+| 63 | privacy_review | **approval_decision** | {"answers": {}, "comment": "[SIMULATED] scripted demo decision - not a human sign-off", "decision": "approve", "human": false, "mode": "simulated", "request_hash": "978d8539100f2ab9", "revise_target": null, "round": 1, " |
+| 65 | privacy_review | succeeded | 5/5 privacy checks passed |
+| 67 | implement | running | agent=implementer attempt=1 |
+| 70 | implement | waiting_approval | high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/config.py; change to protected path: shortener/db.py |
+| 71 | implement | **approval_decision** | {"answers": {}, "comment": "[SIMULATED] scripted demo decision - not a human sign-off", "decision": "approve", "human": false, "mode": "simulated", "request_hash": "9a0509a1ee15ea80", "revise_target": null, "round": 1, " |
+| 74 | implement | succeeded | 9 files (8 source, 1 test): denylist + pseudonymous unique-visitor analytics with retention |
+| 76 | docs | running | agent=tech_writer attempt=1 |
+| 78 | run_tests | running | agent=test_runner attempt=1 |
+| 80 | security_scan | running | agent=security_scanner attempt=1 |
+| 83 | security_scan | succeeded | 9 files scanned, 0 findings (max=info) |
+| 87 | docs | succeeded | API.md (7 routes), CHANGELOG, 3 ADRs |
+| 90 | run_tests | succeeded | 76/76 passed, coverage=99.38% |
+| 92 | release_readiness | running | agent=release_manager attempt=1 |
+| 94 | release_readiness | waiting_approval | 'release_readiness' always requires human sign-off |
+| 95 | release_readiness | **approval_decision** | {"answers": {}, "comment": "[SIMULATED] scripted demo decision - not a human sign-off", "decision": "approve", "human": false, "mode": "simulated", "request_hash": "f45b17699f1cf60a", "revise_target": null, "round": 1, " |
+| 97 | release_readiness | succeeded | GO: 8/8 checks green |
 
 **Gates (last evaluation per node)**
 
@@ -204,7 +210,7 @@ flowchart LR
 | docs | exit:docs_cover_routes | pass | 7 routes documented |
 | run_tests | entry:inputs_available | pass | all inputs present |
 | run_tests | entry:workspace_has_code | pass | 17 python files |
-| run_tests | exit:tests_pass | pass | 62/62 passed, 0 failed, 0 errors |
+| run_tests | exit:tests_pass | pass | 76/76 passed, 0 failed, 0 errors, exit_code=0 |
 | run_tests | exit:coverage_min | pass | 99.4% (min 85.0%) |
 | run_tests | exit:planned_tests_pass | pass | 9 planned tests passed |
 | security_scan | entry:inputs_available | pass | all inputs present |
@@ -216,7 +222,7 @@ flowchart LR
 
 | id | node | kind | actor | summary |
 |---|---|---|---|---|
-| D001 | intake | approval | product-owner@example.com | approve: high-impact change: pii, requirement contains ambiguities resolved only by assumptions |
+| D001 | intake | approval | simulated:product-owner | approve: high-impact change: pii, requirement contains ambiguities resolved only by assumptions |
 | D002 | intake | assumption | requirements_analyst | Q1: assumed 'block harmful destinations via an operator-managed domain denylist' |
 | D003 | intake | assumption | requirements_analyst | Q2: assumed 'creation_only' |
 | D004 | intake | assumption | requirements_analyst | Q3: assumed 'no: aggregate unique-visitor counts from a pseudonymous daily hash; no personal profiles' |
@@ -224,45 +230,45 @@ flowchart LR
 | D006 | intake | assumption | requirements_analyst | Q5: assumed 'no new I/O on the redirect path; one HMAC (~microseconds); p95 unchanged' |
 | D007 | intake | assumption | requirements_analyst | Q6: assumed '90 days (policy maximum)' |
 | D008 | intake | replan | orchestrator | inserted 'privacy_review' between ['design'] and ['implement'] |
-| D009 | design | approval | product-owner@example.com | revise: high-impact change: pii, high-impact change: public_api_change, high-impact change: schema_change |
-| D010 | design | assumption | product-owner@example.com | human clarified ['Q2'] |
-| D011 | intake | approval | product-owner@example.com | approve: high-impact change: pii, requirement contains ambiguities resolved only by assumptions |
+| D009 | design | approval | simulated:product-owner | revise: high-impact change: pii, high-impact change: public_api_change, high-impact change: schema_change |
+| D010 | design | assumption | simulated:product-owner | human clarified ['Q2'] |
+| D011 | intake | approval | simulated:product-owner | approve: high-impact change: pii, requirement contains ambiguities resolved only by assumptions |
 | D012 | intake | assumption | requirements_analyst | Q1: assumed 'block harmful destinations via an operator-managed domain denylist' |
 | D013 | intake | assumption | requirements_analyst | Q3: assumed 'no: aggregate unique-visitor counts from a pseudonymous daily hash; no personal profiles' |
 | D014 | intake | assumption | requirements_analyst | Q4: assumed 'latency (read together with 'without slowing redirects'); no deadline was given' |
 | D015 | intake | assumption | requirements_analyst | Q5: assumed 'no new I/O on the redirect path; one HMAC (~microseconds); p95 unchanged' |
 | D016 | intake | assumption | requirements_analyst | Q6: assumed '90 days (policy maximum)' |
 | D017 | intake | replan | orchestrator | 'requirements_spec' changed; invalidating ['codebase_analysis', 'test_plan'] |
-| D018 | design | approval | product-owner@example.com | approve: high-impact change: pii, high-impact change: public_api_change, high-impact change: schema_change |
+| D018 | design | approval | simulated:product-owner | approve: high-impact change: pii, high-impact change: public_api_change, high-impact change: schema_change |
 | D019 | design | design_choice | architect | Meaning of 'who is clicking': Aggregate unique visitors from a pseudonymous daily hash |
 | D020 | design | design_choice | architect | Visitor hash construction: HMAC-SHA256 with a server secret, day in the input |
 | D021 | design | design_choice | architect | Denylist source: Operator-managed config list with parent-domain matching |
-| D022 | privacy_review | approval | product-owner@example.com | approve: high-impact change: pii |
-| D023 | implement | approval | product-owner@example.com | approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/config.py, change to protected path: shortener/db.py |
-| D024 | release_readiness | approval | product-owner@example.com | approve: 'release_readiness' always requires human sign-off |
+| D022 | privacy_review | approval | simulated:product-owner | approve: high-impact change: pii |
+| D023 | implement | approval | simulated:product-owner | approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/config.py, change to protected path: shortener/db.py |
+| D024 | release_readiness | approval | simulated:product-owner | approve: 'release_readiness' always requires human sign-off |
 
-**Artifact versions**
+**Artifact versions and content provenance**
 
-| artifact | version | hash | producer | derived from |
-|---|---|---|---|---|
-| requirements_spec | 1 | 4db48afd70c78e85 | intake | - |
-| requirements_spec | 2 | 6c28ecb333358296 | intake | clarifications@v1 |
-| test_plan | 1 | 910f7d1ec022fa80 | test_plan | requirements_spec@v1 |
-| test_plan | 2 | 888d5a64f617ffe7 | test_plan | requirements_spec@v2 |
-| impact_analysis | 1 | 8dfa1fe03d130553 | codebase_analysis | requirements_spec@v1 |
-| impact_analysis | 2 | 623cee22c848750c | codebase_analysis | requirements_spec@v2 |
-| clarifications | 1 | 43eaaea2c3183f42 | human:product-owner@example.com | - |
-| design | 1 | dc16e0dcd2961c96 | design | requirements_spec@v2, impact_analysis@v2 |
-| privacy_review | 1 | 7da0af8b586d0166 | privacy_review | requirements_spec@v2, design@v1 |
-| change_set | 1 | 6913a41010a4880a | implement | requirements_spec@v2, design@v1, test_plan@v2 |
-| security_report | 1 | 193a73b6a7f3d6c9 | security_scan | - |
-| docs_report | 1 | ee1cc67f4f79b455 | docs | requirements_spec@v2, design@v1 |
-| test_report | 1 | 30f8bbc9767087ef | run_tests | test_plan@v2 |
-| release_readiness | 1 | 3a3ff163b552f222 | release_readiness | requirements_spec@v2, design@v1, test_plan@v2, test_report@v1, security_report@v1, docs_report@v1, privacy_review@v1 |
+| artifact | version | hash | producer | derived from | content origin | source / model | response sha256 |
+|---|---|---|---|---|---|---|---|
+| requirements_spec | 1 | 4db48afd70c78e85 | intake | - | recorded | scenarios/playbooks/ambiguous.yaml#requirements | 0a4a7920ec55 |
+| requirements_spec | 2 | 6c28ecb333358296 | intake | clarifications@v1 | recorded | scenarios/playbooks/ambiguous.yaml#requirements | 9971a5034cb0 |
+| test_plan | 1 | 910f7d1ec022fa80 | test_plan | requirements_spec@v1 | computed | test_planner | - |
+| test_plan | 2 | 888d5a64f617ffe7 | test_plan | requirements_spec@v2 | computed | test_planner | - |
+| impact_analysis | 1 | 1506c112d94c321c | codebase_analysis | requirements_spec@v1 | computed | codebase_analyst | - |
+| impact_analysis | 2 | 32443592dc8ad015 | codebase_analysis | requirements_spec@v2 | computed | codebase_analyst | - |
+| clarifications | 1 | 43eaaea2c3183f42 | simulated:product-owner | - | - | - | - |
+| design | 1 | dc16e0dcd2961c96 | design | requirements_spec@v2, impact_analysis@v2 | recorded | scenarios/playbooks/ambiguous.yaml#design | 0640f788a008 |
+| privacy_review | 1 | 7da0af8b586d0166 | privacy_review | requirements_spec@v2, design@v1 | computed | privacy_officer | - |
+| change_set | 1 | 6913a41010a4880a | implement | requirements_spec@v2, design@v1, test_plan@v2 | recorded | scenarios/playbooks/ambiguous.yaml#implement | fd5a854f2f0f |
+| security_report | 1 | 193a73b6a7f3d6c9 | security_scan | - | computed | security_scanner | - |
+| docs_report | 1 | ee1cc67f4f79b455 | docs | requirements_spec@v2, design@v1 | computed | tech_writer | - |
+| test_report | 1 | 761890301ac6b552 | run_tests | test_plan@v2 | computed | test_runner | - |
+| release_readiness | 1 | 69d2d68c6cc6ac65 | release_readiness | requirements_spec@v2, design@v1, test_plan@v2, test_report@v1, security_report@v1, docs_report@v1, privacy_review@v1 | computed | release_manager | - |
 
 ## 6. Validation
 
-Tests: **62/62 passed**, coverage **99.36%** (`pytest -q -p no:cacheprovider --junitxml=<run_dir>/test-output/exec1-attempt1/junit.xml --cov=shortener --cov-report=json:<run_dir>/test-output/exec1-attempt1/coverage.json tests`)
+Tests: **76/76 passed**, coverage **99.38%** (`pytest -q -p no:cacheprovider --junitxml=<run_dir>/test-output/exec1-attempt1/junit.xml --cov=shortener --cov-report=json:<run_dir>/test-output/exec1-attempt1/coverage.json tests`)
 
 **Traceability: acceptance criterion -> tasks -> tests -> result**
 
@@ -292,8 +298,8 @@ Security scan: 9 files, 0 findings (max severity info).
 
 | item | passed | evidence |
 |---|---|---|
-| full test suite green | True | 62/62 |
-| coverage >= 85.0% | True | 99.36% |
+| full test suite green (pytest exit code 0) | True | 76/76, exit_code=0 |
+| coverage >= 85.0% | True | 99.38% |
 | every acceptance criterion verified by a passing test | True | 7/7 ACs |
 | no blocking security findings | True | 0 findings, max=info |
 | migrations forward-only and additive | True | no destructive statements |
@@ -320,7 +326,7 @@ Security scan: 9 files, 0 findings (max severity info).
 
 ```json
 {
-  "end_to_end_latency_s": 2.472,
+  "end_to_end_latency_s": 2.448,
   "attempts": 14,
   "attempt_success_rate": 0.929,
   "retries": 0,
@@ -331,21 +337,23 @@ Security scan: 9 files, 0 findings (max severity info).
   "replans": 3,
   "approvals_requested": 7,
   "approvals_rejected": 0,
+  "approvals_human": 0,
+  "approvals_simulated": 7,
   "policy_violations": 0,
   "incidents_recovered": 0,
   "incidents_unrecovered": 0,
   "mttr_s": null,
   "stage_latency_s": {
-    "analysis": 0.058,
-    "architecture": 0.001,
+    "analysis": 0.064,
+    "architecture": 0.002,
     "compliance": 0.001,
-    "documentation": 0.405,
+    "documentation": 0.436,
     "implementation": 0.003,
     "release": 0.006,
-    "requirements": 0.0,
-    "security": 0.033,
-    "test-design": 0.0,
-    "testing": 2.35
+    "requirements": 0.001,
+    "security": 0.045,
+    "test-design": 0.004,
+    "testing": 2.272
   }
 }
 ```

@@ -69,7 +69,8 @@ def test_rework_rolls_back_workspace_and_reruns_upstream(make_engine):
     def check(t, n):
         body = t.workspace.read("src/app.py")
         return produce("test_report", {"total": 1, "passed": int("buggy" not in body),
-                                       "failed": int("buggy" in body), "errors": 0})
+                                       "failed": int("buggy" in body), "errors": 0,
+                                       "exit_code": int("buggy" in body)})
     writer, tester = FnAgent("writer", write), FnAgent("tester", check)
     nodes = [NodeSpec("impl", "s", "writer"),
              NodeSpec("test", "s", "tester", deps=["impl"], exit_gates=["tests_pass"],
@@ -213,3 +214,55 @@ def test_audit_log_is_complete_and_verifiable(make_engine):
     assert ok, msg
     events = [l for l in (eng.run_dir / "audit.jsonl").read_text().splitlines()]
     assert '"run_started"' in events[0] and '"run_finished"' in events[-1]
+
+
+def test_tests_pass_gate_requires_zero_exit_code():
+    """Regression: parsed counts looked green but pytest exited non-zero (e.g. collection error)."""
+    from orchestrator import gates
+    from orchestrator.context import RunContext
+    from orchestrator.policy import Policy
+
+    def check(report):
+        gi = gates.GateInput(NodeSpec("t", "s", "a"), RunContext({}), Policy({}), None,
+                             AgentResult(artifacts={"test_report": report}))
+        return gates.tests_pass(gi).passed
+
+    green = {"total": 3, "passed": 3, "failed": 0, "errors": 0}
+    assert check({**green, "exit_code": 0})
+    assert not check({**green, "exit_code": 2})
+    assert not check(green)  # missing exit code is not a pass
+    assert not check({"total": 0, "passed": 0, "failed": 0, "errors": 0, "exit_code": 0})
+
+
+def test_infrastructure_failure_safe_stops_instead_of_reworking(make_engine):
+    """A broken sandbox/runtime is not evidence that the change is wrong: stop, don't rework."""
+    from orchestrator.agents.base import InfrastructureError
+    writer = FnAgent("writer", lambda t, n: AgentResult(file_changes={"src/app.py": "x = 1\n"}))
+    broken = FnAgent("tester", lambda t, n: (_ for _ in ()).throw(InfrastructureError("docker daemon down")))
+    nodes = [NodeSpec("impl", "s", "writer"),
+             NodeSpec("test", "s", "tester", deps=["impl"], retry=fast(1), on_failure="rework:impl")]
+    eng = make_engine(nodes, {"writer": writer, "tester": broken})
+    assert eng.run() == RunStatus.HALTED
+    assert writer.calls == 1 and eng.metrics.reworks == 0
+    assert "infrastructure" in eng.stop_reason
+
+
+def test_time_waiting_for_a_human_does_not_consume_the_execution_budget(make_engine):
+    """Regression: a reviewer taking longer than max_wall_seconds used to safe-stop the run."""
+    from orchestrator.approval import ApprovalDecision, Approver
+
+    class SlowHuman(Approver):
+        mode, human = "interactive", True
+
+        def request(self, req):
+            time.sleep(1.5)  # longer than the whole execution budget below
+            return ApprovalDecision("approve", "alice", request_hash=req.request_hash)
+
+    pol = copy.deepcopy(BASE_POLICY)
+    pol["budgets"]["max_wall_seconds"] = 1
+    a = FnAgent("a", lambda t, n: produce(f"a{n}", impact={"schema_change"}))
+    nodes = [NodeSpec("A", "s", "a"), NodeSpec("B", "s", "a", deps=["A"])]
+    eng = make_engine(nodes, {"a": a}, policy=pol, approver=SlowHuman())
+    assert eng.run() == RunStatus.SUCCEEDED, eng.stop_reason
+    m = eng.metrics.summary()
+    assert m["approval_wait_s"] >= 3.0 and m["active_execution_s"] < 1.0

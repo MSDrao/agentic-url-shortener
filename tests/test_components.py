@@ -7,7 +7,7 @@ import json
 import pytest
 from conftest import BASE_POLICY
 
-from orchestrator.approval import ApprovalRequest, InteractiveApprover, ScriptedApprover
+from orchestrator.approval import ApprovalRequest, InteractiveApprover, SimulatedApprover
 from orchestrator.audit import AuditLog
 from orchestrator.graph import GraphError, WorkflowGraph
 from orchestrator.llm import LLMError, OfflineProvider
@@ -74,7 +74,54 @@ def test_audit_detects_deleted_record(tmp_path):
 def test_audit_resumes_chain_across_instances(tmp_path):
     AuditLog(tmp_path / "a.jsonl", "r").record("one")
     AuditLog(tmp_path / "a.jsonl", "r").record("two")
-    assert AuditLog.verify(tmp_path / "a.jsonl") == (True, "2 records verified")
+    ok, msg = AuditLog.verify(tmp_path / "a.jsonl")
+    assert ok and msg.startswith("2 records verified")
+
+
+def _truncate_last(path):
+    lines = path.read_text().splitlines()
+    path.write_text("\n".join(lines[:-1]) + "\n")
+
+
+def test_audit_detects_truncated_tail(tmp_path):
+    """Regression: dropping the final record left a valid chain and used to verify."""
+    log = AuditLog(tmp_path / "a.jsonl", "r1", key=b"")
+    for i in range(3):
+        log.record("evt", n=i)
+    _truncate_last(tmp_path / "a.jsonl")
+    ok, msg = AuditLog.verify(tmp_path / "a.jsonl", key=b"")
+    assert not ok and "truncated" in msg
+
+
+def test_audit_independent_head_catches_rewritten_anchor(tmp_path):
+    log = AuditLog(tmp_path / "a.jsonl", "r1", key=b"")
+    for i in range(3):
+        log.record("evt", n=i)
+    head = dict(log.head)
+    _truncate_last(tmp_path / "a.jsonl")
+    AuditLog(tmp_path / "a.jsonl", "r1", key=b"")._write_anchor()  # attacker re-anchors the shortened log
+    assert AuditLog.verify(tmp_path / "a.jsonl", key=b"")[0]  # anchor alone is fooled...
+    ok, msg = AuditLog.verify(tmp_path / "a.jsonl", key=b"", expected_head=head)
+    assert not ok and "independently stored head" in msg  # ...the independent copy is not
+
+
+def test_keyed_anchor_cannot_be_forged_without_key(tmp_path):
+    log = AuditLog(tmp_path / "a.jsonl", "r1", key=b"secret-key")
+    for i in range(3):
+        log.record("evt", n=i)
+    assert AuditLog.verify(tmp_path / "a.jsonl", key=b"secret-key")[0]
+    _truncate_last(tmp_path / "a.jsonl")
+    AuditLog(tmp_path / "a.jsonl", "r1", key=b"wrong-key")._write_anchor()  # forged without the real key
+    ok, msg = AuditLog.verify(tmp_path / "a.jsonl", key=b"secret-key")
+    assert not ok and "MAC invalid" in msg
+
+
+def test_audit_without_anchor_is_not_reported_complete(tmp_path):
+    log = AuditLog(tmp_path / "a.jsonl", "r1", key=b"")
+    log.record("evt")
+    (tmp_path / "a.anchor.json").unlink()
+    ok, msg = AuditLog.verify(tmp_path / "a.jsonl", key=b"")
+    assert not ok and "completeness cannot be established" in msg
 
 
 # --- policy -----------------------------------------------------------------
@@ -138,10 +185,12 @@ def test_offline_provider_when_filter_and_derived_variants():
 
 # --- approvals --------------------------------------------------------------
 
-def test_scripted_approver_consumes_rounds_then_defaults():
-    ap = ScriptedApprover("bot", {"design": [{"decision": "revise", "answers": {"Q1": "a"}}]})
-    assert ap.request(ApprovalRequest("design", ["r"], "", {}, round=1)).decision == "revise"
-    assert ap.request(ApprovalRequest("design", ["r"], "", {}, round=2)).decision == "approve"
+def test_simulated_approver_is_labelled_non_human():
+    ap = SimulatedApprover("bot", {"design": [{"decision": "revise", "answers": {"Q1": "a"}}]})
+    d1 = ap.request(ApprovalRequest("design", ["r"], "", {}, round=1))
+    d2 = ap.request(ApprovalRequest("design", ["r"], "", {}, round=2))
+    assert (d1.decision, d2.decision) == ("revise", "approve")
+    assert d1.approver == "simulated:bot" and d1.human is False and d2.comment.startswith("[SIMULATED]")
 
 
 def test_interactive_approver_revise_flow():
@@ -195,3 +244,29 @@ def test_anthropic_provider_rejects_bad_responses(monkeypatch, status, text):
     handler = lambda req: httpx.Response(status, json={"content": [{"type": "text", "text": text}]})
     with pytest.raises(LLMError):
         _provider(monkeypatch, handler).generate("design", prompt="p", context={}, execution=1)
+
+
+# --- lineage -----------------------------------------------------------------
+
+def test_lineage_traces_an_artifact_back_to_human_input():
+    from orchestrator.context import RunContext
+    ctx = RunContext({})
+    ctx.put("clarifications", {"Q2": "yes"}, producer="human:alice", attempt=1, derived_from=[])
+    ctx.put("spec", {"a": 1}, producer="intake", attempt=1, derived_from=["clarifications@v1"])
+    ctx.put("design", {"b": 2}, producer="design", attempt=1, derived_from=["spec@v1"])
+    tree = ctx.lineage("design")
+    assert tree["ref"] == "design@v1" and tree["producer"] == "design"
+    assert tree["derived_from"][0]["derived_from"][0]["producer"] == "human:alice"
+
+
+def test_keyed_verification_rejects_unsigned_anchor_downgrade(tmp_path):
+    """Regression: flipping `keyed` to false in the anchor used to skip the MAC check."""
+    log = AuditLog(tmp_path / "a.jsonl", "r1", key=b"secret-key")
+    for i in range(3):
+        log.record("evt", n=i)
+    _truncate_last(tmp_path / "a.jsonl")
+    forged = AuditLog(tmp_path / "a.jsonl", "r1", key=b"")  # re-anchor without a MAC
+    forged._write_anchor()
+    assert json.loads((tmp_path / "a.anchor.json").read_text())["keyed"] is False
+    ok, msg = AuditLog.verify(tmp_path / "a.jsonl", key=b"secret-key")
+    assert not ok and "downgrade" in msg

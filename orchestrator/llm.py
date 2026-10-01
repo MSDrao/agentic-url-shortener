@@ -13,10 +13,11 @@ path; on failure the engine retries and then falls back to the offline agent.
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import os
 import re
-from pathlib import Path
+import time
 from typing import Any, Protocol
 
 
@@ -28,6 +29,36 @@ class LLMProvider(Protocol):
     name: str
 
     def generate(self, key: str, *, prompt: str, context: dict[str, Any], execution: int) -> Any: ...
+
+    def generate_with_meta(self, key: str, *, prompt: str, context: dict[str, Any],
+                           execution: int) -> tuple[Any, dict[str, Any]]: ...
+
+
+def sha256(value: Any) -> str:
+    blob = value if isinstance(value, str) else json.dumps(value, sort_keys=True, default=str)
+    return hashlib.sha256(blob.encode()).hexdigest()
+
+
+class RecordingLLM:
+    """Per-dispatch wrapper that records the provenance of every reasoning call
+    (who produced the content, from what prompt, with which response hash)."""
+
+    def __init__(self, inner: Any, sink: list[dict[str, Any]]):
+        self.inner = inner
+        self.name = inner.name
+        self.sink = sink
+
+    def generate(self, key: str, *, prompt: str, context: dict[str, Any], execution: int) -> Any:
+        started = time.time()
+        base = {"key": key, "provider": self.inner.name, "execution": execution,
+                "prompt_sha256": sha256({"prompt": prompt, "context": context})}
+        try:
+            data, meta = self.inner.generate_with_meta(key, prompt=prompt, context=context, execution=execution)
+        except Exception as exc:
+            self.sink.append({**base, "error": str(exc)[:300], "latency_s": round(time.time() - started, 3)})
+            raise
+        self.sink.append({**base, **meta, "response_sha256": sha256(data), "latency_s": round(time.time() - started, 3)})
+        return data
 
 
 def _filter_when(value: Any, answers: dict[str, Any]) -> Any:
@@ -49,14 +80,20 @@ def _filter_when(value: Any, answers: dict[str, Any]) -> Any:
 
 
 class OfflineProvider:
+    """Replays recorded responses. Provenance marks the content as `recorded`, never `generated`."""
+
     name = "offline"
 
-    def __init__(self, playbook: dict[str, Any], faults: dict[str, Any] | None = None, reference_root: Path | None = None):
+    def __init__(self, playbook: dict[str, Any], faults: dict[str, Any] | None = None, source: str = "playbook"):
         self.playbook = playbook
         self.faults = faults or {}
-        self.reference_root = reference_root
+        self.source = source
 
     def generate(self, key: str, *, prompt: str, context: dict[str, Any], execution: int) -> Any:
+        return self.generate_with_meta(key, prompt=prompt, context=context, execution=execution)[0]
+
+    def generate_with_meta(self, key: str, *, prompt: str, context: dict[str, Any],
+                           execution: int) -> tuple[Any, dict[str, Any]]:
         fault = self.faults.get(key)
         variant_key = key
         if fault and execution in fault.get("on_executions", []):
@@ -65,9 +102,10 @@ class OfflineProvider:
                 raise LLMError(f"injected fault: provider error for '{key}' (execution {execution})")
         if variant_key not in self.playbook:
             raise LLMError(f"no recorded response for '{variant_key}'")
-        response = self._resolve(variant_key)
-        return _filter_when(response, context.get("answers", {}))
-
+        response = _filter_when(self._resolve(variant_key), context.get("answers", {}))
+        meta = {"content_origin": "recorded", "source": f"{self.source}#{variant_key}",
+                "fault_injected": variant_key != key}
+        return response, meta
 
     def _resolve(self, key: str) -> Any:
         """A variant may be declared as a delta of another response (keeps playbooks DRY)."""
@@ -86,30 +124,58 @@ class OfflineProvider:
         return base
 
 
+def _exemplar(example: Any, answers: dict[str, Any]) -> Any:
+    """Shape exemplar for the live model: recorded content is trimmed so the model is shown the
+    format, not handed the answer - and reference-copy ops are never shown."""
+    example = _filter_when(copy.deepcopy(example), answers)
+    if isinstance(example, dict) and isinstance(example.get("changes"), list):
+        shown = []
+        for op in example["changes"][:3]:
+            if op.get("op") == "create_from_reference":
+                op = {"op": "create", "path": op["path"], "content": "<complete file content>"}
+            for k in ("content", "search", "replace"):
+                if isinstance(op.get(k), str) and len(op[k]) > 200:
+                    op[k] = op[k][:200] + "...<truncated example>"
+            shown.append(op)
+        example["changes"] = shown
+    return example
+
+
 class AnthropicProvider:
+    """Live reasoning via the Anthropic Messages API. Output goes through the same gates as
+    recorded content; failures retry, then fall back to the offline agent."""
+
     name = "anthropic"
     URL = "https://api.anthropic.com/v1/messages"
 
-    def __init__(self, playbook: dict[str, Any], model: str | None = None, timeout: float = 120.0, client=None):
+    def __init__(self, playbook: dict[str, Any], model: str | None = None, timeout: float = 300.0, client=None):
         import httpx  # local import: optional dependency path
 
         self.api_key = os.environ.get("ANTHROPIC_API_KEY")
         if not self.api_key:
             raise LLMError("ANTHROPIC_API_KEY is not set")
-        self.model = model or os.environ.get("ORCH_LLM_MODEL", "claude-sonnet-4-5")
-        self.playbook = playbook  # used only as a format exemplar
+        self.model = model or os.environ.get("ORCH_LLM_MODEL", "claude-sonnet-5-5")
+        self.max_tokens = int(os.environ.get("ORCH_LLM_MAX_TOKENS", "16000"))
+        self.playbook = playbook  # used only as a (trimmed) format exemplar
         self.client = client or httpx.Client(timeout=timeout)
 
     def generate(self, key: str, *, prompt: str, context: dict[str, Any], execution: int) -> Any:
+        return self.generate_with_meta(key, prompt=prompt, context=context, execution=execution)[0]
+
+    def generate_with_meta(self, key: str, *, prompt: str, context: dict[str, Any],
+                           execution: int) -> tuple[Any, dict[str, Any]]:
         example = self.playbook.get(key)
+        shape = _exemplar(example, context.get("answers", {}))
         system = (
             "You are one agent in a governed SDLC pipeline. Respond with a single JSON "
             "value only - no prose, no markdown fences. Match the structure (keys and "
-            "types) of the example exactly."
+            "types) of the example exactly. File edits must be complete and self-contained: "
+            "use op 'create' with the full file content, or 'replace' with a 'search' string "
+            "that occurs exactly once in the current file."
         )
         user = (
-            f"TASK ({key}):\n{prompt}\n\nCONTEXT:\n{json.dumps(context, default=str)[:60000]}\n\n"
-            f"EXAMPLE OF THE REQUIRED JSON SHAPE:\n{json.dumps(example, default=str)[:20000]}"
+            f"TASK ({key}):\n{prompt}\n\nCONTEXT:\n{json.dumps(context, default=str)[:120000]}\n\n"
+            f"EXAMPLE OF THE REQUIRED JSON SHAPE:\n{json.dumps(shape, default=str)[:20000]}"
         )
         resp = self.client.post(
             self.URL,
@@ -120,14 +186,17 @@ class AnthropicProvider:
             },
             json={
                 "model": self.model,
-                "max_tokens": 16000,
+                "max_tokens": self.max_tokens,
                 "system": system,
                 "messages": [{"role": "user", "content": user}],
             },
         )
         if resp.status_code != 200:
             raise LLMError(f"LLM HTTP {resp.status_code}: {resp.text[:300]}")
-        text = "".join(b.get("text", "") for b in resp.json().get("content", []))
+        body = resp.json()
+        if body.get("stop_reason") == "max_tokens":
+            raise LLMError(f"LLM output truncated at max_tokens={self.max_tokens} (raise ORCH_LLM_MAX_TOKENS)")
+        text = "".join(b.get("text", "") for b in body.get("content", []))
         text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip())
         try:
             data = json.loads(text)
@@ -137,4 +206,6 @@ class AnthropicProvider:
             missing = [k for k in example if k not in data]
             if missing:
                 raise LLMError(f"LLM response missing keys: {missing}")
-        return data
+        meta = {"content_origin": "generated", "model": body.get("model", self.model),
+                "response_id": body.get("id"), "usage": body.get("usage", {})}
+        return data, meta

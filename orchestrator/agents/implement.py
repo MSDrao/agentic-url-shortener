@@ -44,6 +44,10 @@ class ImplementationAgent(Agent):
             if kind == "create":
                 overlay[path] = op["content"]
             elif kind == "create_from_reference":
+                # Recorded-demo convenience only. In a live run the model must write the code itself,
+                # so copying the reference implementation is refused (also for offline fallbacks).
+                if task.live_run:
+                    raise AgentError(f"edit {i}: create_from_reference is disabled in live runs ({path})")
                 src = task.repo_root / op.get("reference_root", "service") / path
                 if not src.is_file():
                     raise AgentError(f"edit {i}: reference file not found: {path}")

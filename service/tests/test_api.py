@@ -72,7 +72,8 @@ def test_reserved_alias_rejected_case_insensitively(client):
 
 
 def test_invalid_url_rejected(client):
-    for url in ("javascript:alert(1)", "ftp://x.test/file", "http://127.0.0.1/admin", ""):
+    for url in ("javascript:alert(1)", "ftp://x.test/file", "http://127.0.0.1/admin", "",
+                "https://[invalid", "http://127.1", "http://2130706433"):
         assert _create(client, url=url).status_code == 422, url
 
 

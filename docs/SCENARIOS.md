@@ -6,9 +6,9 @@ Each scenario is a YAML file under `scenarios/` containing:
 - the baseline (`null` for an empty workspace, or `service` for a copy of the current codebase);
 - the playbook (the recorded agent responses);
 - optional fault injection;
-- an optional approval script, which is the set of human decisions used in unattended mode.
+- an optional `simulated_approvals` script, used **only** with `--approvals simulated`, where the decisions are recorded as `human: false`.
 
-The numbers below come from `make demo`; the full reports are in `sample-runs/<run>/SUMMARY.md`. Timings vary between machines.
+The numbers below come from `make demo`, which runs with **simulated approvals** so it can finish unattended. Every report is stamped "not authorized for release" for that reason. To make the decisions yourself, see [section 5](#5-running-a-scenario-with-your-own-decisions). The full reports are in `sample-runs/<run>/SUMMARY.md`. Timings vary between machines.
 
 ---
 
@@ -47,7 +47,7 @@ Every acceptance criterion traces to at least one task (the `traceability` gate)
 
 **Validation.**
 
-- 53/53 tests pass with about 99% coverage.
+- 67/67 tests pass with about 98–99% coverage (pytest exit code 0 is also required).
 - All 11 acceptance criteria are verified by passing tests.
 - The security scan reports one *medium* finding (a new dependency manifest, which calls for a supply-chain review). It is below the blocking threshold and appears in the risk register.
 - The docs agent generated `docs/API.md` from the live OpenAPI contract (7 routes), a CHANGELOG entry and 4 ADRs.
@@ -89,10 +89,10 @@ T5 tests (depends only on T1, so it runs in parallel with T2)
 **Orchestration: rework and rollback.**
 
 1. The first implementation contains a realistic off-by-one: it uses `<=` where it should use `<`.
-2. `run_tests` fails: 61/63 pass, and 2 planned tests fail.
+2. `run_tests` fails: 75/77 pass, 2 planned tests fail, and pytest exits with code 1.
 3. The workspace is rolled back to the `pre-implement` snapshot.
 4. `implement` re-runs with the failing test names in its feedback. `run_tests`, `security_scan` and `docs` are invalidated and re-run.
-5. Result: 63/63 pass. Metrics: rollbacks=1, reworks=1, MTTR ≈ 2.5 s.
+5. Result: 77/77 pass. Metrics: rollbacks=1, reworks=1, MTTR ≈ 2.6 s.
 
 **Change control.**
 
@@ -124,7 +124,7 @@ T5 tests (depends only on T1, so it runs in parallel with T2)
 1. "who is clicking" matches a policy PII signal, so the spec is flagged `pii_involved`.
 2. The agent asks for a `privacy_review` node. Policy allowlists that node, so the engine **inserts it between `design` and `implement` at runtime**. The graph above shows it as a hexagon.
 
-**Human revision at the design review.** The scripted security reviewer chooses **revise**: the change is sent back to `intake` with `Q2 = create_and_redirect` ("denylisted domains must also stop existing links").
+**Revision at the design review.** In the demo, the scripted (simulated) security reviewer chooses **revise**. Run it with `--approvals interactive` or `queue` to make that call yourself: the change is sent back to `intake` with `Q2 = create_and_redirect` ("denylisted domains must also stop existing links").
 
 1. `intake` re-runs. Q2 is now *confirmed*, and the spec moves from v1 to v2 with 5 functional requirements (was 4) and 7 acceptance criteria (was 6).
 2. The engine compares hashes, sees that `requirements_spec` changed, and **invalidates** `codebase_analysis` and `test_plan`, which had already completed. `design` re-runs as well.
@@ -143,7 +143,7 @@ Tests prove that the raw IP never reaches storage and that expired hashes are pu
 
 **Lineage.** `requirements_spec@v2` has `derived_from: [clarifications@v1]`, which was produced by `human:product-owner@example.com`. Every downstream artifact chains back to it. See section 5 of the run's SUMMARY.
 
-**Result.** 62/62 tests pass. 7 approvals were requested, including the revise round. Re-plans=3: the privacy-review insertion, the revise, and the hash invalidation. Release checklist 8/8 (it includes the privacy review): **GO**.
+**Result.** 76/76 tests pass. 7 approvals were requested, including the revise round. Re-plans=3: the privacy-review insertion, the revise, and the hash invalidation. Release checklist 8/8 (it includes the privacy review): **GO**.
 
 ---
 
@@ -151,7 +151,7 @@ Tests prove that the raw IP never reaches storage and that expired hashes are pu
 
 | Drill | Injected condition | Engine behaviour | Final state |
 |---|---|---|---|
-| `release-rejected` | the human rejects at the final gate | release node FAILED; workspace **restored to baseline** (the patch is empty) | `rolled_back` |
+| `release-rejected` | the (simulated) reviewer rejects at the final gate | release node FAILED; workspace **restored to baseline** (the patch is empty) | `rolled_back` |
 | `policy-violation` | the implementer also proposes `scripts/deploy.sh` (outside its write scope) | CRITICAL autonomy-boundary finding → nothing committed → **safe-stop**; `resume --reset-failed` completes the run, and MTTR spans the human intervention | `halted` → `succeeded` |
 | `rework-exhausted` | the implementation is wrong on every attempt | rollback + rework twice (the policy's `max_rework_cycles`), then `run_tests` FAILED → safe-stop | `halted` |
 
@@ -168,3 +168,14 @@ At each gate you see the reasons, the summary and the evidence (spec, design and
 - `a`: approve;
 - `r`: reject;
 - `v`: revise. You pick the target node, give feedback, and optionally supply answers such as `{"Q2": "create_and_redirect"}`.
+
+Or review asynchronously. The run pauses at each gate until a decision is recorded:
+
+```bash
+python -m orchestrator run scenarios/ambiguous.yaml --approvals queue --run-id amb
+python -m orchestrator pending amb
+python -m orchestrator approve amb intake --decision approve --as <you> --comment "assumptions acceptable"
+python -m orchestrator resume amb
+python -m orchestrator approve amb design --decision revise --target intake --answers '{"Q2": "create_and_redirect"}' --as <you>
+python -m orchestrator resume amb     # ... repeat until the release gate
+```

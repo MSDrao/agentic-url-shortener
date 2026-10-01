@@ -1,5 +1,6 @@
 
-▶ Greenfield: build the URL shortener service from scratch  [greenfield]  run=demo-greenfield  llm=offline  approvals=auto
+▶ Greenfield: build the URL shortener service from scratch  [greenfield]  run=demo-greenfield  llm=offline  approvals=simulated
+  ⚠ SIMULATED approvals: scripted stand-ins, recorded as human=false. NOT a release authorization.
   waves: intake | design, test_plan | implement | docs, run_tests, security_scan | release_readiness
   → intake               running (agent=requirements_analyst, attempt=1)
   ? intake               waiting_approval  requirement contains ambiguities resolved only by assumptions
@@ -19,16 +20,17 @@
   → security_scan        running (agent=security_scanner, attempt=1)
   ✓ security_scan        succeeded         18 files scanned, 1 findings (max=medium)
   ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 4 ADRs
-  ✓ run_tests            succeeded         53/53 passed, coverage=98.64%
+  ✓ run_tests            succeeded         67/67 passed, coverage=98.68%
   → release_readiness    running (agent=release_manager, attempt=1)
   ? release_readiness    waiting_approval  'release_readiness' always requires human sign-off
   ✓ release_readiness    succeeded         GO: 7/7 checks green
 
-■ run SUCCEEDED  latency=2.098s  attempts=9  retries=1  rollbacks=0  replans=0  mttr=0.205s
+■ run SUCCEEDED  latency=2.158s  attempts=9  retries=1  rollbacks=0  replans=0  mttr=0.211s
   summary: runs/demo-greenfield/SUMMARY.md
   patch:   runs/demo-greenfield/change.patch
 
-▶ Brownfield: add limited-use links (max_clicks) to the existing service  [brownfield]  run=demo-brownfield  llm=offline  approvals=auto
+▶ Brownfield: add limited-use links (max_clicks) to the existing service  [brownfield]  run=demo-brownfield  llm=offline  approvals=simulated
+  ⚠ SIMULATED approvals: scripted stand-ins, recorded as human=false. NOT a release authorization.
   waves: intake | codebase_analysis, test_plan | design | implement | docs, run_tests, security_scan | release_readiness
   → intake               running (agent=requirements_analyst, attempt=1)
   ? intake               waiting_approval  requirement contains ambiguities resolved only by assumptions
@@ -48,7 +50,7 @@
   → security_scan        running (agent=security_scanner, attempt=1)
   ✓ security_scan        succeeded         7 files scanned, 0 findings (max=info)
   ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
-  ! run_tests attempt 1 failed: exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks
+  ! run_tests attempt 1 failed: exit gate failed: tests_pass (75/77 passed, 2 failed, 0 errors, exit_code=1); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/te
   ↺ rework: rolled back 'implement', re-running with feedback from 'run_tests'
   → implement            running (agent=implementer, attempt=1)
   ? implement            waiting_approval  high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/
@@ -58,16 +60,17 @@
   → security_scan        running (agent=security_scanner, attempt=1)
   ✓ security_scan        succeeded         7 files scanned, 0 findings (max=info)
   ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
-  ✓ run_tests            succeeded         63/63 passed, coverage=98.91%
+  ✓ run_tests            succeeded         77/77 passed, coverage=98.94%
   → release_readiness    running (agent=release_manager, attempt=1)
   ? release_readiness    waiting_approval  'release_readiness' always requires human sign-off
   ✓ release_readiness    succeeded         GO: 7/7 checks green
 
-■ run SUCCEEDED  latency=4.899s  attempts=13  retries=0  rollbacks=1  replans=0  mttr=2.47s
+■ run SUCCEEDED  latency=5.04s  attempts=13  retries=0  rollbacks=1  replans=0  mttr=2.562s
   summary: runs/demo-brownfield/SUMMARY.md
   patch:   runs/demo-brownfield/change.patch
 
-▶ Ambiguous: 'make links safer and show who is clicking'  [ambiguous]  run=demo-ambiguous  llm=offline  approvals=auto
+▶ Ambiguous: 'make links safer and show who is clicking'  [ambiguous]  run=demo-ambiguous  llm=offline  approvals=simulated
+  ⚠ SIMULATED approvals: scripted stand-ins, recorded as human=false. NOT a release authorization.
   waves: intake | codebase_analysis, test_plan | design | implement | docs, run_tests, security_scan | release_readiness
   → intake               running (agent=requirements_analyst, attempt=1)
   ? intake               waiting_approval  high-impact change: pii; requirement contains ambiguities resolved only by assumptions
@@ -79,7 +82,7 @@
   ✓ codebase_analysis    succeeded         16 modules, 7 routes, 2 tables; 7 directly + 5 indirectly impacted; risk=high
   → design               running (agent=architect, attempt=1)
   ? design               waiting_approval  high-impact change: pii; high-impact change: public_api_change; high-impact change: schema_change
-  ↩ product-owner@example.com requested revision at 'design' -> re-running 'intake' with answers {'Q2': 'create_and_redirect'}
+  ↩ simulated:product-owner requested revision at 'design' -> re-running 'intake' with answers {'Q2': 'create_and_redirect'}
   → intake               running (agent=requirements_analyst, attempt=1)
   ? intake               waiting_approval  high-impact change: pii; requirement contains ambiguities resolved only by assumptions
   ✓ intake               succeeded         5 functional reqs, 7 ACs, 6 ambiguities (5 assumed), pii=True
@@ -102,16 +105,17 @@
   → security_scan        running (agent=security_scanner, attempt=1)
   ✓ security_scan        succeeded         9 files scanned, 0 findings (max=info)
   ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
-  ✓ run_tests            succeeded         62/62 passed, coverage=99.36%
+  ✓ run_tests            succeeded         76/76 passed, coverage=99.38%
   → release_readiness    running (agent=release_manager, attempt=1)
   ? release_readiness    waiting_approval  'release_readiness' always requires human sign-off
   ✓ release_readiness    succeeded         GO: 8/8 checks green
 
-■ run SUCCEEDED  latency=2.472s  attempts=14  retries=0  rollbacks=0  replans=3  mttr=n/a
+■ run SUCCEEDED  latency=2.448s  attempts=14  retries=0  rollbacks=0  replans=3  mttr=n/a
   summary: runs/demo-ambiguous/SUMMARY.md
   patch:   runs/demo-ambiguous/change.patch
 
-▶ Drill: release rejected at the final human gate -> rollback  [brownfield]  run=drill-release-rejected  llm=offline  approvals=auto
+▶ Drill: release rejected at the final human gate -> rollback  [brownfield]  run=drill-release-rejected  llm=offline  approvals=simulated
+  ⚠ SIMULATED approvals: scripted stand-ins, recorded as human=false. NOT a release authorization.
   waves: intake | codebase_analysis, test_plan | design | implement | docs, run_tests, security_scan | release_readiness
   → intake               running (agent=requirements_analyst, attempt=1)
   ? intake               waiting_approval  requirement contains ambiguities resolved only by assumptions
@@ -131,16 +135,17 @@
   → security_scan        running (agent=security_scanner, attempt=1)
   ✓ security_scan        succeeded         7 files scanned, 0 findings (max=info)
   ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
-  ✓ run_tests            succeeded         63/63 passed, coverage=98.91%
+  ✓ run_tests            succeeded         77/77 passed, coverage=98.94%
   → release_readiness    running (agent=release_manager, attempt=1)
   ? release_readiness    waiting_approval  'release_readiness' always requires human sign-off
   ✗ release_readiness    failed            rejected by approver
 
-■ run ROLLED_BACK  latency=2.636s  attempts=9  retries=0  rollbacks=1  replans=0  mttr=n/a
+■ run ROLLED_BACK  latency=2.544s  attempts=9  retries=0  rollbacks=1  replans=0  mttr=n/a
   summary: runs/drill-release-rejected/SUMMARY.md
   patch:   runs/drill-release-rejected/change.patch
 
-▶ Drill: agent exceeds its autonomy boundary -> safe-stop  [brownfield]  run=drill-policy-violation  llm=offline  approvals=auto
+▶ Drill: agent exceeds its autonomy boundary -> safe-stop  [brownfield]  run=drill-policy-violation  llm=offline  approvals=simulated
+  ⚠ SIMULATED approvals: scripted stand-ins, recorded as human=false. NOT a release authorization.
   waves: intake | codebase_analysis, test_plan | design | implement | docs, run_tests, security_scan | release_readiness
   → intake               running (agent=requirements_analyst, attempt=1)
   ? intake               waiting_approval  requirement contains ambiguities resolved only by assumptions
@@ -156,11 +161,12 @@
   ✗ implement            failed            critical policy violation
   ■ SAFE-STOP: critical policy violation in 'implement'
 
-■ run HALTED  latency=0.044s  attempts=5  retries=0  rollbacks=0  replans=0  mttr=n/a
+■ run HALTED  latency=0.081s  attempts=5  retries=0  rollbacks=0  replans=0  mttr=n/a
   summary: runs/drill-policy-violation/SUMMARY.md
   patch:   runs/drill-policy-violation/change.patch
 
-▶ Drill: repeated test failures exhaust the rework budget -> safe-stop  [brownfield]  run=drill-rework-exhausted  llm=offline  approvals=auto
+▶ Drill: repeated test failures exhaust the rework budget -> safe-stop  [brownfield]  run=drill-rework-exhausted  llm=offline  approvals=simulated
+  ⚠ SIMULATED approvals: scripted stand-ins, recorded as human=false. NOT a release authorization.
   waves: intake | codebase_analysis, test_plan | design | implement | docs, run_tests, security_scan | release_readiness
   → intake               running (agent=requirements_analyst, attempt=1)
   ? intake               waiting_approval  requirement contains ambiguities resolved only by assumptions
@@ -180,7 +186,7 @@
   → security_scan        running (agent=security_scanner, attempt=1)
   ✓ security_scan        succeeded         7 files scanned, 0 findings (max=info)
   ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
-  ! run_tests attempt 1 failed: exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks
+  ! run_tests attempt 1 failed: exit gate failed: tests_pass (75/77 passed, 2 failed, 0 errors, exit_code=1); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/te
   ↺ rework: rolled back 'implement', re-running with feedback from 'run_tests'
   → implement            running (agent=implementer, attempt=1)
   ? implement            waiting_approval  high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/
@@ -190,7 +196,7 @@
   → security_scan        running (agent=security_scanner, attempt=1)
   ✓ security_scan        succeeded         7 files scanned, 0 findings (max=info)
   ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
-  ! run_tests attempt 1 failed: exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks
+  ! run_tests attempt 1 failed: exit gate failed: tests_pass (75/77 passed, 2 failed, 0 errors, exit_code=1); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/te
   ↺ rework: rolled back 'implement', re-running with feedback from 'run_tests'
   → implement            running (agent=implementer, attempt=1)
   ? implement            waiting_approval  high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/
@@ -200,11 +206,11 @@
   → security_scan        running (agent=security_scanner, attempt=1)
   ✓ security_scan        succeeded         7 files scanned, 0 findings (max=info)
   ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
-  ! run_tests attempt 1 failed: exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks
-  ✗ run_tests            failed            rework budget exhausted for 'implement': exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); plan
+  ! run_tests attempt 1 failed: exit gate failed: tests_pass (75/77 passed, 2 failed, 0 errors, exit_code=1); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/te
+  ✗ run_tests            failed            rework budget exhausted for 'implement': exit gate failed: tests_pass (75/77 passed, 2 failed, 0 errors, exit_
   ■ SAFE-STOP: 'run_tests' failed after retries/fallback
 
-■ run HALTED  latency=7.595s  attempts=16  retries=0  rollbacks=2  replans=0  mttr=n/a
+■ run HALTED  latency=7.327s  attempts=16  retries=0  rollbacks=2  replans=0  mttr=n/a
   summary: runs/drill-rework-exhausted/SUMMARY.md
   patch:   runs/drill-rework-exhausted/change.patch
 
@@ -219,12 +225,12 @@
   → security_scan        running (agent=security_scanner, attempt=1)
   ✓ security_scan        succeeded         7 files scanned, 0 findings (max=info)
   ✓ docs                 succeeded         API.md (7 routes), CHANGELOG, 3 ADRs
-  ✓ run_tests            succeeded         63/63 passed, coverage=98.91%
+  ✓ run_tests            succeeded         77/77 passed, coverage=98.94%
   → release_readiness    running (agent=release_manager, attempt=1)
   ? release_readiness    waiting_approval  'release_readiness' always requires human sign-off
   ✓ release_readiness    succeeded         GO: 7/7 checks green
 
-■ run SUCCEEDED  latency=10.296s  attempts=10  retries=0  rollbacks=0  replans=0  mttr=7.672s
+■ run SUCCEEDED  latency=9.916s  attempts=10  retries=0  rollbacks=0  replans=0  mttr=7.417s
   summary: runs/drill-policy-violation/SUMMARY.md
   patch:   runs/drill-policy-violation/change.patch
 
@@ -245,7 +251,7 @@
   },
   "retry_rate": 0.014,
   "rollbacks_per_run": 0.667,
-  "mttr_s_mean": 3.449,
-  "latency_s_p50": 3.768,
-  "latency_s_max": 10.296
+  "mttr_s_mean": 3.397,
+  "latency_s_p50": 3.792,
+  "latency_s_max": 9.916
 }

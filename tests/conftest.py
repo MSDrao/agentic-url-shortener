@@ -12,7 +12,7 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
 from orchestrator.agents.base import Agent, AgentTask  # noqa: E402
-from orchestrator.approval import ScriptedApprover  # noqa: E402
+from orchestrator.approval import SimulatedApprover  # noqa: E402
 from orchestrator.context import RunContext  # noqa: E402
 from orchestrator.engine import Engine  # noqa: E402
 from orchestrator.graph import WorkflowGraph  # noqa: E402
@@ -25,7 +25,7 @@ BASE_POLICY: dict[str, Any] = {
     "budgets": {"max_total_attempts": 50, "max_wall_seconds": 60, "max_rework_cycles": 2},
     "autonomy": {"write_scopes": {"writer": ["src/*.py"]}, "max_files_per_commit": 10},
     "approvals": {"always": [], "on_impact": ["schema_change"], "rollback_on_reject": ["release"],
-                  "max_revision_rounds": 3},
+                  "max_revision_rounds": 3, "allow_simulated_approvals": True},
     "change_control": {"protected_paths": []},
     "security": {"block_at_or_above": "high", "forbidden_calls": ["eval"], "secret_patterns": ["AKIA[0-9A-Z]{16}"]},
     "compliance": {"pii_fields": ["ip"]},
@@ -62,7 +62,7 @@ def produce(name: str, value: Any = None, **kw) -> AgentResult:
 @pytest.fixture
 def make_engine(tmp_path):
     def _make(nodes: list[NodeSpec], agents: dict[str, Agent], policy: dict | None = None,
-              approvals: dict | None = None, templates: dict | None = None) -> Engine:
+              approvals: dict | None = None, templates: dict | None = None, approver=None) -> Engine:
         run_dir = tmp_path / "run"
         run_dir.mkdir(exist_ok=True)
         ws = Workspace.create(run_dir, None)
@@ -71,7 +71,7 @@ def make_engine(tmp_path):
             run_id="t", run_dir=run_dir, repo_root=REPO, scenario=scenario,
             graph=WorkflowGraph(nodes), ctx=RunContext(scenario), agents=agents,
             llm=OfflineProvider({}), policy=Policy(policy or BASE_POLICY),
-            approver=ScriptedApprover("tester", approvals or {}), workspace=ws,
+            approver=approver or SimulatedApprover("tester", approvals or {}), workspace=ws,
             node_templates=templates or {}, max_parallel=4, log=lambda *_: None,
         )
     return _make

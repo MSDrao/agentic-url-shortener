@@ -14,6 +14,10 @@ from typing import Any
 class Metrics:
     started_at: float = field(default_factory=time.time)
     finished_at: float | None = None
+    # Execution time excludes time spent waiting for humans (paused runs, approval prompts),
+    # so the wall-clock budget measures agent work, not reviewer response time.
+    active_s: float = 0.0
+    approval_wait_s: float = 0.0
     attempts: int = 0
     attempt_successes: int = 0
     attempt_failures: int = 0
@@ -24,6 +28,8 @@ class Metrics:
     replans: int = 0
     approvals_requested: int = 0
     approvals_rejected: int = 0
+    approvals_human: int = 0
+    approvals_simulated: int = 0
     policy_violations: int = 0
     stage_latency: dict[str, float] = field(default_factory=dict)
     open_incidents: dict[str, float] = field(default_factory=dict)  # key -> opened_at
@@ -45,6 +51,8 @@ class Metrics:
         end = self.finished_at or time.time()
         return {
             "end_to_end_latency_s": round(end - self.started_at, 3),
+            "active_execution_s": round(self.active_s, 3),
+            "approval_wait_s": round(self.approval_wait_s, 3),
             "attempts": self.attempts,
             "attempt_success_rate": round(self.attempt_successes / self.attempts, 3) if self.attempts else None,
             "retries": self.retries,
@@ -55,6 +63,8 @@ class Metrics:
             "replans": self.replans,
             "approvals_requested": self.approvals_requested,
             "approvals_rejected": self.approvals_rejected,
+            "approvals_human": self.approvals_human,
+            "approvals_simulated": self.approvals_simulated,
             "policy_violations": self.policy_violations,
             "incidents_recovered": len(self.repair_times),
             "incidents_unrecovered": len(self.open_incidents),

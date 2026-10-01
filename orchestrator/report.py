@@ -32,10 +32,36 @@ def render(run_dir: Path) -> str:
     rr = _latest(state, "release_readiness") or {}
     privacy = _latest(state, "privacy_review")
     L: list[str] = []
-    L += [f"# Engineering summary: {sc['title']}", "",
-          f"- Run: `{state['run_id']}`  |  scenario: `{sc['id']}` ({sc['type']})",
+    started = next((e["data"] for e in audit if e["event"] == "run_started"), {})
+    appr = [e["data"] for e in audit if e["event"] == "approval_decision"]
+    n_human = sum(1 for a in appr if a.get("human"))
+    n_sim = len(appr) - n_human
+    signoff = state.get("release_signoff")
+    llm_name = started.get("llm", "?")
+    origins = sorted({p.get("content_origin", "?") for vs in state["context"]["artifacts"].values()
+                      for v in vs for p in v.get("provenance", [])})
+    sandbox = (tests or {}).get("sandbox") or {}
+    L += [f"# Engineering summary: {sc['title']}", ""]
+    if n_sim:
+        L += ["> **SIMULATED APPROVALS.** Gate decisions in this run were scripted stand-ins recorded as "
+              "`human: false`. This run demonstrates the workflow; it is **not** authorized for release.", ""]
+    L += [f"- Run: `{state['run_id']}`  |  scenario: `{sc['id']}` ({sc['type']})",
           f"- Outcome: **{state['run_status'].upper()}**" + (f" (reason: {state['stop_reason']})" if state.get("stop_reason") else ""),
-          f"- Release recommendation: **{rr.get('recommendation', 'n/a')}**", ""]
+          f"- Release recommendation: **{rr.get('recommendation', 'n/a')}**",
+          "- Release sign-off: " + ("none" if not signoff else
+                                    f"**{signoff['approver']}** ({'human' if signoff['human'] else 'SIMULATED - not an authorization'})"),
+          f"- Approvals: {n_human} human, {n_sim} simulated",
+          f"- Reasoning backend: `{llm_name}`" + (" (recorded playbook responses - content is authored, not generated)"
+                                                 if llm_name == "offline" else " (live model)")
+          + f"; content origins in this run: {', '.join(origins) or 'n/a'}",
+          f"- Sandbox for generated code: {sandbox.get('backend', 'n/a')}"
+          + (f" (network: {sandbox.get('network')}; filesystem: {sandbox.get('filesystem')})" if sandbox else ""), ""]
+    if state["run_status"] == "awaiting_approval":
+        L += ["## Awaiting human approval", ""]
+        for node, p in state.get("pending_approvals", {}).items():
+            L += [f"- `{node}` (round {p['round']}, request `{p['request_hash']}`): " + "; ".join(p["reasons"])]
+        L += ["", f"Review with `python -m orchestrator pending {state['run_id']}`, decide with "
+                  f"`python -m orchestrator approve {state['run_id']} <node> --decision ...`, then `resume`.", ""]
 
     L += ["## 1. Requirement understanding", "", "> " + sc["requirement"].strip().replace("\n", "\n> "), ""]
     if spec:
@@ -101,8 +127,13 @@ def render(run_dir: Path) -> str:
     L += ["## 5. Decisions and lineage", "", _table(["id", "node", "kind", "actor", "summary"],
                                                      [[d["id"], d["node"], d["kind"], d["actor"], d["summary"]] for d in decisions]), ""]
     arts = state["context"]["artifacts"]
-    L += ["**Artifact versions**", "", _table(["artifact", "version", "hash", "producer", "derived from"],
-                                              [[n, v["version"], v["hash"], v["producer"], ", ".join(v["derived_from"]) or "-"] for n, vs in arts.items() for v in vs]), ""]
+    L += ["**Artifact versions and content provenance**", "",
+          _table(["artifact", "version", "hash", "producer", "derived from", "content origin", "source / model", "response sha256"],
+                 [[n, v["version"], v["hash"], v["producer"], ", ".join(v["derived_from"]) or "-",
+                   ", ".join(sorted({p.get("content_origin", "?") for p in v.get("provenance", [])})) or "-",
+                   ", ".join(sorted({p.get("source") or p.get("model") or p.get("agent", "") for p in v.get("provenance", [])})) or "-",
+                   ", ".join(p["response_sha256"][:12] for p in v.get("provenance", []) if p.get("response_sha256")) or "-"]
+                  for n, vs in arts.items() for v in vs]), ""]
 
     L += ["## 6. Validation", ""]
     if tests:

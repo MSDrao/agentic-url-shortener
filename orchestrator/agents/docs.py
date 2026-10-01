@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import json
-import os
 import re
-import subprocess
 import sys
 from datetime import date
 
+from .. import sandbox
 from ..model import AgentResult
-from .base import Agent, AgentError, AgentTask
+from ..sandbox import SandboxConfig, SandboxError
+from .base import Agent, AgentError, AgentTask, InfrastructureError
 
 OPENAPI_SNIPPET = (
     "import json, tempfile, os\n"
@@ -61,10 +61,14 @@ class TechWriterAgent(Agent):
 
     def run(self, task: AgentTask) -> AgentResult:
         ws = task.workspace
-        env = {**os.environ, "PYTHONPATH": str(ws.root)}
-        proc = subprocess.run([sys.executable, "-c", OPENAPI_SNIPPET], cwd=ws.root, env=env,
-                              capture_output=True, text=True, timeout=60)
-        if proc.returncode != 0:
+        # Importing the app executes generated code, so it runs in the sandbox too.
+        cfg = SandboxConfig.from_policy(task.policy.section("sandbox"))
+        out_dir = task.run_dir / "docs-output" / f"exec{task.execution}-attempt{task.attempt}"
+        try:
+            proc = sandbox.run([sys.executable, "-c", OPENAPI_SNIPPET], workspace=ws.root, out_dir=out_dir, cfg=cfg)
+        except SandboxError as exc:
+            raise InfrastructureError(str(exc)) from exc
+        if proc.returncode != 0 or proc.timed_out:
             raise AgentError(f"could not load OpenAPI contract: {proc.stderr[-600:]}")
         openapi = json.loads(proc.stdout)
         api_md, routes = render_api_md(openapi)

@@ -1,0 +1,32 @@
+{
+  "end_to_end_latency_s": 206.261,
+  "active_execution_s": 96.73,
+  "approval_wait_s": 109.531,
+  "attempts": 9,
+  "attempt_success_rate": 1.0,
+  "retries": 0,
+  "retry_rate": 0.0,
+  "fallbacks": 0,
+  "rollbacks": 0,
+  "reworks": 0,
+  "replans": 0,
+  "approvals_requested": 4,
+  "approvals_rejected": 0,
+  "approvals_human": 4,
+  "approvals_simulated": 0,
+  "policy_violations": 0,
+  "incidents_recovered": 0,
+  "incidents_unrecovered": 0,
+  "mttr_s": null,
+  "stage_latency_s": {
+    "analysis": 0.034,
+    "architecture": 28.263,
+    "documentation": 0.525,
+    "implementation": 53.072,
+    "release": 0.004,
+    "requirements": 13.57,
+    "security": 0.019,
+    "test-design": 0.0,
+    "testing": 1.684
+  }
+}

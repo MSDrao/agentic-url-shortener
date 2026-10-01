@@ -68,9 +68,10 @@ class Policy:
                     findings.append(Finding("file-deletion", "high", path, "agents may not delete files"))
                 continue
             findings += scan_secrets(path, content, sec.get("secret_patterns", []))
-            if path.endswith(".py") and not path.startswith("tests/"):
-                findings += scan_python(path, content, sec.get("forbidden_calls", []))
-                findings += scan_pii_columns(path, content, comp.get("pii_fields", []))
+            if path.endswith(".py"):
+                findings += scan_python(path, content, sec.get("forbidden_calls", []))  # tests run too
+                if not path.startswith("tests/"):
+                    findings += scan_pii_columns(path, content, comp.get("pii_fields", []))
         return findings
 
     # --- human-in-the-loop ---------------------------------------------

@@ -1,8 +1,14 @@
 # Engineering summary: Greenfield: build the URL shortener service from scratch
 
+> **SIMULATED APPROVALS.** Gate decisions in this run were scripted stand-ins recorded as `human: false`. This run demonstrates the workflow; it is **not** authorized for release.
+
 - Run: `demo-greenfield`  |  scenario: `greenfield` (greenfield)
 - Outcome: **SUCCEEDED**
 - Release recommendation: **GO**
+- Release sign-off: **simulated:tech-lead** (SIMULATED - not an authorization)
+- Approvals: 0 human, 4 simulated
+- Reasoning backend: `offline` (recorded playbook responses - content is authored, not generated); content origins in this run: computed, recorded
+- Sandbox for generated code: process (network: none (netns); filesystem: not isolated (use docker backend))
 
 ## 1. Requirement understanding
 
@@ -114,31 +120,31 @@ flowchart LR
 | seq | node | event | detail |
 |---|---|---|---|
 | 3 | intake | running | agent=requirements_analyst attempt=1 |
-| 5 | intake | waiting_approval | requirement contains ambiguities resolved only by assumptions |
-| 6 | intake | **approval_decision** | {"answers": {}, "comment": "auto-approved under scripted policy", "decision": "approve", "revise_target": null, "round": 1, "wait_s": 0.0} |
-| 8 | intake | succeeded | 7 functional reqs, 11 ACs, 2 ambiguities (2 assumed), pii=False |
-| 10 | design | running | agent=architect attempt=1 |
-| 12 | test_plan | running | agent=test_planner attempt=1 |
-| 13 | design | **attempt_failed** | {"attempt": 1, "error": "LLMError: injected fault: provider error for 'design' (execution 1)"} |
-| 17 | test_plan | succeeded | 16 planned cases ({'unit': 4, 'integration': 12}) |
-| 19 | design | running | agent=architect attempt=2 |
-| 21 | design | waiting_approval | high-impact change: public_api_change; high-impact change: schema_change |
-| 22 | design | **approval_decision** | {"answers": {}, "comment": "auto-approved under scripted policy", "decision": "approve", "revise_target": null, "round": 1, "wait_s": 0.0} |
-| 24 | design | succeeded | 7 tasks in 5 waves; 6 API / 2 schema changes |
-| 26 | implement | running | agent=implementer attempt=1 |
-| 28 | implement | waiting_approval | high-impact change: dependency_change; high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/config.py; change to protected path: shortener/db.py |
-| 29 | implement | **approval_decision** | {"answers": {}, "comment": "auto-approved under scripted policy", "decision": "approve", "revise_target": null, "round": 1, "wait_s": 0.0} |
-| 32 | implement | succeeded | 18 files (15 source, 3 test): Scaffold the v1 service and its test suites per tasks T1-T7 |
-| 34 | docs | running | agent=tech_writer attempt=1 |
-| 36 | run_tests | running | agent=test_runner attempt=1 |
-| 38 | security_scan | running | agent=security_scanner attempt=1 |
-| 41 | security_scan | succeeded | 18 files scanned, 1 findings (max=medium) |
-| 45 | docs | succeeded | API.md (7 routes), CHANGELOG, 4 ADRs |
-| 48 | run_tests | succeeded | 53/53 passed, coverage=98.64% |
-| 50 | release_readiness | running | agent=release_manager attempt=1 |
-| 52 | release_readiness | waiting_approval | 'release_readiness' always requires human sign-off |
-| 53 | release_readiness | **approval_decision** | {"answers": {}, "comment": "auto-approved under scripted policy", "decision": "approve", "revise_target": null, "round": 1, "wait_s": 0.0} |
-| 55 | release_readiness | succeeded | GO: 7/7 checks green |
+| 6 | intake | waiting_approval | requirement contains ambiguities resolved only by assumptions |
+| 7 | intake | **approval_decision** | {"answers": {}, "comment": "[SIMULATED] scripted demo decision - not a human sign-off", "decision": "approve", "human": false, "mode": "simulated", "request_hash": "26e8ff8286d31bd4", "revise_target": null, "round": 1, " |
+| 9 | intake | succeeded | 7 functional reqs, 11 ACs, 2 ambiguities (2 assumed), pii=False |
+| 11 | design | running | agent=architect attempt=1 |
+| 13 | test_plan | running | agent=test_planner attempt=1 |
+| 15 | design | **attempt_failed** | {"attempt": 1, "error": "LLMError: injected fault: provider error for 'design' (execution 1)"} |
+| 19 | test_plan | succeeded | 16 planned cases ({'unit': 4, 'integration': 12}) |
+| 21 | design | running | agent=architect attempt=2 |
+| 24 | design | waiting_approval | high-impact change: public_api_change; high-impact change: schema_change |
+| 25 | design | **approval_decision** | {"answers": {}, "comment": "[SIMULATED] scripted demo decision - not a human sign-off", "decision": "approve", "human": false, "mode": "simulated", "request_hash": "1dc02a25c36e3ba7", "revise_target": null, "round": 1, " |
+| 27 | design | succeeded | 7 tasks in 5 waves; 6 API / 2 schema changes |
+| 29 | implement | running | agent=implementer attempt=1 |
+| 32 | implement | waiting_approval | high-impact change: dependency_change; high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/config.py; change to protected path: shortener/db.py |
+| 33 | implement | **approval_decision** | {"answers": {}, "comment": "[SIMULATED] scripted demo decision - not a human sign-off", "decision": "approve", "human": false, "mode": "simulated", "request_hash": "7688daf031657514", "revise_target": null, "round": 1, " |
+| 36 | implement | succeeded | 18 files (15 source, 3 test): Scaffold the v1 service and its test suites per tasks T1-T7 |
+| 38 | docs | running | agent=tech_writer attempt=1 |
+| 40 | run_tests | running | agent=test_runner attempt=1 |
+| 42 | security_scan | running | agent=security_scanner attempt=1 |
+| 45 | security_scan | succeeded | 18 files scanned, 1 findings (max=medium) |
+| 49 | docs | succeeded | API.md (7 routes), CHANGELOG, 4 ADRs |
+| 52 | run_tests | succeeded | 67/67 passed, coverage=98.68% |
+| 54 | release_readiness | running | agent=release_manager attempt=1 |
+| 56 | release_readiness | waiting_approval | 'release_readiness' always requires human sign-off |
+| 57 | release_readiness | **approval_decision** | {"answers": {}, "comment": "[SIMULATED] scripted demo decision - not a human sign-off", "decision": "approve", "human": false, "mode": "simulated", "request_hash": "4804d9d9898115e9", "revise_target": null, "round": 1, " |
+| 59 | release_readiness | succeeded | GO: 7/7 checks green |
 
 **Gates (last evaluation per node)**
 
@@ -158,8 +164,8 @@ flowchart LR
 | docs | exit:docs_cover_routes | pass | 7 routes documented |
 | run_tests | entry:inputs_available | pass | all inputs present |
 | run_tests | entry:workspace_has_code | pass | 16 python files |
-| run_tests | exit:tests_pass | pass | 53/53 passed, 0 failed, 0 errors |
-| run_tests | exit:coverage_min | pass | 98.6% (min 85.0%) |
+| run_tests | exit:tests_pass | pass | 67/67 passed, 0 failed, 0 errors, exit_code=0 |
+| run_tests | exit:coverage_min | pass | 98.7% (min 85.0%) |
 | run_tests | exit:planned_tests_pass | pass | 16 planned tests passed |
 | security_scan | entry:inputs_available | pass | all inputs present |
 | security_scan | exit:no_blocking_findings | pass | 0 blocking of 1 findings |
@@ -170,33 +176,33 @@ flowchart LR
 
 | id | node | kind | actor | summary |
 |---|---|---|---|---|
-| D001 | intake | approval | tech-lead@example.com | approve: requirement contains ambiguities resolved only by assumptions |
+| D001 | intake | approval | simulated:tech-lead | approve: requirement contains ambiguities resolved only by assumptions |
 | D002 | intake | assumption | requirements_analyst | Q1: assumed '307: browsers do not cache it, so every click reaches the service and is counted' |
 | D003 | intake | assumption | requirements_analyst | Q2: assumed 'SQLite behind a repository interface; Postgres is a later, local swap' |
-| D004 | design | approval | tech-lead@example.com | approve: high-impact change: public_api_change, high-impact change: schema_change |
+| D004 | design | approval | simulated:tech-lead | approve: high-impact change: public_api_change, high-impact change: schema_change |
 | D005 | design | design_choice | architect | Redirect status code: 307 Temporary Redirect with Cache-Control max-age=0 |
 | D006 | design | design_choice | architect | Short code generation: Cryptographically random base62, length 7, bounded retry on collision |
 | D007 | design | design_choice | architect | Storage: SQLite with versioned forward-only migrations behind a repository |
 | D008 | design | design_choice | architect | Click recording: Synchronous insert on the redirect path |
-| D009 | implement | approval | tech-lead@example.com | approve: high-impact change: dependency_change, high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/config.py, change to protected path: shortener/db.py |
-| D010 | release_readiness | approval | tech-lead@example.com | approve: 'release_readiness' always requires human sign-off |
+| D009 | implement | approval | simulated:tech-lead | approve: high-impact change: dependency_change, high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/config.py, change to protected path: shortener/db.py |
+| D010 | release_readiness | approval | simulated:tech-lead | approve: 'release_readiness' always requires human sign-off |
 
-**Artifact versions**
+**Artifact versions and content provenance**
 
-| artifact | version | hash | producer | derived from |
-|---|---|---|---|---|
-| requirements_spec | 1 | be7eba063668ef57 | intake | - |
-| test_plan | 1 | 35ed793cc3ce3a23 | test_plan | requirements_spec@v1 |
-| design | 1 | 73d90af00ebbf7f3 | design | requirements_spec@v1 |
-| change_set | 1 | 4e27d5bafe3dd5af | implement | requirements_spec@v1, design@v1, test_plan@v1 |
-| security_report | 1 | e1cdb4e1a5a6812a | security_scan | - |
-| docs_report | 1 | 8ebbfeec3c52152e | docs | requirements_spec@v1, design@v1 |
-| test_report | 1 | ad3c152d583a078b | run_tests | test_plan@v1 |
-| release_readiness | 1 | 5f36f5cc3ba912b4 | release_readiness | requirements_spec@v1, design@v1, test_plan@v1, test_report@v1, security_report@v1, docs_report@v1 |
+| artifact | version | hash | producer | derived from | content origin | source / model | response sha256 |
+|---|---|---|---|---|---|---|---|
+| requirements_spec | 1 | be7eba063668ef57 | intake | - | recorded | scenarios/playbooks/greenfield.yaml#requirements | 589e72cbba34 |
+| test_plan | 1 | 35ed793cc3ce3a23 | test_plan | requirements_spec@v1 | computed | test_planner | - |
+| design | 1 | 73d90af00ebbf7f3 | design | requirements_spec@v1 | recorded | scenarios/playbooks/greenfield.yaml#design | 35127a697948 |
+| change_set | 1 | 4e27d5bafe3dd5af | implement | requirements_spec@v1, design@v1, test_plan@v1 | recorded | scenarios/playbooks/greenfield.yaml#implement | 4ace236b1172 |
+| security_report | 1 | e1cdb4e1a5a6812a | security_scan | - | computed | security_scanner | - |
+| docs_report | 1 | 8ebbfeec3c52152e | docs | requirements_spec@v1, design@v1 | computed | tech_writer | - |
+| test_report | 1 | 62dabf2e1948ca04 | run_tests | test_plan@v1 | computed | test_runner | - |
+| release_readiness | 1 | e6a33f4dd45eedd5 | release_readiness | requirements_spec@v1, design@v1, test_plan@v1, test_report@v1, security_report@v1, docs_report@v1 | computed | release_manager | - |
 
 ## 6. Validation
 
-Tests: **53/53 passed**, coverage **98.64%** (`pytest -q -p no:cacheprovider --junitxml=<run_dir>/test-output/exec1-attempt1/junit.xml --cov=shortener --cov-report=json:<run_dir>/test-output/exec1-attempt1/coverage.json tests`)
+Tests: **67/67 passed**, coverage **98.68%** (`pytest -q -p no:cacheprovider --junitxml=<run_dir>/test-output/exec1-attempt1/junit.xml --cov=shortener --cov-report=json:<run_dir>/test-output/exec1-attempt1/coverage.json tests`)
 
 **Traceability: acceptance criterion -> tasks -> tests -> result**
 
@@ -224,8 +230,8 @@ Security scan: 18 files, 1 findings (max severity medium).
 
 | item | passed | evidence |
 |---|---|---|
-| full test suite green | True | 53/53 |
-| coverage >= 85.0% | True | 98.64% |
+| full test suite green (pytest exit code 0) | True | 67/67, exit_code=0 |
+| coverage >= 85.0% | True | 98.68% |
 | every acceptance criterion verified by a passing test | True | 11/11 ACs |
 | no blocking security findings | True | 1 findings, max=medium |
 | migrations forward-only and additive | True | no destructive statements |
@@ -251,7 +257,7 @@ Security scan: 18 files, 1 findings (max severity medium).
 
 ```json
 {
-  "end_to_end_latency_s": 2.098,
+  "end_to_end_latency_s": 2.158,
   "attempts": 9,
   "attempt_success_rate": 0.889,
   "retries": 1,
@@ -262,26 +268,28 @@ Security scan: 18 files, 1 findings (max severity medium).
   "replans": 0,
   "approvals_requested": 4,
   "approvals_rejected": 0,
+  "approvals_human": 0,
+  "approvals_simulated": 4,
   "policy_violations": 0,
   "incidents_recovered": 1,
   "incidents_unrecovered": 0,
-  "mttr_s": 0.205,
+  "mttr_s": 0.211,
   "stage_latency_s": {
     "architecture": 0.002,
-    "documentation": 0.422,
-    "implementation": 0.004,
+    "documentation": 0.403,
+    "implementation": 0.003,
     "release": 0.005,
     "requirements": 0.0,
-    "security": 0.039,
-    "test-design": 0.0,
-    "testing": 1.838
+    "security": 0.055,
+    "test-design": 0.002,
+    "testing": 1.876
   }
 }
 ```
 
 ## 9. Artifacts
 
-- Reviewable change: `change.patch` (1396 lines, 24 files)
+- Reviewable change: `change.patch` (1438 lines, 24 files)
 - Workspace with the change applied: `workspace/`
 - Hash-chained audit log: `audit.jsonl` (verify with `python -m orchestrator verify-audit <run_id>`)
 - Resumable state: `state.json`; metrics: `metrics.json`; graph: `graph.mmd`; test output: `test-output/`

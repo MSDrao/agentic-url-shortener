@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +14,12 @@ from ..workspace import Workspace
 
 
 class AgentError(RuntimeError):
-    pass
+    """The agent's work failed (retry / fallback / rework may help)."""
+
+
+class InfrastructureError(AgentError):
+    """The execution environment failed (sandbox, runtime). Retrying the change will not help,
+    so the engine safe-stops instead of reworking correct code."""
 
 
 @dataclass
@@ -30,7 +35,7 @@ class AgentTask:
     policy: Policy
     run_dir: Path
     repo_root: Path
-    extra: dict[str, Any] = field(default_factory=dict)
+    live_run: bool = False  # True when the run's primary reasoning backend is a live model
 
     @property
     def answers(self) -> dict[str, Any]:

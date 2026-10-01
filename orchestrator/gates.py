@@ -143,8 +143,12 @@ def has_changes(gi: GateInput) -> GateResult:
 @gate("tests_pass")
 def tests_pass(gi: GateInput) -> GateResult:
     r = gi.art("test_report") or {}
-    ok = r.get("total", 0) > 0 and r.get("failed", 1) == 0 and r.get("errors", 1) == 0
-    return GateResult("tests_pass", ok, f"{r.get('passed')}/{r.get('total')} passed, {r.get('failed')} failed, {r.get('errors')} errors")
+    # All four must hold: a zero exit code alone can hide "no tests collected"; parsed counts
+    # alone can hide collection/internal errors that pytest only reports via its exit code.
+    ok = (r.get("total", 0) > 0 and r.get("failed", 1) == 0 and r.get("errors", 1) == 0
+          and r.get("exit_code") == 0)
+    return GateResult("tests_pass", ok, f"{r.get('passed')}/{r.get('total')} passed, {r.get('failed')} failed, "
+                                        f"{r.get('errors')} errors, exit_code={r.get('exit_code')}")
 
 
 @gate("coverage_min")

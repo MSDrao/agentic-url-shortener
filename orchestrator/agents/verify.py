@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import json
-import os
 import re
-import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
+from .. import sandbox
 from ..model import AgentResult
+from ..sandbox import SandboxConfig, SandboxError
 from ..scanners import Finding, max_severity, scan_pii_columns, scan_python, scan_secrets
-from .base import Agent, AgentError, AgentTask
+from .base import Agent, AgentError, AgentTask, InfrastructureError
 
 
 class TestRunnerAgent(Agent):
@@ -26,16 +26,20 @@ class TestRunnerAgent(Agent):
             sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider",
             f"--junitxml={junit}", "--cov=shortener", f"--cov-report=json:{cov}", "tests",
         ]
-        env = {**os.environ, "PYTHONPATH": str(task.workspace.root), "COVERAGE_FILE": str(out / ".coverage"),
-               "SHORTENER_DB_PATH": str(out / "unused.db")}
+        # Generated code is untrusted: run it in the sandbox (no inherited secrets, no network,
+        # resource limits; container isolation with the docker backend).
+        cfg = SandboxConfig.from_policy(task.policy.section("sandbox"))
         try:
-            proc = subprocess.run(cmd, cwd=task.workspace.root, env=env, capture_output=True, text=True,
-                                  timeout=int(task.policy.budgets.get("test_timeout_seconds", 300)))
-        except subprocess.TimeoutExpired as exc:
-            raise AgentError("test run timed out") from exc
+            proc = sandbox.run(cmd, workspace=task.workspace.root, out_dir=out, cfg=cfg,
+                               extra_env={"COVERAGE_FILE": str(out / ".coverage"),
+                                          "SHORTENER_DB_PATH": str(out / "unused.db")})
+        except SandboxError as exc:
+            raise InfrastructureError(str(exc)) from exc
+        if proc.timed_out:
+            raise AgentError(f"test run exceeded the sandbox timeout ({cfg.timeout_seconds}s)")
         (out / "stdout.txt").write_text(proc.stdout + proc.stderr)
         if not junit.exists():
-            raise AgentError(f"pytest produced no report (exit {proc.returncode}): {proc.stdout[-500:]}{proc.stderr[-500:]}")
+            raise InfrastructureError(f"pytest produced no report (exit {proc.returncode}): {proc.stdout[-500:]}{proc.stderr[-500:]}")
 
         root = ET.parse(junit).getroot()
         cases, failures = [], []
@@ -65,6 +69,7 @@ class TestRunnerAgent(Agent):
             "passed_tests": passed_tests,
             "command": " ".join(cmd[2:]).replace(str(task.run_dir), "<run_dir>"),
             "exit_code": proc.returncode,
+            "sandbox": proc.isolation,
         }
         return AgentResult(
             artifacts={"test_report": report},
@@ -87,9 +92,11 @@ class SecurityScannerAgent(Agent):
             if content is None:
                 continue
             findings += scan_secrets(path, content, sec.get("secret_patterns", []))
-            if path.endswith(".py") and not path.startswith("tests/"):
+            if path.endswith(".py"):
+                # Tests execute too, so dangerous calls in tests matter as much as in app code.
                 findings += scan_python(path, content, sec.get("forbidden_calls", []))
-                findings += scan_pii_columns(path, content, comp.get("pii_fields", []))
+                if not path.startswith("tests/"):
+                    findings += scan_pii_columns(path, content, comp.get("pii_fields", []))
             if path in ("requirements.txt", "pyproject.toml"):
                 findings.append(Finding("dependency-change", "medium", path, "dependency manifest changed: supply-chain review"))
         # Security-relevant tests must still exist (defence against a change deleting them).

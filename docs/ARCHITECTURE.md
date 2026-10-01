@@ -5,7 +5,7 @@
 ```mermaid
 flowchart TB
   subgraph Human["Human oversight"]
-    H1[Approver: CLI prompt or scripted identity]
+    H1[Approver: terminal prompt, or queued decision + resume<br/>simulated only when explicitly requested]
     H2[Kill switch: orchestrator stop]
   end
   subgraph Engine["Orchestration engine (single writer)"]
@@ -82,7 +82,12 @@ flowchart LR
 5. **Policy:** file changes are checked against the agent's write scope, the change-size limit, the delete ban, secret patterns, forbidden calls, SQL built by interpolation, and PII column names.
    - A *critical* finding means nothing is committed and the run safe-stops.
    - A *high* finding counts as a failed attempt and the agent retries with feedback.
-6. **Approval:** triggered by the policy's `always` list, by impact flags (schema, public API, dependency, PII), by changes to protected paths, or by assumptions nobody has confirmed. The human can:
+6. **Approval:** triggered by the policy's `always` list, by impact flags (schema, public API, dependency, PII), by changes to protected paths, or by assumptions nobody has confirmed. How the decision is obtained depends on the mode:
+   - **interactive:** the person is prompted at the terminal;
+   - **queue** (the default without a terminal): the proposal, its reasons and the evidence are persisted along with a request hash. The run finishes in-flight work, dispatches nothing new, and ends as `awaiting_approval`. A person records a decision with `orchestrator approve`, and `resume` commits the *stored* proposal without re-running the agent. A decision whose hash does not match the proposal is refused (safe-stop);
+   - **simulated:** opt-in only, recorded as `simulated:<role>` with `human: false`. Policy can forbid it (`allow_simulated_approvals: false`).
+
+   The decision can be:
    - approve: the result is committed;
    - reject: safe-stop, or a rollback to baseline if the node is the release gate;
    - revise: feedback and answers go to a target node, which re-runs.
@@ -92,19 +97,30 @@ flowchart LR
    - If the agent asked for a new node and policy allowlists that node, it is inserted. Any completed nodes downstream of it are invalidated.
    - If the hash is unchanged, nothing downstream re-runs, so no work is wasted.
 
+**Infrastructure failures** (the sandbox fails to start, or pytest produces no report) are *not* treated as evidence that the change is wrong. The engine safe-stops instead of reworking code that may be correct.
+
 **Failure handling:** each node has bounded retries with exponential backoff. After that comes one fallback attempt, which uses a deterministic agent when a live LLM was in use. After that the node's `on_failure` policy applies:
 
 - `rework:<upstream>` restores the upstream node's pre-commit snapshot (a rollback) and re-runs it with the failure details as feedback. The number of rework cycles is capped by `max_rework_cycles`.
 - `stop` performs a safe-stop.
 
-**Budgets and kill switch:** the run safe-stops before the next dispatch when any of these trips: `max_total_attempts`, `max_wall_seconds`, or the kill switch (`runs/<id>/STOP`, written by `orchestrator stop`). Every running node gets an *epoch*, so results from invalidated or stopped work are recognized as stale and discarded.
+**Budgets and kill switch:** the run safe-stops before the next dispatch when any of these trips: `max_total_attempts`, `max_wall_seconds` (measured as *active execution* time; time spent waiting for a human, whether at a prompt or while the run is paused, is excluded and reported separately as `approval_wait_s`), or the kill switch (`runs/<id>/STOP`, written by `orchestrator stop`). Every running node gets an *epoch*, so results from invalidated or stopped work are recognized as stale and discarded.
 
 ## 4. State, lineage, audit, metrics
 
 - **RunContext.** Artifacts are stored as a list of versions (`requirements_spec@v2`), each with a content hash, the node that produced it, the attempt, and `derived_from` references. `lineage(name)` rebuilds the provenance tree. Decisions (`D001…`) carry a kind, actor, rationale and references. Kinds include assumption, design_choice, approval, replan, rollback, fallback and safe_stop.
-- **Persistence.** `state.json` is written atomically (temp file, then rename) after every commit. It holds statuses, attempt counts, the context, graph mutations and metrics. `resume` rebuilds the graph by replaying the recorded mutations.
-- **Audit.** `audit.jsonl` is append-only. Each record contains `prev_hash`, and its own `hash` is the SHA-256 of its content. `verify-audit` detects modified, deleted or reordered records. The log captures every status change, gate result, policy finding, approval (with approver, round, comment, answers and wait time), commit (files, artifact version and hash), rollback, fallback, re-plan and safe-stop.
-- **Metrics.** Per run: attempts, attempt success rate, retries and retry rate, fallbacks, rollbacks, reworks, re-plans, approvals requested and rejected, policy violations, incidents recovered and unrecovered, **MTTR** (an incident opens at a node's first failure and closes when that node next succeeds, including across a resume), end-to-end latency, and latency per stage. `history.jsonl` and `orchestrator metrics` aggregate across runs.
+- **Persistence.** `state.json` also records the run's execution configuration (LLM backend, approval mode). `resume` restores it; changing the backend, or moving between simulated and human approvals, requires `--override-config` and is written to the audit log as `config_override`. `state.json` is written atomically (temp file, then rename) after every commit. It holds statuses, attempt counts, the context, graph mutations and metrics. `resume` rebuilds the graph by replaying the recorded mutations.
+- **Audit.** `audit.jsonl` is append-only. Each record contains `prev_hash`, and its own `hash` is the SHA-256 of its content, so edits, deletions and reordering *inside* the log break the chain.
+  - A chain cannot prove the log is *complete*, because dropping the tail leaves a valid chain. The writer therefore keeps the head (record count and last hash) in `audit.anchor.json`, and the engine copies the final head into `runs/history.jsonl`. `verify-audit` requires the log to end exactly at both. With `ORCH_AUDIT_KEY` set, the anchor carries an HMAC, so it cannot be re-forged without the key. When a key is supplied at verification time, an *unsigned* anchor is rejected, so the check cannot be downgraded by flipping `keyed` to false.
+  - **Remaining limit:** someone who can rewrite the log, the anchor and the history (or who holds the key) can still forge a consistent history. Real deployments should ship anchors to external append-only storage or sign them with an off-host key.
+  - The log captures every status change, gate result, policy finding, approval (approver, `human` flag, mode, request hash, round, comment, answers, wait time), reasoning call (provider, prompt and response hashes, model and usage when live), commit, rollback, fallback, re-plan and safe-stop.
+- **Provenance.** Every artifact version records how its content was produced:
+  - `recorded`: the playbook source and variant;
+  - `generated`: the model, response id, token usage, and prompt and response SHA-256;
+  - `computed`: the agent's own code.
+
+  Reports show this per artifact, so authored content is never presented as generated.
+- **Metrics.** Per run: attempts, attempt success rate, retries and retry rate, fallbacks, rollbacks, reworks, re-plans, approvals requested and rejected, policy violations, incidents recovered and unrecovered, **MTTR** (an incident opens at a node's first failure and closes when that node next succeeds, including across a resume), end-to-end latency (wall clock), active execution time, human approval wait time, and latency per stage. `history.jsonl` and `orchestrator metrics` aggregate across runs.
 
 ## 5. Agents and their autonomy boundaries
 
@@ -116,9 +132,9 @@ flowchart LR
 | test_planner | AC → test cases (level, intent) | — | none |
 | privacy_officer | checks the design's data handling against compliance policy | — | none |
 | implementer | applies anchored edits (each must match exactly once); derives impact flags | edit operations | `shortener/*.py`, `tests/*.py`, `pytest.ini`, `requirements.txt` |
-| test_runner | runs pytest with JUnit and coverage in the workspace | — | none |
+| test_runner | runs pytest with JUnit and coverage **inside the sandbox** (see below) | — | none |
 | security_scanner | secrets, forbidden calls, shell/SQL injection, PII columns, dependency changes, required security tests | — | none |
-| tech_writer | loads the real OpenAPI contract, renders API.md, changelog, ADRs | — | `docs/*.md`, `CHANGELOG.md` |
+| tech_writer | loads the real OpenAPI contract (app import runs in the sandbox), renders API.md, changelog, ADRs | — | `docs/*.md`, `CHANGELOG.md` |
 | release_manager | checklist, AC→task→test traceability, migration safety check on the diff, risk register | — | none |
 
 **Reasoning backends.**
@@ -126,7 +142,21 @@ flowchart LR
 - `OfflineProvider` (the default) replays recorded responses from `scenarios/playbooks/*.yaml`.
   - Items tagged `when: {Q2: …}` are included only when the clarified answer matches, which is how a human's revision changes the spec, design, tests and code.
   - Variants such as `implement__buggy` are expressed as deltas of the recorded response and are used for fault injection.
-- `AnthropicProvider` calls the Messages API, asks for JSON in the shape of the recorded example, and checks the required keys. Its output goes through the same gates. When it fails, the node retries and then falls back to the offline agent.
+- `AnthropicProvider` calls the Messages API and checks the required keys. It is shown a *trimmed* exemplar: the format of the recorded response, with long content cut and reference-copy operations never shown.
+  - Its output goes through the same gates. Truncated output (`stop_reason: max_tokens`) is treated as a failure.
+  - When it fails, the node retries and then falls back to the offline agent.
+  - In live runs, `create_from_reference` (the demo shortcut that copies `service/`) is refused, including in the fallback. A live greenfield run therefore either generates the service or stops.
+
+**Execution sandbox.** The workspace is a *working copy*, not a security boundary. Code the agents wrote runs through `orchestrator/sandbox.py`:
+- **`process` backend:**
+  - only allowlisted environment variables are passed, so secrets such as `ANTHROPIC_API_KEY` are stripped;
+  - HOME and TMP are private;
+  - CPU, file-size, open-file and memory limits apply, and the process group is killed on timeout;
+  - on Linux the code runs with no network (unprivileged network namespace);
+  - the filesystem is not isolated.
+- **`docker` backend:** no network, read-only root filesystem and workspace, a non-root user, no capabilities, `no-new-privileges`, and memory, CPU and PID limits. Only the output directory is writable.
+
+The test report records which isolation applied.
 
 ## 6. Key design decisions
 
@@ -138,6 +168,9 @@ flowchart LR
 | Policy as YAML | Autonomy can be tightened or loosened without code changes, which suits change-advisory review | Policy mistakes are possible; the demo drills exercise it |
 | Full-copy snapshots | Simple, exact rollback | O(repo size) per commit; use git worktrees or overlay filesystems at scale |
 | Recorded responses as the default backend | Deterministic, reviewable, CI-friendly demos with no secrets | Offline mode does not show model creativity; the live path is available |
+| Queued approvals commit the stored proposal, bound by hash | What a human approved is exactly what lands, even with non-deterministic live agents; approvals can be given asynchronously | Needs an extra `approve` + `resume` step; the approver identity is asserted (`--as`, or the OS user), not authenticated |
+| Simulated approvals are opt-in and labelled | Deterministic demos without faking human oversight | Policy should disable them wherever real releases happen |
+| Sandbox backends: process (portable) and docker (isolating) | Works everywhere by default; strong isolation where Docker exists | The process backend does not isolate the filesystem |
 | Human approval driven by impact, not by every step | Oversight where risk exists (schema, API, dependencies, PII, release); low-risk steps flow through | Needs trustworthy impact detection; the implementer re-derives impact flags from file paths as a second check |
 
 ## 7. The service under change (URL shortener)

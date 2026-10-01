@@ -1,6 +1,7 @@
-PY ?= python3
+# Use the project's virtualenv automatically when it exists, so `make` works even if it isn't activated.
+PY ?= $(if $(wildcard .venv/bin/python),$(abspath .venv/bin/python),python3)
 
-.PHONY: install test test-service test-orchestrator demo serve clean
+.PHONY: install test test-service test-orchestrator demo serve sandbox-image clean
 
 install:
 	$(PY) -m pip install -r requirements.txt
@@ -15,6 +16,9 @@ test-orchestrator:
 
 demo:
 	$(PY) -m orchestrator demo
+
+sandbox-image:
+	docker build -f Dockerfile.sandbox -t orchestrator-sandbox:py311 .
 
 serve:
 	cd service && $(PY) -m uvicorn shortener.main:app --reload --port 8000

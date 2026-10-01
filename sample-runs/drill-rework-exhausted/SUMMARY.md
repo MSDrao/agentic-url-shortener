@@ -1,8 +1,14 @@
 # Engineering summary: Drill: repeated test failures exhaust the rework budget -> safe-stop
 
+> **SIMULATED APPROVALS.** Gate decisions in this run were scripted stand-ins recorded as `human: false`. This run demonstrates the workflow; it is **not** authorized for release.
+
 - Run: `drill-rework-exhausted`  |  scenario: `drill-rework-exhausted` (brownfield)
 - Outcome: **HALTED** (reason: 'run_tests' failed after retries/fallback)
 - Release recommendation: **n/a**
+- Release sign-off: none
+- Approvals: 0 human, 5 simulated
+- Reasoning backend: `offline` (recorded playbook responses - content is authored, not generated); content origins in this run: computed, recorded
+- Sandbox for generated code: n/a
 
 ## 1. Requirement understanding
 
@@ -126,51 +132,51 @@ flowchart LR
 | seq | node | event | detail |
 |---|---|---|---|
 | 3 | intake | running | agent=requirements_analyst attempt=1 |
-| 5 | intake | waiting_approval | requirement contains ambiguities resolved only by assumptions |
-| 6 | intake | **approval_decision** | {"answers": {}, "comment": "auto-approved under scripted policy", "decision": "approve", "revise_target": null, "round": 1, "wait_s": 0.0} |
-| 8 | intake | succeeded | 4 functional reqs, 6 ACs, 3 ambiguities (3 assumed), pii=False |
-| 10 | codebase_analysis | running | agent=codebase_analyst attempt=1 |
-| 12 | test_plan | running | agent=test_planner attempt=1 |
-| 15 | test_plan | succeeded | 10 planned cases ({'unit': 4, 'integration': 6}) |
-| 18 | codebase_analysis | succeeded | 16 modules, 7 routes, 2 tables; 5 directly + 4 indirectly impacted; risk=high |
-| 20 | design | running | agent=architect attempt=1 |
-| 22 | design | waiting_approval | high-impact change: public_api_change; high-impact change: schema_change |
-| 23 | design | **approval_decision** | {"answers": {}, "comment": "auto-approved under scripted policy", "decision": "approve", "revise_target": null, "round": 1, "wait_s": 0.0} |
-| 25 | design | succeeded | 5 tasks in 4 waves; 3 API / 1 schema changes |
-| 27 | implement | running | agent=implementer attempt=1 |
-| 29 | implement | waiting_approval | high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/db.py |
-| 30 | implement | **approval_decision** | {"answers": {}, "comment": "auto-approved under scripted policy", "decision": "approve", "revise_target": null, "round": 1, "wait_s": 0.0} |
-| 33 | implement | succeeded | 7 files (6 source, 1 test): max_clicks (first attempt) |
-| 35 | docs | running | agent=tech_writer attempt=1 |
-| 37 | run_tests | running | agent=test_runner attempt=1 |
-| 39 | security_scan | running | agent=security_scanner attempt=1 |
-| 42 | security_scan | succeeded | 7 files scanned, 0 findings (max=info) |
-| 46 | docs | succeeded | API.md (7 routes), CHANGELOG, 3 ADRs |
-| 48 | run_tests | **attempt_failed** | {"attempt": 1, "error": "exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_c |
-| 49 | implement | **rollback** | {"to_snapshot": "pre-implement", "trigger": "run_tests"} |
-| 55 | implement | running | agent=implementer attempt=1 |
-| 57 | implement | waiting_approval | high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/db.py |
-| 58 | implement | **approval_decision** | {"answers": {}, "comment": "auto-approved under scripted policy", "decision": "approve", "revise_target": null, "round": 2, "wait_s": 0.0} |
-| 61 | implement | succeeded | 7 files (6 source, 1 test): max_clicks (first attempt) |
-| 63 | docs | running | agent=tech_writer attempt=1 |
-| 65 | run_tests | running | agent=test_runner attempt=1 |
-| 67 | security_scan | running | agent=security_scanner attempt=1 |
-| 70 | security_scan | succeeded | 7 files scanned, 0 findings (max=info) |
-| 74 | docs | succeeded | API.md (7 routes), CHANGELOG, 3 ADRs |
-| 76 | run_tests | **attempt_failed** | {"attempt": 1, "error": "exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_c |
-| 77 | implement | **rollback** | {"to_snapshot": "pre-implement", "trigger": "run_tests"} |
-| 83 | implement | running | agent=implementer attempt=1 |
-| 85 | implement | waiting_approval | high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/db.py |
-| 86 | implement | **approval_decision** | {"answers": {}, "comment": "auto-approved under scripted policy", "decision": "approve", "revise_target": null, "round": 3, "wait_s": 0.0} |
-| 89 | implement | succeeded | 7 files (6 source, 1 test): max_clicks (first attempt) |
-| 91 | docs | running | agent=tech_writer attempt=1 |
-| 93 | run_tests | running | agent=test_runner attempt=1 |
-| 95 | security_scan | running | agent=security_scanner attempt=1 |
-| 98 | security_scan | succeeded | 7 files scanned, 0 findings (max=info) |
-| 102 | docs | succeeded | API.md (7 routes), CHANGELOG, 3 ADRs |
-| 104 | run_tests | **attempt_failed** | {"attempt": 1, "error": "exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_c |
-| 105 | run_tests | failed | rework budget exhausted for 'implement': exit gate failed: tests_pass (61/63 passed, 2 failed, 0 errors); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic']) |
-| 106 | - | **safe_stop** | {"reason": "'run_tests' failed after retries/fallback"} |
+| 6 | intake | waiting_approval | requirement contains ambiguities resolved only by assumptions |
+| 7 | intake | **approval_decision** | {"answers": {}, "comment": "[SIMULATED] scripted demo decision - not a human sign-off", "decision": "approve", "human": false, "mode": "simulated", "request_hash": "6b1bb9a381c8d38c", "revise_target": null, "round": 1, " |
+| 9 | intake | succeeded | 4 functional reqs, 6 ACs, 3 ambiguities (3 assumed), pii=False |
+| 11 | codebase_analysis | running | agent=codebase_analyst attempt=1 |
+| 13 | test_plan | running | agent=test_planner attempt=1 |
+| 16 | test_plan | succeeded | 10 planned cases ({'unit': 4, 'integration': 6}) |
+| 19 | codebase_analysis | succeeded | 16 modules, 7 routes, 2 tables; 5 directly + 4 indirectly impacted; risk=high |
+| 21 | design | running | agent=architect attempt=1 |
+| 24 | design | waiting_approval | high-impact change: public_api_change; high-impact change: schema_change |
+| 25 | design | **approval_decision** | {"answers": {}, "comment": "[SIMULATED] scripted demo decision - not a human sign-off", "decision": "approve", "human": false, "mode": "simulated", "request_hash": "da15472302d50d1b", "revise_target": null, "round": 1, " |
+| 27 | design | succeeded | 5 tasks in 4 waves; 3 API / 1 schema changes |
+| 29 | implement | running | agent=implementer attempt=1 |
+| 32 | implement | waiting_approval | high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/db.py |
+| 33 | implement | **approval_decision** | {"answers": {}, "comment": "[SIMULATED] scripted demo decision - not a human sign-off", "decision": "approve", "human": false, "mode": "simulated", "request_hash": "b9f7c8654039bba0", "revise_target": null, "round": 1, " |
+| 36 | implement | succeeded | 7 files (6 source, 1 test): max_clicks (first attempt) |
+| 38 | docs | running | agent=tech_writer attempt=1 |
+| 40 | run_tests | running | agent=test_runner attempt=1 |
+| 42 | security_scan | running | agent=security_scanner attempt=1 |
+| 45 | security_scan | succeeded | 7 files scanned, 0 findings (max=info) |
+| 49 | docs | succeeded | API.md (7 routes), CHANGELOG, 3 ADRs |
+| 51 | run_tests | **attempt_failed** | {"attempt": 1, "error": "exit gate failed: tests_pass (75/77 passed, 2 failed, 0 errors, exit_code=1); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tes |
+| 52 | implement | **rollback** | {"to_snapshot": "pre-implement", "trigger": "run_tests"} |
+| 58 | implement | running | agent=implementer attempt=1 |
+| 61 | implement | waiting_approval | high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/db.py |
+| 62 | implement | **approval_decision** | {"answers": {}, "comment": "[SIMULATED] scripted demo decision - not a human sign-off", "decision": "approve", "human": false, "mode": "simulated", "request_hash": "e7f3b678a75a990d", "revise_target": null, "round": 2, " |
+| 65 | implement | succeeded | 7 files (6 source, 1 test): max_clicks (first attempt) |
+| 67 | docs | running | agent=tech_writer attempt=1 |
+| 69 | run_tests | running | agent=test_runner attempt=1 |
+| 71 | security_scan | running | agent=security_scanner attempt=1 |
+| 74 | security_scan | succeeded | 7 files scanned, 0 findings (max=info) |
+| 78 | docs | succeeded | API.md (7 routes), CHANGELOG, 3 ADRs |
+| 80 | run_tests | **attempt_failed** | {"attempt": 1, "error": "exit gate failed: tests_pass (75/77 passed, 2 failed, 0 errors, exit_code=1); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tes |
+| 81 | implement | **rollback** | {"to_snapshot": "pre-implement", "trigger": "run_tests"} |
+| 87 | implement | running | agent=implementer attempt=1 |
+| 90 | implement | waiting_approval | high-impact change: public_api_change; high-impact change: schema_change; change to protected path: shortener/db.py |
+| 91 | implement | **approval_decision** | {"answers": {}, "comment": "[SIMULATED] scripted demo decision - not a human sign-off", "decision": "approve", "human": false, "mode": "simulated", "request_hash": "0a28f9b831856317", "revise_target": null, "round": 3, " |
+| 94 | implement | succeeded | 7 files (6 source, 1 test): max_clicks (first attempt) |
+| 96 | docs | running | agent=tech_writer attempt=1 |
+| 98 | run_tests | running | agent=test_runner attempt=1 |
+| 100 | security_scan | running | agent=security_scanner attempt=1 |
+| 103 | security_scan | succeeded | 7 files scanned, 0 findings (max=info) |
+| 107 | docs | succeeded | API.md (7 routes), CHANGELOG, 3 ADRs |
+| 109 | run_tests | **attempt_failed** | {"attempt": 1, "error": "exit gate failed: tests_pass (75/77 passed, 2 failed, 0 errors, exit_code=1); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tes |
+| 110 | run_tests | failed | rework budget exhausted for 'implement': exit gate failed: tests_pass (75/77 passed, 2 failed, 0 errors, exit_code=1); planned_tests_pass (planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic']) |
+| 111 | - | **safe_stop** | {"reason": "'run_tests' failed after retries/fallback"} |
 
 **Gates (last evaluation per node)**
 
@@ -193,7 +199,7 @@ flowchart LR
 | docs | exit:docs_cover_routes | pass | 7 routes documented |
 | run_tests | entry:inputs_available | pass | all inputs present |
 | run_tests | entry:workspace_has_code | pass | 17 python files |
-| run_tests | exit:tests_pass | FAIL | 61/63 passed, 2 failed, 0 errors |
+| run_tests | exit:tests_pass | FAIL | 75/77 passed, 2 failed, 0 errors, exit_code=1 |
 | run_tests | exit:coverage_min | pass | 98.7% (min 85.0%) |
 | run_tests | exit:planned_tests_pass | FAIL | planned tests not passing: ['tests/test_max_clicks.py::test_http_limit_reached_returns_410', 'tests/test_max_clicks.py::test_repository_limit_is_atomic'] |
 | security_scan | entry:inputs_available | pass | all inputs present |
@@ -203,38 +209,38 @@ flowchart LR
 
 | id | node | kind | actor | summary |
 |---|---|---|---|---|
-| D001 | intake | approval | eng-manager@example.com | approve: requirement contains ambiguities resolved only by assumptions |
+| D001 | intake | approval | simulated:eng-manager | approve: requirement contains ambiguities resolved only by assumptions |
 | D002 | intake | assumption | requirements_analyst | Q1: assumed 'no: only successful redirects are recorded as clicks' |
 | D003 | intake | assumption | requirements_analyst | Q2: assumed 'no: immutable in this change (out of scope)' |
 | D004 | intake | assumption | requirements_analyst | Q3: assumed 'no: the limit is enforced atomically' |
-| D005 | design | approval | eng-manager@example.com | approve: high-impact change: public_api_change, high-impact change: schema_change |
+| D005 | design | approval | simulated:eng-manager | approve: high-impact change: public_api_change, high-impact change: schema_change |
 | D006 | design | design_choice | architect | Limit enforcement: Single conditional INSERT ... SELECT ... WHERE count < max_clicks |
 | D007 | design | design_choice | architect | Response when exhausted: 410 Gone |
 | D008 | design | design_choice | architect | remaining_clicks source: Derived on read via COUNT(*) over the (link_id, clicked_at) index |
-| D009 | implement | approval | eng-manager@example.com | approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/db.py |
+| D009 | implement | approval | simulated:eng-manager | approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/db.py |
 | D010 | run_tests | rollback | orchestrator | rolled back 'implement' and re-running it with failure feedback |
-| D011 | implement | approval | eng-manager@example.com | approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/db.py |
+| D011 | implement | approval | simulated:eng-manager | approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/db.py |
 | D012 | run_tests | rollback | orchestrator | rolled back 'implement' and re-running it with failure feedback |
-| D013 | implement | approval | eng-manager@example.com | approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/db.py |
+| D013 | implement | approval | simulated:eng-manager | approve: high-impact change: public_api_change, high-impact change: schema_change, change to protected path: shortener/db.py |
 | D014 | - | safe_stop | orchestrator | 'run_tests' failed after retries/fallback |
 
-**Artifact versions**
+**Artifact versions and content provenance**
 
-| artifact | version | hash | producer | derived from |
-|---|---|---|---|---|
-| requirements_spec | 1 | 9fd815822c7c2d98 | intake | - |
-| test_plan | 1 | 9e78b7d5379edbe8 | test_plan | requirements_spec@v1 |
-| impact_analysis | 1 | 41a24b096fc81ad4 | codebase_analysis | requirements_spec@v1 |
-| design | 1 | 5270bc98ff5e0673 | design | requirements_spec@v1, impact_analysis@v1 |
-| change_set | 1 | 8fd45aa3f07fff2e | implement | requirements_spec@v1, design@v1, test_plan@v1 |
-| change_set | 2 | 8fd45aa3f07fff2e | implement | requirements_spec@v1, design@v1, test_plan@v1 |
-| change_set | 3 | 8fd45aa3f07fff2e | implement | requirements_spec@v1, design@v1, test_plan@v1 |
-| security_report | 1 | d5a617e4a8458b6c | security_scan | - |
-| security_report | 2 | d5a617e4a8458b6c | security_scan | - |
-| security_report | 3 | d5a617e4a8458b6c | security_scan | - |
-| docs_report | 1 | ebf4a25b946ba813 | docs | requirements_spec@v1, design@v1 |
-| docs_report | 2 | ebf4a25b946ba813 | docs | requirements_spec@v1, design@v1 |
-| docs_report | 3 | ebf4a25b946ba813 | docs | requirements_spec@v1, design@v1 |
+| artifact | version | hash | producer | derived from | content origin | source / model | response sha256 |
+|---|---|---|---|---|---|---|---|
+| requirements_spec | 1 | 9fd815822c7c2d98 | intake | - | recorded | scenarios/playbooks/brownfield.yaml#requirements | 9ca219d2d7f0 |
+| test_plan | 1 | 9e78b7d5379edbe8 | test_plan | requirements_spec@v1 | computed | test_planner | - |
+| impact_analysis | 1 | 41a24b096fc81ad4 | codebase_analysis | requirements_spec@v1 | computed | codebase_analyst | - |
+| design | 1 | 5270bc98ff5e0673 | design | requirements_spec@v1, impact_analysis@v1 | recorded | scenarios/playbooks/brownfield.yaml#design | 6bc058dcddee |
+| change_set | 1 | 8fd45aa3f07fff2e | implement | requirements_spec@v1, design@v1, test_plan@v1 | recorded | scenarios/playbooks/brownfield.yaml#implement__buggy | 587d5b6a66b5 |
+| change_set | 2 | 8fd45aa3f07fff2e | implement | requirements_spec@v1, design@v1, test_plan@v1 | recorded | scenarios/playbooks/brownfield.yaml#implement__buggy | 587d5b6a66b5 |
+| change_set | 3 | 8fd45aa3f07fff2e | implement | requirements_spec@v1, design@v1, test_plan@v1 | recorded | scenarios/playbooks/brownfield.yaml#implement__buggy | 587d5b6a66b5 |
+| security_report | 1 | d5a617e4a8458b6c | security_scan | - | computed | security_scanner | - |
+| security_report | 2 | d5a617e4a8458b6c | security_scan | - | computed | security_scanner | - |
+| security_report | 3 | d5a617e4a8458b6c | security_scan | - | computed | security_scanner | - |
+| docs_report | 1 | ebf4a25b946ba813 | docs | requirements_spec@v1, design@v1 | computed | tech_writer | - |
+| docs_report | 2 | ebf4a25b946ba813 | docs | requirements_spec@v1, design@v1 | computed | tech_writer | - |
+| docs_report | 3 | ebf4a25b946ba813 | docs | requirements_spec@v1, design@v1 | computed | tech_writer | - |
 
 ## 6. Validation
 
@@ -254,7 +260,7 @@ Security scan: 7 files, 0 findings (max severity info).
 
 ```json
 {
-  "end_to_end_latency_s": 7.595,
+  "end_to_end_latency_s": 7.327,
   "attempts": 16,
   "attempt_success_rate": 0.812,
   "retries": 0,
@@ -265,19 +271,21 @@ Security scan: 7 files, 0 findings (max severity info).
   "replans": 0,
   "approvals_requested": 5,
   "approvals_rejected": 0,
+  "approvals_human": 0,
+  "approvals_simulated": 5,
   "policy_violations": 0,
   "incidents_recovered": 0,
   "incidents_unrecovered": 1,
   "mttr_s": null,
   "stage_latency_s": {
-    "analysis": 0.023,
-    "architecture": 0.0,
-    "documentation": 1.211,
-    "implementation": 0.008,
+    "analysis": 0.03,
+    "architecture": 0.001,
+    "documentation": 1.26,
+    "implementation": 0.009,
     "requirements": 0.0,
-    "security": 0.061,
+    "security": 0.1,
     "test-design": 0.0,
-    "testing": 7.491
+    "testing": 7.153
   }
 }
 ```
